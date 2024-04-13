@@ -1,0 +1,32 @@
+{% extends "Sidebar prototype.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1;height:2000px;  padding:0px;">
+   <table class="table table-bordered table-hover table-striped" style="width:100%">
+      <thead class="table-light">
+      <tr>
+          <th>№</th>
+          <th>Дисциплины</th>
+          <th>Действие</th>
+      </thead>
+      <tbody>
+        <tr>
+            <td>1</td>
+            <td>Линейная алгебра</td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Матанализ</td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Дискретная математика</td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+        </tr>
+      </tbody>
+   </table>
+</div>
+</div>
+{% endblock %}
