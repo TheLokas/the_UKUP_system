@@ -12,6 +12,7 @@
     position: sticky;
     top: 0px;
     background-color:#e9ecef;
+
 }
 .nav-button{
     justify-content: space-evenly;
@@ -23,6 +24,9 @@
 .btn{width:100%;}
 
 .nav-button{
-    min-width:100px;
-    text-align:center;
+min-width:100px;
+text-align:center;
+}
+.table>:not(:first-child) {
+    border-top: 1px solid currentColor;
 }
