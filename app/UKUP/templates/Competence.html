@@ -1,0 +1,41 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+   <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
+      <thead class="table-light">
+      <tr>
+          <th>Код</th>
+          <th>Описание</th>
+          <th>Дисциплины</th>
+          <th style="width: 280px;">Действие</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% set ns = namespace(type="", count = 1) %}
+      {%  for competence in competencies  %}
+        {%  if ns.type != competence.type  %}
+            <tr class="table-light"><th style="text-align:center; border-color: inherit;" colspan="4">{{  competence.type  }}</th></tr>
+            <tr>
+            <td>{{  competence.code  }}</td>
+            <td>{{  competence.description  }}</td>
+            <td><button class="btn btn-outline-secondary" style="margin: 5px;width: calc(100% - 10px);">Дисциплины</button></td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+            </tr>
+            {%  set ns.count = ns.count + 1  %}
+            {%  set ns.type = competence.type  %}
+        {%  else  %}
+            <tr>
+            <td>{{  competence.code  }}</td>
+            <td>{{  competence.description  }}</td>
+            <td><button class="btn btn-outline-secondary" style="margin: 5px;width: calc(100% - 10px);">Дисциплины</button></td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+            </tr>
+            {%  set ns.count = ns.count + 1  %}
+        {%  endif  %}
+      {%  endfor  %}
+      </tbody>
+   </table>
+</div>
+</div>
+{% endblock %}

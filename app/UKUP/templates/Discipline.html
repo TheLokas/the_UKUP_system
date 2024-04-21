@@ -1,0 +1,46 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+   <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
+      <thead class="table-light">
+      <tr>
+          <th>№</th>
+          <th>Дисциплины</th>
+          <th>Блок</th>
+          <th>Кафедра</th>
+          <th>Действие</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% set ns = namespace(module="", count = 1) %}
+      {%  for discipline in disciplines  %}
+        {%  if ns.module != discipline.module  %}
+            <tr class="table-light"><th style="text-align:center; border-color: inherit;" colspan="5">{{  discipline.module  }}</th></tr>
+            <tr>
+            <td>{{  ns.count  }}</td>
+            <td>{{  discipline.name  }}</td>
+            <td>{{  discipline.block  }}</td>
+            <td>{{  discipline.faculty  }}</td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+            </tr>
+            {%  set ns.count = ns.count + 1  %}
+            {%  set ns.module = discipline.module  %}
+        {%  else  %}
+            <tr>
+            <td>{{  ns.k  }}</td>
+            <td>{{  discipline.name  }}</td>
+            <td>{{  discipline.block  }}</td>
+            <td>{{  discipline.faculty  }}</td>
+            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
+            </tr>
+            {%  set ns.count = ns.count + 1  %}
+
+        {%  endif  %}
+      {%  endfor  %}
+
+      </tbody>
+   </table>
+</div>
+</div>
+{% endblock %}
