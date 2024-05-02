@@ -159,3 +159,17 @@ def add_discipline():
         except Exception:
             db.session.rollback()
     return render_template("disciplineAdd.html", form=form)
+
+
+@UKUP.route("/competence/add")
+def add_competence():
+    UK = get_not_available_comp_numbers_for_type("УК")
+    OPK = get_not_available_comp_numbers_for_type("ОПК")
+    PK = get_not_available_comp_numbers_for_type("ПК")
+    current_year = date.today().year
+    year_choices = []
+    for year in range(2019, current_year + 2):
+        year_choices.append((year, year))
+    form = CompetenceForm()
+    form.addData(year=year_choices)
+    return render_template("addCompetence.html", form=form, UK=UK, OPK=OPK, PK=PK)
