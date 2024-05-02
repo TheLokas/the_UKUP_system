@@ -1,0 +1,79 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+   <form action="" method="post" style="width:100%; margin-top:5px">
+      <div>Добавьте свою собственную компетенцию на нашем сайте</div>
+      <input type="hidden" id="UK" value="{{ UK }}">
+      <input type="hidden" id="OPK" value="{{ OPK }}">
+      <input type="hidden" id="PK" value="{{ PK }}">
+      {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name", readonly=True, value="УК") }}
+      {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num") }}
+      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
+      {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type") }}
+      {{ form.formulation(class="form-select", style="width:80%; margin-top:5px", id="module") }}
+      {{ form.submit() }}
+   </form>
+</div>
+<script>
+   var type = document.getElementById("type");
+   var num = document.getElementById("num");
+   type.addEventListener("change",function(){
+      var name = document.getElementById("name");
+      if (type.value=="УК"){
+         var UK = document.getElementById("UK");
+         if (UK.value=="[]")
+         {
+            num.value = 1
+         }
+         else{
+            var numValue = UK.value.slice(1,-1).split(", ")
+            num.value = Number(numValue.at(-1)) + 1
+         }
+      }
+      if (type.value=="ОПК"){
+         var OPK = document.getElementById("OPK");
+         if (OPK.value=="[]")
+         {
+            num.value = 1
+         }
+         else{
+            var numValue = OPK.value.slice(1,-1).split(", ")
+            num.value = Number(numValue.at(-1)) + 1
+         }
+      }
+      if (type.value=="ПК"){
+         var PK = document.getElementById("PK");
+         if (PK.value=="[]")
+         {
+            num.value = 1
+         }
+         else{
+            var numValue = PK.value.slice(1,-1).split(", ")
+            num.value = Number(numValue.at(-1)) + 1
+         }
+      }
+      name.value = `${type.value}-${num.value}`;
+   });
+   num.addEventListener("change",function(){
+      var name = document.getElementById("name");
+
+      name.value = `${type.value}-${num.value}`;
+   });
+   window.addEventListener("load",function(){
+
+      var UK = document.getElementById("UK");
+      var name = document.getElementById("name");
+      if (UK.value=="[]")
+      {
+         num.value = 1
+      }
+      else{
+         var numValue = UK.value.slice(1,-1).split(", ")
+         num.value = Number(numValue.at(-1)) + 1
+      }
+      name.value = `УК-${num.value}`
+   })
+</script>
+</div>
+{% endblock %}\
