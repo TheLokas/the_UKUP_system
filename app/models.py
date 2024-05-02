@@ -13,13 +13,18 @@ class Direction(db.Model):
     code = db.Column(db.String(50))
     disciplines = db.relationship('DirectionDiscipline', backref='direction', lazy='dynamic')
 
-class DirectionDiscipline(db.Model):
-    __tablename__ = 'direction_disciplines'
+class Discipline(db.Model):
+    __tablename__ = 'disciplines'
     id = db.Column(db.Integer, primary_key=True)
-    discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
-    direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
-    year_created = db.Column(db.Integer)
-    year_removed = db.Column(db.Integer)
+    name = db.Column(db.String(255))
+    year_approved = db.Column(db.Integer)
+    year_cancelled = db.Column(db.Integer)
+    block_id = db.Column(db.Integer, db.ForeignKey('blocks.id'))
+    module_id = db.Column(db.Integer, db.ForeignKey('modules.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    competence_disciplines = db.relationship('CompetenceDiscipline', backref='discipline', lazy='dynamic')
+    indicator_disciplines = db.relationship('IndicatorDiscipline', backref='discipline', lazy='dynamic')
+    direction = db.relationship('DirectionDiscipline', backref='discipline', lazy='dynamic')
 
 class Discipline(db.Model):
     __tablename__ = 'disciplines'
