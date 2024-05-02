@@ -53,6 +53,18 @@ def add_few_data():
         db.session.rollback()
 
 
+def get_not_available_comp_numbers_for_type(type: str):
+    competence_names = Competence.query.filter(Competence.type == type).with_entities(Competence.name).all()
+    numbers = []
+    if competence_names is not None:
+        for competence_name in competence_names:
+            number = int(str(competence_name[0]).split("-")[1])
+            numbers.append(number)
+        numbers.sort()
+
+    return numbers
+
+
 @UKUP.route("/discipline")
 def discipline():
     return render_template("discipline.html", disciplines=disciplines)
@@ -63,7 +75,27 @@ def competence():
     return render_template("competence.html")
 
 
-
+@UKUP.route("/competence/add", methods=["POST"])
+def add_competence_to_DB():
+    form = CompetenceForm(request.form)
+    not_available_numbers = get_not_available_comp_numbers_for_type(form.type.data)
+    number = int(str(form.name.data).split("-")[1])
+    if number in not_available_numbers:
+        flash("Номер компетенции недопустим")
+    else:
+        competence = Competence(name=form.name.data,
+                                year_approved=form.year_approved.data[0],
+                                type=form.type.data,
+                                year_cancelled=None,
+                                formulation=form.formulation.data)
+        try:
+            db.session.add(competence)
+            db.session.flush()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash("Произошла ошибка, компетенция не добавлена")
+    return redirect("/UKUP/competence")
 
 
 @UKUP.route("/test")
