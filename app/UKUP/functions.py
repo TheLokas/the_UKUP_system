@@ -1,3 +1,4 @@
+from datetime import date
 from .forms import DisciplineForm, CompetenceForm
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence
 
@@ -13,6 +14,13 @@ def get_not_available_comp_numbers_for_type(type: str):
 
     return numbers
 
+
+def generate_year(year):
+    years = []
+    current_year = date.today().year
+    for year in range(year, current_year + 2):
+        years.append(year)
+    return years
 
 def add_few_data():
     directions = [

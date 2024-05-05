@@ -1,0 +1,28 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+   <form action="" method="post" style="width:100%; margin-top:5px">
+      <div>Отредактируй свою собственную дисциплину на нашем сайте, и в будущем её будет кто-то изучать</div>
+      {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name") }}
+      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
+       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled") }}
+      {{ form.block(class="form-select", style="width:80%; margin-top:5px", id="block") }}
+      {{ form.module(class="form-select", style="width:80%; margin-top:5px", id="module") }}
+      {{ form.department(class="form-select", style="width:80%; margin-top:5px", id="department") }}
+      {{ form.direction(class="", style="width:80%; margin-top:5px", id="direction") }}
+      {{ form.submit() }}
+   </form>
+</div>
+</div>
+<script>
+   document.querySelector('select[multiple]').addEventListener('mousedown', (e) => {
+  if (e.target.tagName === 'OPTION') {
+    e.preventDefault(); // Отменяем действие по умолчанию
+    const option = e.target;
+    option.selected = !option.selected; // Инвертируем выбранный элемент
+    e.target.parentNode.dispatchEvent(new Event('change')); // Генерируем событие изменения
+  }
+});
+</script>
+{% endblock %}
