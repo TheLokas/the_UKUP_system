@@ -1,4 +1,4 @@
-from app.models import Block, Module, Department
+from app.models import Block, Module, Department, Direction
 
 
 # Получаем все блоки из базы данных
@@ -18,5 +18,8 @@ def get_departments():
     return departments
 
 
-
+# Получаем все направления из базы данных
+def get_directions():
+    directions = Direction.query.all()
+    return directions
 
