@@ -1,4 +1,4 @@
-from app.models import Block, Module
+from app.models import Block, Module, Department
 
 
 # Получаем все блоки из базы данных
@@ -11,6 +11,12 @@ def get_block():
 def get_modules():
     modules = Module.query.all()
     return modules
+
+# Получаем все кафедры из базы данных
+def get_departments():
+    departments = Department.query.all()
+    return departments
+
 
 
 
