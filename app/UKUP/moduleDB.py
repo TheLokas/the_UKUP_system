@@ -115,4 +115,24 @@ def edit_competence(id_competence, competence_params):
         db.session.commit()
 
 
+def edit_discipline(id_discipline, discipline_params):
+    # Находим дисциплину по ее идентификатору
+    discipline = db.session.get(Discipline, id_discipline)
+
+    if discipline:
+        # Обновляем данные дисциплины
+        discipline.name = discipline_params[0]
+        discipline.year_approved = discipline_params[1]
+        discipline.block_id = discipline_params[2]
+        discipline.module_id = discipline_params[3]
+        discipline.department_id = discipline_params[4]
+
+        # Обновляем данные связи между дисциплиной и направлением
+        direction_to_discipline = DirectionDiscipline.query.filter_by(discipline_id=id_discipline).first()
+        if direction_to_discipline:
+            direction_to_discipline.direction_id = discipline_params[5]
+            direction_to_discipline.year_created = discipline_params[1]
+
+        # Сохраняем изменения в базе данных
+        db.session.commit()
 
