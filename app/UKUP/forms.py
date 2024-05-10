@@ -6,6 +6,7 @@ from wtforms.validators import input_required, data_required, ValidationError, L
 class DisciplineForm(FlaskForm):
     name = StringField()
     year_approved = SelectField()
+    year_cancelled = SelectField()
     block = SelectField()
     module = SelectField()
     department = SelectField()
@@ -19,10 +20,14 @@ class DisciplineForm(FlaskForm):
         self.department.choices = department
         self.direction.choices = direction
 
+    def addYearCancelled(self, year):
+        self.year_cancelled.choices = year
+
 
 class CompetenceForm(FlaskForm):
     name = StringField()
     num = IntegerField()
+    year_cancelled = SelectField()
     year_approved = SelectField()
     type = SelectField(choices=["УК", "ОПК", "ПК"])
     formulation = TextAreaField()
@@ -30,3 +35,6 @@ class CompetenceForm(FlaskForm):
 
     def addData(self, year):
         self.year_approved.choices = year
+
+    def addYearCancelled(self, year):
+        self.year_cancelled.choices = year
