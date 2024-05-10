@@ -86,3 +86,17 @@ def add_discipline(discipline):
     db.session.commit()
 
 
+#Функция для добавления новой компетенции в базу данных
+def add_competence(competence_params):
+    new_competence = Competence(name=competence_params[0],
+                                year_approved=competence_params[1],
+                                type=competence_params[2],
+                                year_cancelled=None,
+                                formulation=competence_params[3])
+
+    # Добавляем компетенцию в базу данных
+    db.session.add(new_competence)
+    db.session.flush()
+    db.session.commit()
+
+
