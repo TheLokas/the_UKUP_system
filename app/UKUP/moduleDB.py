@@ -100,3 +100,19 @@ def add_competence(competence_params):
     db.session.commit()
 
 
+def edit_competence(id_competence, competence_params):
+    # Находим компетенцию по ее идентификатору
+    competence = db.session.get(Competence, id_competence)
+
+    if competence:
+        # Обновляем данные компетенции
+        competence.name = competence_params[0]
+        competence.year_approved = competence_params[1]
+        competence.type = competence_params[2]
+        competence.formulation = competence_params[3]
+
+        # Сохраняем изменения в базе данных
+        db.session.commit()
+
+
+
