@@ -1,4 +1,4 @@
-from app.models import Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline
+from app.models import Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline
 
 
 # Получаем все блоки из базы данных
@@ -43,7 +43,26 @@ def get_disciplines(direction = None, year = None):
     return disciplines
 
 
+#Возвращает список компетенций с указанными параметрами
+def get_competences(direction=None, year=None):
+    if direction:
+        # Если указано направление, выбираем компетенции с учетом направления и года.
+        competences = Competence.query \
+            .join(CompetenceDiscipline, Competence.id == CompetenceDiscipline.competence_id) \
+            .join(Discipline, CompetenceDiscipline.discipline_id == Discipline.id) \
+            .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
+            .filter(DirectionDiscipline.direction_id == direction.id) \
+            .filter(CompetenceDiscipline.year_created <= year) \
+            .filter((CompetenceDiscipline.year_removed > year) | (CompetenceDiscipline.year_removed == None)) \
+            .all()
+    else:
+        # Если направление не указано, выбираем все компетенции с учетом года.
+        competences = Competence.query \
+            .join(CompetenceDiscipline, Competence.id == CompetenceDiscipline.competence_id) \
+            .join(Discipline, CompetenceDiscipline.discipline_id == Discipline.id) \
+            .filter(Competence.year_approved <= year) \
+            .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+            .all()
 
-
-
+    return competences
 
