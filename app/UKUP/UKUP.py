@@ -4,45 +4,35 @@ from app.models import Discipline, db, Department, Block, Module, Direction, Dir
 from .forms import DisciplineForm, CompetenceForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 
-# class Discipline:
-# def __init__(self, name, block, faculty, module):
-#   self.name = name
-#   self.block = block
-#   self.faculty = faculty
-#   self.module = module
-
-
-# class Competence:
-# def __init__(self, code, description,  type):
-#   self.code = code
-#   self.description = description
-#   self.type = type
-
-# disciplines = [Discipline("Линейная алгебра", "Б1.Б", "МА", "Математические и естественнонаучные дисциплины"), Discipline("Матанализ", "Б1.Б", "МА", "Математические и естественнонаучные дисциплины"), Discipline("Дискретная математика", "Б1.Б", "ПМиК", "Модуль 2")]
-
-# competencies = [Competence("УК-1", "Способен осуществлять поиск, критический анализ и синтез информации, применять системный подход для решения поставленных задач", "Универсальные компетенции"),
-#         Competence("УК-2", "Способен определять круг задач в рамках поставленной цели и выбирать оптимальные способы их решения, исходя из действующих правовых норм, имеющихся ресурсов и ограничений", "Универсальные компетенции"),
-#         Competence("ОПК-1", "Способен применять естественнонаучные и общеинженерные знания, методы математического анализа и моделирования, теоретического и экспериментального исследования в профессиональной деятельности", "Общепрофессиональные компетенции"),
-#         Competence("ОПК-2", "Способен понимать принципы работы современных информационных технологий и программных средств, в том числе отечественного производства, и использовать их при решении задач профессиональной деятельности", "Общепрофессиональные компетенции"),
-#         Competence("ОПК-3", "Способен решать стандартные задачи профессиональной деятельности на основе информационной и библиографической культуры с применением информационно-коммуникационных технологий и с учетом основных требований информационной безопасности", "Общепрофессиональные компетенции"),
-#         Competence("ПК-1", "Способен осуществлять выявление требований к информационным системам", "Профессиональные компетенции"),
-#         Competence("ПК-2", "Способность осуществлять проектирование и дизайн ИС", "Профессиональные компетенции"),
-#         Competence("ПК-3", "Способность осуществлять разработку прототипов ИС", "Профессиональные компетенции")]
-
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
 
 
-@UKUP.route("/discipline")
+@UKUP.route("/discipline", methods=["GET"])
 def discipline():
     disciplines = Discipline.query.order_by(Discipline.module_id)
-    return render_template("Discipline.html", disciplines=disciplines)
+    years = generate_year(2019)[::-1]
+    directions = Direction.query.all()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+    return render_template("Discipline.html", disciplines=disciplines, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
+
 
 
 @UKUP.route("/competence")
 def competence():
     competence = Competence.query.all()
-    return render_template("Competence.html", competencies=competence)
+    years = generate_year(2019)[::-1]
+    directions = Direction.query.all()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+    return render_template("Competence.html", competencies=competence, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
 @UKUP.route("/discipline/add")
