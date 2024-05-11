@@ -136,3 +136,15 @@ def edit_discipline(id_discipline, discipline_params):
         # Сохраняем изменения в базе данных
         db.session.commit()
 
+
+#Функция для получения компетенций, привязанных к дисциплине
+def get_connected_competences(discipline_id):
+    connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
+                                            .filter(CompetenceDiscipline.discipline_id == discipline_id)\
+                                            .all()
+    return connected_competences
+
+
+
+
+
