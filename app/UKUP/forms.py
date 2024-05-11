@@ -38,3 +38,8 @@ class CompetenceForm(FlaskForm):
 
     def addYearCancelled(self, year):
         self.year_cancelled.choices = year
+
+class CompetenceConnectForm(FlaskForm):
+    connect = BooleanField()
+    hidden = HiddenField()
+    submit = SubmitField()

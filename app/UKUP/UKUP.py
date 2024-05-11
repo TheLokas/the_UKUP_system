@@ -1,8 +1,9 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence
-from .forms import DisciplineForm, CompetenceForm
+from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline
+from .forms import DisciplineForm, CompetenceForm, CompetenceConnectForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
+from .module_db import connect_discipline_with_competence
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
@@ -240,6 +241,37 @@ def edit_competence_post(competence_id):
     form = CompetenceForm(request.form)
     # функция занесения данных в таблицу
     return redirect("/UKUP/discipline")
+
+
+@UKUP.route('/competence/connect_discipline/<competence_id>', methods=['GET'])
+def connect_disciplines_to_competence(competence_id):
+    competence = Competence.query.get(competence_id)
+    disciplines = Discipline.query.all()
+    form = CompetenceConnectForm()
+    checked=[]
+    check = CompetenceDiscipline.query.filter_by(competence_id=competence_id).all()
+    for ch in check:
+        checked.append(ch.discipline_id)
+    print(checked)
+
+    years = generate_year(2019)[::-1]
+    directions = Direction.query.all()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    return render_template("CompetenceDisciplines.html", form=form, competence=competence, disciplines=disciplines, years=years, directions=directions, current_year=current_year, current_direction=current_direction, checked=checked)
+
+
+@UKUP.route('/competence/connect_discipline/<competence_id>', methods=['POST'])
+def connect_disciplines_to_competence_post(competence_id):
+    a = request.form.getlist("connect")
+    # В будущем заменить на другую функцию
+    for check in a:
+        connect_discipline_with_competence(competence_id, check, request.args["year"])
+    return redirect("/UKUP/competence")
 
 
 @UKUP.route("/addData")
