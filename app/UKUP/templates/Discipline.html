@@ -17,26 +17,27 @@
       {%  for discipline in disciplines  %}
         {%  if ns.module != discipline.module  %}
             <tr class="table-light"><th style="text-align:center; border-color: inherit;" colspan="5">{{  discipline.module.name  }}</th></tr>
-            <tr>
-            <td>{{  ns.count  }}</td>
-            <td>{{  discipline.name  }}</td>
-            <td>{{  discipline.block.name  }}</td>
-            <td>{{  discipline.department.name  }}</td>
-            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
-            </tr>
-            {%  set ns.count = ns.count + 1  %}
             {%  set ns.module = discipline.module  %}
-        {%  else  %}
-            <tr>
+        {%  endif  %}
+        <tr>
             <td>{{  ns.count  }}</td>
             <td>{{  discipline.name  }}</td>
             <td>{{  discipline.block.name  }}</td>
             <td>{{  discipline.department.name  }}</td>
-            <td><button class="btn btn-outline-secondary" style="width:calc((100% - 20px)/2);margin:5px;">Редактировать</button><button class="btn btn-outline-danger" style="width:calc((100% - 20px)/2);margin:5px;">Удалить</button></td>
-            </tr>
+            <td style="display: flex;">
+                <form action="/UKUP/discipline/{{  discipline.id  }}" method="get" style="width:calc((100% - 20px)/2);margin:5px;">
+                    <input name="year" id="editYear{{  discipline.id  }}" type="hidden" value="{{ current_year }}">
+                    <input name="direction" id="editDirection{{  discipline.id  }}" type="hidden" value="{{ current_direction.id }}">
+                    <input type="submit" class="btn btn-outline-secondary" value="Редактировать">
+                </form>
+                <form action="/UKUP/discipline/connect_competence/{{  discipline.id  }}" method="get" style="width:calc((100% - 20px)/2);margin:5px;">
+                    <input name="year" id="connectYear{{  discipline.id  }}" type="hidden" value="{{ current_year }}">
+                    <input name="direction" id="connectDirection{{  discipline.id  }}" type="hidden" value="{{ current_direction.id }}">
+                    <input type="submit" class="btn btn-outline-danger" value="Компетенции">
+                </form>
+            </td>
+        </tr>
             {%  set ns.count = ns.count + 1  %}
-
-        {%  endif  %}
       {%  endfor  %}
 
       </tbody>
