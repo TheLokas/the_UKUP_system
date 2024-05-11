@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline
 from .forms import DisciplineForm, CompetenceForm, CreateConnectionToCompetenceForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
-from .module_db import connect_discipline_with_competence, get_connected_competences
+from .module_db import connect_discipline_with_competence, get_connected_competences, delete_connection
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
 
@@ -239,6 +239,17 @@ def connect_competences_to_discipline(discipline_id):
 def connect_competences_to_discipline_db(discipline_id):
     checked = request.form.getlist("connect")
     year = request.args["year"]
+
+    already_exist = CompetenceDiscipline.query\
+                                        .filter_by(discipline_id=discipline_id)\
+                                        .filter_by(year_created=year)\
+                                        .all()
+
+    # НЕ ПРОТЕСТИРОВАНО
+    for ref in already_exist:
+        if ref.competence_id not in checked:
+            delete_connection(connection_id=ref.id)
+
     for check in checked:
         connect_discipline_with_competence(discipline_id=discipline_id,
                                            competence_id=check,
