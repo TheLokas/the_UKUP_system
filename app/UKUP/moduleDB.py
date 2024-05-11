@@ -145,6 +145,15 @@ def get_connected_competences(discipline_id):
     return connected_competences
 
 
+#Функция удаления связи дисциплины и компетенции по id связи
+def delete_connection(connection_id):
+    connection = CompetenceDiscipline.query.filter_by(id=connection_id).first()
+    if connection:
+        db.session.delete(connection)
+        db.session.commit()
+        return True
+    else:
+        return False
 
 
 
