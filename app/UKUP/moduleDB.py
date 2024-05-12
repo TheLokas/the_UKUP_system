@@ -68,7 +68,7 @@ def get_competences(direction=None, year=None):
 
 
 #Функция для добавления новой дисциплины в базу данных
-def add_discipline(discipline):
+def add_discipline(discipline, directions):
     new_discipline = Discipline(name=discipline[0],
                                 year_approved=discipline[1],
                                 year_cancelled=None,
@@ -78,12 +78,15 @@ def add_discipline(discipline):
     db.session.add(new_discipline)
     db.session.commit()
 
-    direction_to_discipline = DirectionDiscipline(discipline_id=new_discipline.id,
-                                                  direction_id=discipline[5],
+    for direction in directions:
+        direction_to_discipline = DirectionDiscipline(discipline_id=new_discipline.id,
+                                                  direction_id=direction,
                                                   year_created=discipline[1],
                                                   year_removed=None)
-    db.session.add(direction_to_discipline)
+        db.session.add(direction_to_discipline)
     db.session.commit()
+
+
 
 
 #Функция для добавления новой компетенции в базу данных
@@ -115,7 +118,8 @@ def edit_competence(id_competence, competence_params):
         db.session.commit()
 
 
-def edit_discipline(id_discipline, discipline_params):
+def edit_discipline(id_discipline, discipline_params, directions):
+
     # Находим дисциплину по ее идентификатору
     discipline = db.session.get(Discipline, id_discipline)
 
@@ -127,22 +131,49 @@ def edit_discipline(id_discipline, discipline_params):
         discipline.module_id = discipline_params[3]
         discipline.department_id = discipline_params[4]
 
-        # Обновляем данные связи между дисциплиной и направлением
-        direction_to_discipline = DirectionDiscipline.query.filter_by(discipline_id=id_discipline).first()
-        if direction_to_discipline:
-            direction_to_discipline.direction_id = discipline_params[5]
-            direction_to_discipline.year_created = discipline_params[1]
+        # Сохраняем изменения в базе данных
+        db.session.commit()
+
+        # Получаем все записи направления-дисциплины для данной дисциплины
+        all_directions_for_discipline = DirectionDiscipline.query.filter_by(discipline_id=id_discipline).all()
+
+        for directionID in directions:
+            # Проверяем, существует ли запись для данного направления и дисциплины
+            direction_discipline = DirectionDiscipline.query.filter_by(discipline_id=id_discipline, direction_id=directionID).first()
+
+            if not direction_discipline:
+                # Если записи нет, добавляем новую запись
+                new_direction_to_discipline = DirectionDiscipline(
+                    discipline_id=id_discipline,
+                    direction_id=directionID,
+                    year_created=discipline_params[1]
+                )
+                db.session.add(new_direction_to_discipline)
+
+        # Обновляем все остальные записи в таблице направления-дисциплины для данной дисциплины, устанавливая год удаления
+        for direction_to_discipline in all_directions_for_discipline:
+            if direction_to_discipline.direction_id not in directions:
+                direction_to_discipline.year_removed = discipline_params[1]
 
         # Сохраняем изменения в базе данных
         db.session.commit()
 
+        # Получаем все записи направления-дисциплины для данной дисциплины
+        all_directions_for_discipline = DirectionDiscipline.query.filter_by(discipline_id=id_discipline).all()
+        for i in all_directions_for_discipline:
+            if i.year_created == i.year_removed:
+                db.session.delete(i)
+        db.session.commit()
 
-#Функция для получения компетенций, привязанных к дисциплине
+
+
+#Функция получения компетенций, привязанных к дисциплине
 def get_connected_competences(discipline_id):
     connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
                                             .filter(CompetenceDiscipline.discipline_id == discipline_id)\
                                             .all()
     return connected_competences
+
 
 
 #Функция удаления связи дисциплины и компетенции по id связи
