@@ -267,11 +267,63 @@ def connect_disciplines_to_competence(competence_id):
 
 @UKUP.route('/competence/connect_discipline/<competence_id>', methods=['POST'])
 def connect_disciplines_to_competence_post(competence_id):
-    a = request.form.getlist("connect")
+    req = request.form.getlist("connect")
     # В будущем заменить на другую функцию
-    for check in a:
+    for check in req:
         connect_discipline_with_competence(competence_id, check, request.args["year"])
     return redirect("/UKUP/competence")
+
+
+@UKUP.route('/discipline/<discipline_id>/connect', methods=["GET"])
+def connect_competences_to_discipline(discipline_id):
+
+    discipline = Discipline.query.get(discipline_id)
+    competences = Competence.query.all()
+
+    form = CompetenceConnectForm()
+    checked = []
+    check = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).all()
+    for ch in check:
+        checked.append(ch.competence_id)
+
+    years = generate_year(2019)[::-1]
+    directions = Direction.query.all()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    return render_template('connectCompetences.html', form=form,
+                           competences=competences,
+                           discipline=discipline,
+                           years=years,
+                           directions=directions,
+                           current_direction=current_direction,
+                           current_year=current_year,
+                           checked=checked)
+
+
+@UKUP.route('/discipline/<discipline_id>/connect', methods=['POST'])
+def connect_competences_to_discipline_db(discipline_id):
+    checked = request.form.getlist("connect")
+    year = request.args["year"]
+
+    already_exist = CompetenceDiscipline.query\
+                                        .filter_by(discipline_id=discipline_id)\
+                                        .filter_by(year_created=year)\
+                                        .all()
+
+    # НЕ ПРОТЕСТИРОВАНО
+    #for ref in already_exist:
+    #    if ref.competence_id not in checked:
+    #        delete_connection(connection_id=ref.id)
+
+    for check in checked:
+        connect_discipline_with_competence(discipline_id=discipline_id,
+                                           competence_id=check,
+                                           year=year)
+    return redirect("/UKUP/discipline")
 
 
 @UKUP.route("/addData")
