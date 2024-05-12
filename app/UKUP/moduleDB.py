@@ -25,7 +25,7 @@ def get_directions():
     return directions
 
 
-#Возвращает список дисциплин с указанными параметрами, а также информацией о модуле, блоке, кафедре и направлении.
+# Возвращает список дисциплин с указанными параметрами, а также информацией о модуле, блоке, кафедре и направлении.
 def get_disciplines(direction = None, year = None):
     if direction:
         disciplines = Discipline.query \
@@ -43,7 +43,7 @@ def get_disciplines(direction = None, year = None):
     return disciplines
 
 
-#Возвращает список компетенций с указанными параметрами
+# Возвращает список компетенций с указанными параметрами
 def get_competences(direction=None, year=None):
     if direction:
         # Если указано направление, выбираем компетенции с учетом направления и года.
@@ -67,7 +67,7 @@ def get_competences(direction=None, year=None):
     return competences
 
 
-#Функция для добавления новой дисциплины в базу данных
+# Функция для добавления новой дисциплины в базу данных
 def add_discipline(discipline, directions):
     new_discipline = Discipline(name=discipline[0],
                                 year_approved=discipline[1],
@@ -89,7 +89,7 @@ def add_discipline(discipline, directions):
 
 
 
-#Функция для добавления новой компетенции в базу данных
+# Функция для добавления новой компетенции в базу данных
 def add_competence(competence_params):
     new_competence = Competence(name=competence_params[0],
                                 year_approved=competence_params[1],
@@ -167,7 +167,7 @@ def edit_discipline(id_discipline, discipline_params, directions):
 
 
 
-#Функция получения компетенций, привязанных к дисциплине
+# Функция получения компетенций, привязанных к дисциплине
 def get_connected_competences(discipline_id):
     connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
                                             .filter(CompetenceDiscipline.discipline_id == discipline_id)\
@@ -176,7 +176,7 @@ def get_connected_competences(discipline_id):
 
 
 
-#Функция удаления связи дисциплины и компетенции по id связи
+# Функция удаления связи дисциплины и компетенции по id связи
 def delete_connection(connection_id):
     connection = CompetenceDiscipline.query.filter_by(id=connection_id).first()
     if connection:
@@ -187,6 +187,7 @@ def delete_connection(connection_id):
         return False
 
 
+# Функция удаления дисциплины
 def delete_discipline(id_discipline, year_cancelled_value):
     # Находим дисциплину по ее идентификатору
     discipline = db.session.get(Discipline, id_discipline)
@@ -201,6 +202,27 @@ def delete_discipline(id_discipline, year_cancelled_value):
 
     if discipline.year_cancelled == discipline.year_approved:
         db.session.delete(discipline)
+        db.session.commit()
+        return True
+
+    else:
+        return False
+
+
+# Функция удаления компетенций
+def delete_competence(id_competence, year_cancelled_value):
+    # Находим компетенцию по ее идентификатору
+    competence = db.session.get(Competence, id_competence)
+
+    if competence:
+        competence.year_cancelled = year_cancelled_value
+        # Сохраняем изменения в базе данных
+        db.session.commit()
+
+    competence = db.session.get(Competence, id_competence)
+
+    if competence.year_cancelled == competence.year_approved:
+        db.session.delete(competence)
         db.session.commit()
         return True
 
