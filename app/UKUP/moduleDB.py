@@ -187,4 +187,24 @@ def delete_connection(connection_id):
         return False
 
 
+def delete_discipline(id_discipline, year_cancelled_value):
+    # Находим дисциплину по ее идентификатору
+    discipline = db.session.get(Discipline, id_discipline)
+
+    if discipline:
+        # Устанавливаем год удаления
+        discipline.year_cancelled = year_cancelled_value
+        # Сохраняем изменения в базе данных
+        db.session.commit()
+
+    discipline = db.session.get(Discipline, id_discipline)
+
+    if discipline.year_cancelled == discipline.year_approved:
+        db.session.delete(discipline)
+        db.session.commit()
+        return True
+
+    else:
+        return False
+
 
