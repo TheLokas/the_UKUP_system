@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-# from flask_migrate import Migrate
+from flask_migrate import Migrate
 # from . import db
 
 
@@ -65,6 +65,7 @@ class CompetenceDiscipline(db.Model):
     competence_id = db.Column(db.Integer, db.ForeignKey('competences.id'))
     discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
     year_created = db.Column(db.Integer)
+    year_removed = db.Column(db.Integer)
 
 
 class IndicatorDiscipline(db.Model):
@@ -73,6 +74,7 @@ class IndicatorDiscipline(db.Model):
     indicator_id = db.Column(db.Integer, db.ForeignKey('indicators.id'))
     discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
     year_created = db.Column(db.Integer)
+    year_removed = db.Column(db.Integer)
 
 
 class Competence(db.Model):
