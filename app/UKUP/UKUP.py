@@ -5,9 +5,71 @@ from .forms import DisciplineForm, CompetenceForm, CompetenceConnectForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
 from .moduleDB import get_disciplines, get_competences, add_discipline, add_competence, get_modules, get_block, get_directions, get_departments, edit_discipline, edit_competence, get_connected_competences
+from .moduleDB import report_matrix
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
+
+@UKUP.route("/matrix", methods=["GET"])
+def matrix():
+    years = generate_year(2019)[::-1]
+    directions = Direction.query.all()
+    current_direction = directions[0] if directions else None
+    current_year = date.today().year
+
+    if request.args.get("year") and request.args.get("direction"):
+        current_year = int(request.args["year"])
+        current_direction = Direction.query.get(int(request.args["direction"]))
+
+    if current_direction:
+        disciplines = [
+            discipline
+            for direction_discipline in current_direction.disciplines
+            if direction_discipline.year_created <= current_year
+            and (direction_discipline.year_removed is None or direction_discipline.year_removed > current_year)
+            for discipline in [direction_discipline.discipline]
+            if discipline is not None
+        ]
+
+        competence_set = set()
+        for discipline in disciplines:
+            if discipline is not None:
+                for competence_discipline in discipline.competence_disciplines:
+                    if competence_discipline.year_created <= current_year and (
+                        competence_discipline.year_removed is None or competence_discipline.year_removed > current_year
+                    ):
+                        competence_set.add(competence_discipline.competence)
+
+        competences = list(competence_set)
+
+        discipline_competence_links = [
+            (discipline, competence)
+            for discipline in disciplines
+            if discipline is not None
+            for competence_discipline in discipline.competence_disciplines
+            if competence_discipline.year_created <= current_year
+            and (competence_discipline.year_removed is None or competence_discipline.year_removed > current_year)
+            for competence in [competence_discipline.competence]
+        ]
+
+        competence_types = {competence.id: competence.type for competence in competences}
+    else:
+        disciplines = []
+        competences = []
+        discipline_competence_links = []
+        competence_types = {}
+
+    return render_template(
+        "Matrix.html",
+        competences=competences,
+        disciplines=disciplines,
+        years=years,
+        directions=directions,
+        current_year=current_year,
+        current_direction=current_direction,
+        competence_discipline_map=discipline_competence_links,
+        competence_types=competence_types,
+    )
 
 
 @UKUP.route("/discipline", methods=["GET"])

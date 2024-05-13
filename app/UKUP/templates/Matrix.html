@@ -1,0 +1,43 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content" style="flex: 1; height: 1000px; padding: 0px;">
+    <table class="table table-bordered table-hover" style="width: 100%; margin-top: 5px; table-layout: fixed;">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 20%;">Дисциплина</th>
+                <th colspan="{{ competences|length }}" style="text-align: center;">Компетенции</th>
+            </tr>
+            <tr>
+                <th></th>
+                {% for competence in competences %}
+                <th style="width: {{ 80 / competences|length }}%; text-align: center;">{{ competence_types[competence.id] }}</th>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th>Наименование</th>
+                {% for competence in competences %}
+                <th style="width: {{ 80 / competences|length }}%;">{{ competence.name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for discipline in disciplines %}
+            <tr>
+                <td>{{ discipline.name }}</td>
+                {% for competence in competences %}
+                <td style="text-align: center; vertical-align: middle;">
+                    {% if (discipline, competence) in competence_discipline_map %}
+                    +
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

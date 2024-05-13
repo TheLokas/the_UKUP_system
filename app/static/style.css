@@ -150,3 +150,13 @@ th:nth-child(5), td:nth-child(5) {
     white-space: nowrap;
 }
 
+.competence-marker {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    background-color: green;
+    color: white;
+    border-radius: 50%;
+}
