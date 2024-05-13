@@ -239,6 +239,7 @@ def edit_competence(competence_id):
 @UKUP.route('/competence/<competence_id>', methods=['POST'])
 def edit_competence_post(competence_id):
     form = CompetenceForm(request.form)
+    print(request.form)
     # функция занесения данных в таблицу
     return redirect("/UKUP/discipline")
 
@@ -274,7 +275,7 @@ def connect_disciplines_to_competence_post(competence_id):
     return redirect("/UKUP/competence")
 
 
-@UKUP.route('/discipline/<discipline_id>/connect', methods=["GET"])
+@UKUP.route('/discipline/connect_competence/<discipline_id>', methods=["GET"])
 def connect_competences_to_discipline(discipline_id):
 
     discipline = Discipline.query.get(discipline_id)
@@ -304,7 +305,7 @@ def connect_competences_to_discipline(discipline_id):
                            checked=checked)
 
 
-@UKUP.route('/discipline/<discipline_id>/connect', methods=['POST'])
+@UKUP.route('/discipline/connect_competence/<discipline_id>', methods=['POST'])
 def connect_competences_to_discipline_db(discipline_id):
     checked = request.form.getlist("connect")
     year = request.args["year"]

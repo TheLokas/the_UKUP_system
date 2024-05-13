@@ -21,7 +21,8 @@ class DisciplineForm(FlaskForm):
         self.direction.choices = direction
 
     def addYearCancelled(self, year):
-        self.year_cancelled.choices = year
+        NoneArray = ["-"]
+        self.year_cancelled.choices = NoneArray + year
 
 
 class CompetenceForm(FlaskForm):
@@ -37,7 +38,8 @@ class CompetenceForm(FlaskForm):
         self.year_approved.choices = year
 
     def addYearCancelled(self, year):
-        self.year_cancelled.choices = year
+        NoneArray = ["-"]
+        self.year_cancelled.choices = NoneArray + year
 
 class CompetenceConnectForm(FlaskForm):
     connect = BooleanField()

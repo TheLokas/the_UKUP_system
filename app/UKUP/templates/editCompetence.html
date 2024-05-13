@@ -8,17 +8,20 @@
       <input type="hidden" id="OPK" value="{{ OPK }}">
       <input type="hidden" id="PK" value="{{ PK }}">
       {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name", readonly=True) }}
-      {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num") }}
-      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
-       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled") }}
-      {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type") }}
+      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved", disabled=True) }}
+       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled", disabled=True) }}
+      {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type", disabled=True)}}
       {{ form.formulation(class="form-select", style="width:80%; margin-top:5px", id="module") }}
+      <div id="indicator">
+      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:5px; border:solid 1px;">+</button>
+      </div>
       {{ form.submit() }}
    </form>
 </div>
 <script>
    var type = document.getElementById("type");
    var num = document.getElementById("num");
+   var count = 1;
    type.addEventListener("change",function(){
       var name = document.getElementById("name");
       if (type.value=="УК"){
@@ -61,6 +64,17 @@
 
       name.value = `${type.value}-${num.value}`;
    });
+   function AddIndicator() {
+        var name = document.getElementById("name");
+        var newIndicator = document.createElement('div');
+        newIndicator.innerHTML = `<input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%" ><input class="form-control" style="width:60%; margin-top:5px;"></input><button class="btn" type="button" onclick="RemoveIndicator(this) "style="width:80%; margin-top:5px; border:solid 1px;">-`;
+        document.getElementById('indicator').appendChild(newIndicator);
+        count = count + 1;
+   }
+   function RemoveIndicator(indicator)
+   {
+      indicator.parentNode.remove();
+   }
 </script>
 </div>
 {% endblock %}\
