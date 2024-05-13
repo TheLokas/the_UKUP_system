@@ -1,7 +1,7 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+<div class="content"  style="flex:1; height:1000px;  padding:0px;">
    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
       <thead class="table-light">
       <tr>
@@ -25,15 +25,22 @@
             <td>{{  discipline.block.name  }}</td>
             <td>{{  discipline.department.name  }}</td>
             <td style="display: flex;">
-                <form action="/UKUP/discipline/{{  discipline.id  }}" method="get" style="width:calc((100% - 20px)/2);margin:5px;">
+                <form action="/UKUP/discipline/{{  discipline.id  }}" method="get" style="margin:5px;">
                     <input name="year" id="editYear{{  discipline.id  }}" type="hidden" value="{{ current_year }}">
                     <input name="direction" id="editDirection{{  discipline.id  }}" type="hidden" value="{{ current_direction.id }}">
-                    <input type="submit" class="btn btn-outline-secondary" value="Редактировать">
+                    <label class="edit-icon">
+                        <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
+                    </label>
                 </form>
-                <form action="/UKUP/discipline/connect_competence/{{  discipline.id  }}" method="get" style="width:calc((100% - 20px)/2);margin:5px;">
+                <form action="/UKUP/discipline/connect_competence/{{  discipline.id  }}" method="get" style="margin:5px;">
+                    <label class="edit-icon-delete">
+                        <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
+                    </label>
+                </form>
+                <form action="/UKUP/discipline/connect_competence/{{  discipline.id  }}" method="get" style="margin:5px;">
                     <input name="year" id="connectYear{{  discipline.id  }}" type="hidden" value="{{ current_year }}">
                     <input name="direction" id="connectDirection{{  discipline.id  }}" type="hidden" value="{{ current_direction.id }}">
-                    <input type="submit" class="btn btn-outline-danger" value="Компетенции">
+                    <input type="submit" class="btn btn-outline-secondary" value="Компетенции">
                 </form>
             </td>
         </tr>

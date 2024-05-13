@@ -1,13 +1,13 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+<div class="content"  style="flex:1; height:1000px;  padding:0px;">
    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
       <thead class="table-light">
       <tr>
           <th>Код</th>
           <th>Описание</th>
-          <th style="width: 280px;">Действие</th>
+          <th style="width: 200px;">Действие</th>
       </tr>
       </thead>
       <tbody>
@@ -20,13 +20,15 @@
         <tr>
             <td>{{  competence.name  }}</td>
             <td>{{  competence.formulation }}</td>
-            <td style="display: flex;">
-               <form action="/UKUP/competence/{{ competence.id }}" method="get" style="width:calc((100% - 20px)/2);margin:5px;">
+            <td style="display: flex; height: 100%;">
+               <form action="/UKUP/competence/{{ competence.id }}" method="get" style="margin:5px;">
                    <input name="year" id="editYear{{competence.id}}" type="hidden" value="{{ current_year }}">
                    <input name="direction" id="editDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
-                   <input type="submit" class="btn btn-outline-secondary"  value="Редактировать">
+                   <label class="edit-icon">
+                        <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
+                    </label>
                </form>
-               <form action="/UKUP/competence/connect_discipline/{{ competence.id }}" method="get" style="width:calc((100% - 20px)/2);margin:5px;">
+               <form action="/UKUP/competence/connect_discipline/{{ competence.id }}" method="get" style="margin:5px;">
                    <input name="year" id="connectYear{{competence.id}}" type="hidden" value="{{ current_year }}">
                    <input name="direction" id="connectDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
                    <input type="submit" class="btn btn-outline-danger" value="Дисциплины">
