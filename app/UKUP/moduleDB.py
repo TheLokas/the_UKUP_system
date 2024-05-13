@@ -1,4 +1,4 @@
-from app.models import db, Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline
+from app.models import db, Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline, Indicator
 
 
 # Получаем все блоки из базы данных
@@ -264,3 +264,28 @@ def report_matrix(direction=None, year=None):
     return disciplines, competences, discipline_competence_links
 
 
+# Функция для генерации отчета компетенций
+def get_competences_and_indicators(direction, year):
+    # Получаем список дисциплин для данного направления и года
+    direction_disciplines = DirectionDiscipline.query \
+        .filter_by(direction_id=direction.id) \
+        .filter(DirectionDiscipline.year_created <= year) \
+        .filter((DirectionDiscipline.year_removed > year) | (DirectionDiscipline.year_removed == None)) \
+        .all()
+    discipline_ids = [dd.discipline_id for dd in direction_disciplines]
+
+    # Получаем все компетенции для этих дисциплин и указанного года
+    competence_ids = [cd.competence_id for cd in CompetenceDiscipline.query.filter(CompetenceDiscipline.discipline_id.in_(discipline_ids)).all()]
+    competences = Competence.query \
+        .filter(Competence.id.in_(competence_ids)) \
+        .filter(Competence.year_approved <= year) \
+        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+        .all()
+
+    # Получаем все индикаторы для этих компетенций
+    indicator_ids = [i.id for competence in competences for i in competence.indicator]
+    indicators = Indicator.query \
+        .filter(Indicator.id.in_(indicator_ids)) \
+        .all()
+
+    return competences, indicators
