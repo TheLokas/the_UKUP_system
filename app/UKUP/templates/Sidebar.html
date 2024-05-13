@@ -33,6 +33,11 @@
         </li>
       </ul>
         </form>
+       <form id="form2" method="get" action="/UKUP/{{ type }}/add">
+        <input name="year" id="year3" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction3" type="hidden" value="{{ current_direction.id }}">
+         <input type="submit" class="btn btn-secondary btn-lg" value="Добавить">
+       </form>
     </div>
 
   </div>

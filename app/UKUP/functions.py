@@ -24,7 +24,11 @@ def generate_year(year):
 
 def add_few_data():
     directions = [
-        Direction(name="Информационные системы и технологии", code="09.03.02")
+        Direction(name="Математика", code="01.03.01"),
+        Direction(name="Прикладная математика и информатика", code="01.03.02"),
+        Direction(name="Информационные системы и технологии", code="09.03.02"),
+        Direction(name="Программная инженерия", code="09.03.04"),
+        Direction(name="Педагогическое образование", code="44.03.05")
     ]
     modules = [
         Module(name="Гуманитарные и социально-экономические дисциплины"),

@@ -118,7 +118,7 @@ def edit_competence(id_competence, competence_params):
         db.session.commit()
 
 
-def edit_discipline(id_discipline, discipline_params, directions):
+def edit_discipline(id_discipline, discipline_params, directions, year):
 
     # Находим дисциплину по ее идентификатору
     discipline = db.session.get(Discipline, id_discipline)
@@ -126,7 +126,7 @@ def edit_discipline(id_discipline, discipline_params, directions):
     if discipline:
         # Обновляем данные дисциплины
         discipline.name = discipline_params[0]
-        discipline.year_approved = discipline_params[1]
+        #discipline.year_approved = discipline_params[1]
         discipline.block_id = discipline_params[2]
         discipline.module_id = discipline_params[3]
         discipline.department_id = discipline_params[4]
@@ -146,14 +146,14 @@ def edit_discipline(id_discipline, discipline_params, directions):
                 new_direction_to_discipline = DirectionDiscipline(
                     discipline_id=id_discipline,
                     direction_id=directionID,
-                    year_created=discipline_params[1]
+                    year_created=year
                 )
                 db.session.add(new_direction_to_discipline)
 
         # Обновляем все остальные записи в таблице направления-дисциплины для данной дисциплины, устанавливая год удаления
         for direction_to_discipline in all_directions_for_discipline:
             if direction_to_discipline.direction_id not in directions:
-                direction_to_discipline.year_removed = discipline_params[1]
+                direction_to_discipline.year_removed = year
 
         # Сохраняем изменения в базе данных
         db.session.commit()

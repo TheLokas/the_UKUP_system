@@ -4,9 +4,11 @@
 <div class="content"  style="flex:1; height:2000px;  padding:0px;">
    <form action="" method="post" style="width:100%; margin-top:5px">
       <div>Отредактируй свою собственную дисциплину на нашем сайте, и в будущем её будет кто-то изучать</div>
+      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name") }}
       {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved", disabled=True) }}
-       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled", disabled=True) }}
+      {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled", disabled=True) }}
       {{ form.block(class="form-select", style="width:80%; margin-top:5px", id="block") }}
       {{ form.module(class="form-select", style="width:80%; margin-top:5px", id="module") }}
       {{ form.department(class="form-select", style="width:80%; margin-top:5px", id="department") }}

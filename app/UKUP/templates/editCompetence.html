@@ -7,6 +7,8 @@
       <input type="hidden" id="UK" value="{{ UK }}">
       <input type="hidden" id="OPK" value="{{ OPK }}">
       <input type="hidden" id="PK" value="{{ PK }}">
+      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name", readonly=True) }}
       {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved", disabled=True) }}
        {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled", disabled=True) }}
