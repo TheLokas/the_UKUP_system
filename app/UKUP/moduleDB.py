@@ -230,3 +230,37 @@ def delete_competence(id_competence, year_cancelled_value):
         return False
 
 
+# Функция для генерации отчета матрицы
+def report_matrix(direction=None, year=None):
+    if direction:
+        direction_disciplines = DirectionDiscipline.query \
+            .filter_by(direction_id=direction.id) \
+            .filter(DirectionDiscipline.year_created <= year) \
+            .filter((DirectionDiscipline.year_removed > year) | (DirectionDiscipline.year_removed == None)) \
+            .all()
+        discipline_ids = [dd.discipline_id for dd in direction_disciplines]
+        disciplines = Discipline.query.filter(Discipline.id.in_(discipline_ids)).all()
+    else:
+        disciplines = Discipline.query \
+            .filter(Discipline.year_approved <= year) \
+            .filter((Discipline.year_cancelled > year) | (Discipline.year_cancelled == None)) \
+            .all()
+
+    # Получаем все компетенции, связанные с дисциплинами
+    competence_ids = [cd.competence_id for cd in CompetenceDiscipline.query.filter(CompetenceDiscipline.discipline_id.in_([d.id for d in disciplines])).all()]
+    competences = Competence.query \
+        .filter(Competence.id.in_(competence_ids)) \
+        .filter(CompetenceDiscipline.year_created <= year) \
+        .filter((CompetenceDiscipline.year_removed > year) | (CompetenceDiscipline.year_removed == None)) \
+        .all()
+
+    # Получаем все связи дисциплин и компетенций за выбранный год
+    discipline_competence_links = CompetenceDiscipline.query \
+        .filter(CompetenceDiscipline.discipline_id.in_([d.id for d in disciplines])) \
+        .filter(CompetenceDiscipline.year_created <= year) \
+        .filter((CompetenceDiscipline.year_removed > year) | (CompetenceDiscipline.year_removed == None)) \
+        .all()
+
+    return disciplines, competences, discipline_competence_links
+
+
