@@ -245,6 +245,14 @@ def delete_competence(id_competence, year_cancelled_value):
         return False
 
 
+# Функция получения всех компетенций по году
+def get_competences_by_year(year):
+    return Competence.query \
+        .filter(Competence.year_approved <= year) \
+        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+        .all()
+
+
 # Функция для генерации отчета матрицы
 def report_matrix(direction=None, year=None):
     if direction:
@@ -261,13 +269,8 @@ def report_matrix(direction=None, year=None):
             .filter((Discipline.year_cancelled > year) | (Discipline.year_cancelled == None)) \
             .all()
 
-    # Получаем все компетенции, связанные с дисциплинами
-    competence_ids = [cd.competence_id for cd in CompetenceDiscipline.query.filter(CompetenceDiscipline.discipline_id.in_([d.id for d in disciplines])).all()]
-    competences = Competence.query \
-        .filter(Competence.id.in_(competence_ids)) \
-        .filter(CompetenceDiscipline.year_created <= year) \
-        .filter((CompetenceDiscipline.year_removed > year) | (CompetenceDiscipline.year_removed == None)) \
-        .all()
+    # Получаем все компетенции этого года
+    competences = get_competences_by_year(year)
 
     # Получаем все связи дисциплин и компетенций за выбранный год
     discipline_competence_links = CompetenceDiscipline.query \
@@ -306,11 +309,17 @@ def get_competences_and_indicators(direction, year):
     return competences, indicators
 
 
-# Функция получения всех компетенций по году
-def get_competences_by_year(year):
-    return Competence.query \
-        .filter(Competence.year_approved <= year) \
-        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
-        .all()
+# Получает список дисциплин, привязанных к компетенции по её идентификатору.
+def get_disciplines_by_competence_id(competence_id):
+    # Находим объект компетенции по её идентификатору
+    competence = db.session.get(Competence, competence_id)
+
+    if competence:
+        # Получаем список компетенций для данной дисциплины
+        disciplines = [cd.discipline for cd in competence.competence_disciplines]
+        return disciplines
+    else:
+        # Если компетенция с указанным идентификатором не найдена, возвращаем пустой список
+        return []
 
 
