@@ -25,6 +25,21 @@ def get_directions():
     return directions
 
 
+# Получает направление по его идентификатору
+def get_direction_by_id(direction_id):
+    return db.session.get(Direction, direction_id)
+
+
+# Получает дисциплину по её идентификатору
+def get_discipline_by_id(discipline_id):
+    return db.session.get(Discipline, discipline_id)
+
+
+# Получает компетенцию по её идентификатору
+def get_competence_by_id(competence_id):
+    return db.session.get(Competence, competence_id)
+
+
 # Возвращает список дисциплин с указанными параметрами, а также информацией о модуле, блоке, кафедре и направлении.
 def get_disciplines(direction = None, year = None):
     if direction:
