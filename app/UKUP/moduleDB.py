@@ -304,3 +304,13 @@ def get_competences_and_indicators(direction, year):
         .all()
 
     return competences, indicators
+
+
+# Функция получения всех компетенций по году
+def get_competences_by_year(year):
+    return Competence.query \
+        .filter(Competence.year_approved <= year) \
+        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+        .all()
+
+
