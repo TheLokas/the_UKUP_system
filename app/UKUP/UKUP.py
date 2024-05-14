@@ -1,6 +1,6 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline
+from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline, Indicator
 from .forms import DisciplineForm, CompetenceForm, CompetenceConnectForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
@@ -39,7 +39,7 @@ def competence():
         # Необходима функция
         current_direction = Direction.query.get(request.args["direction"])
     competence = get_competences(direction=current_direction, year=current_year)
-    print(competence)
+    #print(competence)
 
     return render_template("Competence.html", type=type, competencies=competence, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
@@ -198,8 +198,12 @@ def edit_competence_page(competence_id):
 
     year_cancelled = generate_year(competence.year_approved)
 
-    print(competence.name.split("-")[1])
-    print(competence.name)
+    indicators = Indicator.query.filter_by(competence_id=competence_id).all()
+    #print(competence_id)
+    #print(indicators)
+
+    #print(competence.name.split("-")[1])
+    #print(competence.name)
     form = CompetenceForm(name=competence.name, year_approved=competence.year_approved,
                           year_cancelled=competence.year_cancelled, num=int(competence.name.split("-")[1]),
                           type=competence.type, formulation=competence.formulation)
@@ -215,13 +219,19 @@ def edit_competence_page(competence_id):
         # Необходима функция
         current_direction = Direction.query.get(request.args["direction"])
 
-    return render_template("editCompetence.html", type=type, form=form, UK=UK, OPK=OPK, PK=PK, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
+    return render_template("editCompetence.html", type=type, form=form, UK=UK, OPK=OPK, PK=PK, years=years, directions=directions, current_year=current_year, current_direction=current_direction, indicators=indicators)
 
 
 @UKUP.route('/competence/<competence_id>', methods=['POST'])
 def edit_competence_post(competence_id):
     form = CompetenceForm(request.form)
-    print(request.form)
+    #print(request.form.getlist("indicator"))
+    indicators = []
+    for indicator in request.form.getlist("indicator"):
+        a = indicator.split("||")
+        if a[2].strip()!="":
+            indicators.append((a[0], a[1], a[2]))
+    print(indicators)
     edit_competence(competence_id, [form.name.data, form.type.data, form.formulation.data])
     return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
