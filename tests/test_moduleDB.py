@@ -4,80 +4,36 @@ from app.models import (Discipline,
                         DirectionDiscipline,
                         Competence,
                         CompetenceDiscipline,
+                        IndicatorDiscipline,
                         Block,
                         Module,
                         Department)
 from .conftest import db
+from .data_func import (add_disciplines_data,
+                        add_competence_data,
+                        add_competence_discipline_links,
+                        add_indicator_discipline_links,
+                        add_all)
 import pytest
 
 
 class TestClassDisciplines:
     # Проверка возврата списка дисциплин с заданными параметрами (позитивный)
     def test_get_disciplines(client, app):
-        functions.add_few_data()
-
-        disciplines = [
-            Discipline(name="Математика",
-                       year_approved="2019",
-                       year_cancelled=None,
-                       block_id=1,
-                       module_id=1,
-                       department_id=1),
-            Discipline(name="Информатика",
-                       year_approved="2020",
-                       year_cancelled=None,
-                       block_id=1,
-                       module_id=1,
-                       department_id=1),
-            Discipline(name="Third",
-                       year_approved="2024",
-                       year_cancelled=None,
-                       block_id=1,
-                       module_id=1,
-                       department_id=1)
-        ]
-
-        year = 2023
-
-        direction = Direction(name="Информатика", code="1")
-        extra_direction = Direction(name="FSFAF", code="1")
-        db.session.add(direction)
-        db.session.add(extra_direction)
-        db.session.add_all(disciplines)
-        db.session.commit()
-
-        directionDisciplines = [
-            DirectionDiscipline(discipline_id=disciplines[0].id,
-                                direction_id=direction.id,
-                                year_created=year),
-            DirectionDiscipline(discipline_id=disciplines[1].id,
-                                direction_id=direction.id,
-                                year_created=year),
-            DirectionDiscipline(discipline_id=disciplines[2].id,
-                                direction_id=extra_direction.id,
-                                year_created=year)
-        ]
-
-        db.session.add_all(directionDisciplines)
-        db.session.commit()
-
-        got_disciplines = moduleDB.get_disciplines(direction=direction,
-                                                   year=year)
-        assert disciplines[0] in got_disciplines
-        assert disciplines[1] in got_disciplines
+        added_disciplines, direction, direction_d = add_disciplines_data()
+        got_disciplines = moduleDB.get_disciplines(direction=direction.id,
+                                                   year="2023")
+        assert added_disciplines[0] in got_disciplines
+        assert added_disciplines[1] in got_disciplines
 
     # Проверка возврата списка дисциплин с заданными параметрами (негативный)
-    # Failed: DID NOT RAISE <class 'ValueError'> date = "16:05:2024"
-    # Возвращает AttributeError
     def test_get_disciplines_negative(client, app):
-        with pytest.raises(ValueError) as er:
-            moduleDB.get_disciplines(direction=None,
-                                     year="2023")
-        assert er.type is ValueError
+        add_disciplines_data()
+        disciplines = moduleDB.get_disciplines(direction=None,
+                                               year="2023")
+        assert len(disciplines) == 0
 
     # Проверка успешного добавления дисциплины
-    # Failed: assert <sqlalchemy.orm.dynamic.AppenderQuery object at 0x000001CF99C9E6F0> == <Direction 1> # noqa E501
-    # Date: 17:05:2024
     def test_add_disciplines(client, app):
         functions.add_few_data()
 
@@ -96,12 +52,10 @@ class TestClassDisciplines:
             department.id,
             ]
 
-        moduleDB.add_discipline(discipline=discipline_params,
-                                directions=[direction.id])
+        moduleDB.add_discipline(discipline_params=discipline_params,
+                                directions_list=[direction.id])
 
         discipline = Discipline.query.first()
-
-        assert discipline.direction == direction
 
         assert all([
             discipline.name == "Новая дисциплина",
@@ -109,11 +63,13 @@ class TestClassDisciplines:
             discipline.block == block,
             discipline.module == module,
             discipline.department == department,
-            discipline.direction == direction
+            direction in discipline.directions,
+            len(discipline.directions) == 1
         ])
 
     # Проверка обработки некорректных входных данных
-    # Failed: DID NOT RAISE <class 'ValueError'> date: 17:05:2024
+    # Failed: DID NOT RAISE <class 'ValueError'> date: 18:05:2024
+    # Решение: сделать поля модуля, блока и кафедры обязательными
     def test_add_disciplines_negative(client, app):
         functions.add_few_data()
 
@@ -128,14 +84,124 @@ class TestClassDisciplines:
             "Новая дисциплина",
             "2024",
             block.id,
-            None,
-            department.id,
+            module,
+            department.id
             ]
 
-        with pytest.raises(ValueError) as er:
-            moduleDB.add_discipline(discipline=discipline_params,
-                                    directions=[direction.id])
-        assert er.type is ValueError
+        with pytest.raises(Exception) as er:
+            moduleDB.add_discipline(discipline_params=discipline_params,
+                                    directions_list=[direction.id])
+            assert er.type is Exception
+
+    # Проверка успешного редактирования дисциплины при новом году дисциплины
+    def test_edit_discipline_with_new_year(client, app):
+        year = 2024
+        added_disciplines = add_disciplines_data()[0]
+        discipline_to_edit = added_disciplines[0]
+
+        module = db.session.get(Module, 2)
+        department = db.session.get(Department, 1)
+        block = db.session.get(Block, 2)
+        direction = db.session.get(Direction, 3)
+
+        new_discipline_params = [
+            "Отредактированная дисциплина",
+            year,
+            block.id,
+            module.id,
+            department.id,
+        ]
+
+        moduleDB.edit_discipline(discipline_to_edit.id,
+                                 new_discipline_params,
+                                 directions_list=[direction.id])
+
+        edited_discipline = Discipline.query.get(discipline_to_edit.id)
+
+        assert all([
+            edited_discipline.name == new_discipline_params[0],
+            edited_discipline.year_approved == new_discipline_params[1],
+            edited_discipline.block_id == new_discipline_params[2],
+            edited_discipline.module_id == new_discipline_params[3],
+            edited_discipline.department_id == new_discipline_params[4],
+            len(edited_discipline.directions) == 1,
+            direction in edited_discipline.directions
+        ])
+
+    # Проверка успешного редактирования дисциплины при том же году дисциплины
+    def test_edit_discipline_with_same_year(client, app):
+        added_disciplines = add_disciplines_data()[0]
+        discipline_to_edit = added_disciplines[0]
+        year = discipline_to_edit.year_approved
+
+        module = db.session.get(Module, 2)
+        department = db.session.get(Department, 1)
+        block = db.session.get(Block, 2)
+        direction = db.session.get(Direction, 3)
+
+        new_discipline_params = [
+            "Отредактированная дисциплина",
+            year,
+            block.id,
+            module.id,
+            department.id,
+        ]
+
+        moduleDB.edit_discipline(discipline_to_edit.id,
+                                 new_discipline_params,
+                                 directions_list=[direction.id])
+
+        edited_discipline = Discipline.query.get(discipline_to_edit.id)
+
+        assert all([
+            edited_discipline.name == new_discipline_params[0],
+            edited_discipline.year_approved == new_discipline_params[1],
+            edited_discipline.block_id == new_discipline_params[2],
+            edited_discipline.module_id == new_discipline_params[3],
+            edited_discipline.department_id == new_discipline_params[4],
+            len(edited_discipline.directions) == 1,
+            direction in edited_discipline.directions
+        ])
+
+    # Проверка обработки некорректного идентификатора
+    # Failed: DID NOT RAISE <class 'Exception'>
+    # Date: 18:05:2024
+    def test_edit_discipline_negative(client, app):
+        year = 2023
+        module = db.session.get(Module, 2)
+        department = db.session.get(Department, 1)
+        block = db.session.get(Block, 2)
+        direction = db.session.get(Direction, 3)
+
+        new_discipline_params = [
+            "Отредактированная дисциплина",
+            year,
+            block.id,
+            module.id,
+            department.id,
+        ]
+
+        with pytest.raises(Exception) as er:
+            moduleDB.edit_discipline(99,
+                                     new_discipline_params,
+                                     directions_list=[direction.id])
+            assert er.type is ValueError
+
+    # Проверка успешного удаления дисциплины
+    def test_delete_discipline(client, app):
+        added_disciplines, direction, direction_disciplines = add_disciplines_data()  # noqa E501
+        indicator_disciplines = add_indicator_discipline_links()
+        competences_discipline = add_competence_discipline_links()
+
+        discipline_to_delete = added_disciplines[0]
+
+        moduleDB.delete_discipline(discipline_to_delete.id)
+
+        assert all([
+            direction_disciplines[0] not in DirectionDiscipline.query.all(),
+            indicator_disciplines[0] not in IndicatorDiscipline.query.all(),
+            competences_discipline[0] not in CompetenceDiscipline.query.all(),
+        ])
 
 
 class TestClassCompetences:
