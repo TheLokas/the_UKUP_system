@@ -84,4 +84,4 @@ class IndicatorDiscipline(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     indicator_id = db.Column(db.Integer, db.ForeignKey('indicators.id'))
     discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
-
+    indicator = db.relationship('Indicator', backref='indicator_disciplines')

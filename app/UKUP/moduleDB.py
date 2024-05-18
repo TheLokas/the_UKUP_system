@@ -45,7 +45,7 @@ def get_competence_by_id(competence_id):
 def get_disciplines(direction, year):
     disciplines = Discipline.query \
         .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
-        .filter(DirectionDiscipline.direction_id == direction.id) \
+        .filter(DirectionDiscipline.direction_id == direction) \
         .filter(Discipline.year_approved == year) \
         .all()
     return disciplines
@@ -54,8 +54,21 @@ def get_disciplines(direction, year):
 # Функция удаления дисциплины
 def delete_discipline(id_discipline):
     # Находим дисциплину по ее идентификатору
-    discipline = db.session.get(Discipline, id_discipline)
+    discipline = db.session.query(Discipline).get(id_discipline)
+
+    # Удаляем связанные записи в таблице direction_disciplines
+    DirectionDiscipline.query.filter_by(discipline_id=id_discipline).delete()
+
+    # Удаляем связанные записи в таблице indicator_disciplines
+    IndicatorDiscipline.query.filter_by(discipline_id=id_discipline).delete()
+
+    # Удаляем связанные записи в таблице competence_disciplines
+    CompetenceDiscipline.query.filter_by(discipline_id=id_discipline).delete()
+
+    # Удаляем дисциплину
     db.session.delete(discipline)
+
+    # Применяем изменения
     db.session.commit()
 
 
@@ -124,6 +137,7 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
                 indicators_to_remove = db.session.query(Indicator).join(Competence).filter(
                     Competence.id == competence.id
                 ).all()
+
                 for indicator in indicators_to_remove:
                     db.session.query(IndicatorDiscipline).filter_by(
                         indicator_id=indicator.id, discipline_id=id_discipline
@@ -152,6 +166,7 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
                     db.session.query(IndicatorDiscipline).filter_by(
                         indicator_id=indicator.id, discipline_id=id_discipline
                     ).delete()
+
             # Удаляем все записи в таблице direction_disciplines для данной дисциплины
             db.session.query(DirectionDiscipline).filter_by(discipline_id=id_discipline).delete()
 
@@ -178,14 +193,20 @@ def get_competences(direction, year):
 
 # Функция для добавления новой компетенции в базу данных
 def add_competence(competence_params):
-    new_competence = Competence(name=competence_params[0],
-                                year_approved=competence_params[1],
-                                type=competence_params[2],
-                                formulation=competence_params[3],
-                                direction_id=competence_params[4])
-    # Добавляем компетенцию в базу данных
-    db.session.add(new_competence)
-    db.session.flush()
+    # Разделяем параметры компетенции
+    name, year_approved, competence_type, formulation, direction_ids = competence_params
+
+    # Создаем компетенцию для каждого направления
+    for direction_id in direction_ids:
+        new_competence = Competence(name=name,
+                                    year_approved=year_approved,
+                                    type=competence_type,
+                                    formulation=formulation,
+                                    direction_id=direction_id)
+        # Добавляем компетенцию в базу данных
+        db.session.add(new_competence)
+
+    # Применяем изменения
     db.session.commit()
 
 
@@ -275,7 +296,185 @@ def delete_competence(id_competence):
     db.session.commit()
 
 
-# После этой строчки функции скорее всего не работают
+# Функция редактирования компетенций
+def edit_competence(id_competence, competence_params, indicators_list):
+    # Находим компетенцию по ее идентификатору
+    competence = db.session.get(Competence, id_competence)
+
+    # Проверяем, совпадает ли год у компетенции и переданных параметров
+    if competence.year_approved == competence_params[3]:
+        # Обновляем параметры компетенции
+        competence.name = competence_params[0]
+        competence.type = competence_params[1]
+        competence.formulation = competence_params[2]
+
+        # Список индикаторов, которые уже связаны с этой компетенцией
+        existing_indicator_ids = {indicator.id for indicator in competence.indicators}
+
+        # Создаем новые индикаторы и добавляем их к компетенции
+        for indicator_params in indicators_list:
+            indicator_id = indicator_params[0]
+            indicator_name = indicator_params[1]
+
+            indicator_formulation = indicator_params[2]
+
+            # Если передан None в качестве идентификатора, создаем новый индикатор
+            if indicator_id == 'None':
+                indicator = Indicator(name=indicator_name, formulation=indicator_formulation, competence_id=id_competence)
+                db.session.add(indicator)
+
+            # Если индикатор уже существует, обновляем его параметры
+            elif indicator_id in existing_indicator_ids:
+                indicator = db.session.get(Indicator, indicator_id)
+                indicator.name = indicator_name
+                indicator.formulation = indicator_formulation
+
+        # Удаляем индикаторы, которых больше нет в списке indicators_list
+        for indicator in competence.indicators:
+            if indicator.id not in [indicator_params[0] for indicator_params in indicators_list if indicator_params[0] is not None]:
+
+                # Удаляем связи индикатора с дисциплинами
+                IndicatorDiscipline.query.filter_by(indicator_id=indicator.id).delete()
+
+                # Удаляем сам индикатор
+                db.session.delete(indicator)
+
+        db.session.commit()
+
+
+    elif competence.year_approved != competence_params[3]:
+        # Удаляем связи с дисциплинами для этой компетенции
+        CompetenceDiscipline.query.filter_by(competence_id=id_competence).delete()
+
+        # Получаем все связи с индикаторами для этой компетенции
+        indicator_links = IndicatorDiscipline.query.join(IndicatorDiscipline.indicator) \
+            .filter(Indicator.competence_id == id_competence) \
+            .all()
+
+        # Удаляем все связи с индикаторами для этой компетенции
+        for link in indicator_links:
+            db.session.delete(link)
+        # Обновляем параметры компетенции
+        competence.name = competence_params[0]
+        competence.type = competence_params[1]
+        competence.formulation = competence_params[2]
+
+        # Список индикаторов, которые уже связаны с этой компетенцией
+        existing_indicator_ids = {indicator.id for indicator in competence.indicators}
+
+        # Создаем новые индикаторы и добавляем их к компетенции
+        for indicator_params in indicators_list:
+            indicator_id = indicator_params[0]
+            indicator_name = indicator_params[1]
+            indicator_formulation = indicator_params[2]
+
+            # Если передан None в качестве идентификатора, создаем новый индикатор
+            if indicator_id == 'None':
+                indicator = Indicator(name=indicator_name, formulation=indicator_formulation, competence_id=id_competence)
+                db.session.add(indicator)
+            # Если индикатор уже существует, обновляем его параметры
+            elif indicator_id in existing_indicator_ids:
+                indicator = db.session.query(Indicator).get(indicator_id)
+                indicator.name = indicator_name
+                indicator.formulation = indicator_formulation
+
+        # Удаляем индикаторы, которых больше нет в списке indicators_list
+        for indicator in competence.indicators:
+            if indicator.id not in [indicator_params[0] for indicator_params in indicators_list if indicator_params[0] is not None]:
+                # Удаляем связи индикатора с дисциплинами
+                IndicatorDiscipline.query.filter_by(indicator_id=indicator.id).delete()
+                # Удаляем сам индикатор
+                db.session.delete(indicator)
+    competence.year_approved = competence_params[3]
+    db.session.commit()
+
+
+# Функция для получения дисциплин и списка связей компетенции
+def get_disciplines_and_links_by_competence_id(competence_id):
+    # Получаем информацию о компетенции
+    competence = db.session.get(Competence, competence_id)
+
+    # Получаем направление и год компетенции
+    direction_id = competence.direction_id
+    year_approved = competence.year_approved
+    # Получаем список дисциплин с таким же годом и направлением, что и у компетенции
+    related_disciplines = get_disciplines(direction_id, year_approved)
+
+    # Получаем список связей компетенция-дисциплина для данной компетенции
+    competence_discipline_links = db.session.query(CompetenceDiscipline) \
+        .filter_by(competence_id=competence_id) \
+        .all()
+
+    return related_disciplines, competence_discipline_links
+
+
+# Функция получения индикаторов, дисциплин и связей между ними для определенной компетенции
+def get_indicators_disciplines_links_by_competence_id(competence_id):
+    # Получаем список индикаторов, связанных с компетенцией
+    indicators = db.session.query(Indicator)\
+                           .filter(Indicator.competence_id == competence_id)\
+                           .all()
+
+    # Получаем список дисциплин, связанных с этой компетенцией
+    disciplines = db.session.query(Discipline)\
+                            .join(CompetenceDiscipline, Discipline.id == CompetenceDiscipline.discipline_id)\
+                            .filter(CompetenceDiscipline.competence_id == competence_id)\
+                            .all()
+
+    # Получаем список связей дисциплин и индикаторов
+    links = db.session.query(IndicatorDiscipline)\
+                      .join(IndicatorDiscipline.indicator)\
+                      .filter_by(competence_id=competence_id)\
+                      .all()
+
+    return indicators, disciplines, links
+
+
+# Функция обновления связи компетенция-дисциплины
+def update_competence_disciplines(competence_id, discipline_ids):
+    # Получаем текущие записи в таблице competence_disciplines для данной компетенции
+    current_disciplines = CompetenceDiscipline.query.filter_by(competence_id=competence_id).all()
+
+    # Составляем список ID дисциплин, которые уже привязаны к компетенции
+    current_discipline_ids = [cd.discipline_id for cd in current_disciplines]
+
+    # Удаляем записи, которые нужно удалить
+    for discipline_id in current_discipline_ids:
+        if discipline_id not in discipline_ids:
+            CompetenceDiscipline.query.filter_by(competence_id=competence_id, discipline_id=discipline_id).delete()
+
+    # Добавляем новые записи, если их еще нет
+    for discipline_id in discipline_ids:
+        if discipline_id not in current_discipline_ids:
+            new_link = CompetenceDiscipline(competence_id=competence_id, discipline_id=discipline_id)
+            db.session.add(new_link)
+
+    # Применяем изменения
+    db.session.commit()
+
+
+# Функция обновления связи индикаторы-дисциплины
+def update_indicator_disciplines(indicator_discipline_pairs):
+    for indicator_id, discipline_ids in indicator_discipline_pairs:
+        # Получаем текущие записи в таблице indicator_disciplines для данного индикатора
+        current_disciplines = IndicatorDiscipline.query.filter_by(indicator_id=indicator_id).all()
+
+        # Составляем список ID дисциплин, которые уже привязаны к данному индикатору
+        current_discipline_ids = [cd.discipline_id for cd in current_disciplines]
+
+        # Удаляем записи, которые нужно удалить
+        for discipline_id in current_discipline_ids:
+            if discipline_id not in discipline_ids:
+                IndicatorDiscipline.query.filter_by(indicator_id=indicator_id, discipline_id=discipline_id).delete()
+
+        # Добавляем новые записи, если их еще нет
+        for discipline_id in discipline_ids:
+            if discipline_id not in current_discipline_ids:
+                new_link = IndicatorDiscipline(indicator_id=indicator_id, discipline_id=discipline_id)
+                db.session.add(new_link)
+
+    # Применяем изменения
+    db.session.commit()
 
 
 # Функция удаления связи дисциплины и компетенции по id связи
@@ -289,51 +488,12 @@ def delete_connection(connection_id):
         return False
 
 
-# Функция редактирования компетенций
-def edit_competence(id_competence, competence_params):
-    # Находим компетенцию по ее идентификатору
-    competence = db.session.get(Competence, id_competence)
-
-    if competence:
-        # Обновляем данные компетенции
-        competence.name = competence_params[0]
-        competence.type = competence_params[1]
-        competence.formulation = competence_params[2]
-
-        # Сохраняем изменения в базе данных
-        db.session.commit()
-
-
-
 # Функция получения компетенций, привязанных к дисциплине
 def get_connected_competences(discipline_id):
     connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
                                             .filter(CompetenceDiscipline.discipline_id == discipline_id)\
                                             .all()
     return connected_competences
-
-
-
-
-# Функция удаления компетенций
-def delete_competence(id_competence, year_cancelled_value):
-    # Находим компетенцию по ее идентификатору
-    competence = db.session.get(Competence, id_competence)
-
-    if competence:
-        competence.year_cancelled = year_cancelled_value
-        # Сохраняем изменения в базе данных
-        db.session.commit()
-
-    competence = db.session.get(Competence, id_competence)
-
-    if competence.year_cancelled == competence.year_approved:
-        db.session.delete(competence)
-        db.session.commit()
-        return True
-
-    else:
-        return False
 
 
 # Функция получения всех компетенций по году
@@ -414,3 +574,29 @@ def get_disciplines_by_competence_id(competence_id):
         return []
 
 
+# Функция возвращает компетенции определенного типа
+def get_competences_and_indicators_type(direction, year, competence_type):
+    # Получаем список дисциплин для данного направления и года
+    direction_disciplines = DirectionDiscipline.query \
+        .filter_by(direction_id=direction.id) \
+        .filter(DirectionDiscipline.year_created <= year) \
+        .filter((DirectionDiscipline.year_removed > year) | (DirectionDiscipline.year_removed == None)) \
+        .all()
+    discipline_ids = [dd.discipline_id for dd in direction_disciplines]
+
+    # Получаем все компетенции для этих дисциплин, указанного года и типа
+    competences = Competence.query \
+        .join(CompetenceDiscipline) \
+        .filter(CompetenceDiscipline.discipline_id.in_(discipline_ids)) \
+        .filter(Competence.year_approved <= year) \
+        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+        .filter_by(type=competence_type) \
+        .all()
+
+    # Получаем все индикаторы для этих компетенций
+    indicator_ids = [indicator.id for competence in competences for indicator in competence.indicators]
+    indicators = Indicator.query \
+        .filter(Indicator.id.in_(indicator_ids)) \
+        .all()
+
+    return competences, indicators
