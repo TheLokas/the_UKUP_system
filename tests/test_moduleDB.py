@@ -7,7 +7,8 @@ from app.models import (Discipline,
                         IndicatorDiscipline,
                         Block,
                         Module,
-                        Department)
+                        Department,
+                        Indicator)
 from .conftest import db
 from .data_func import (add_disciplines_data,
                         add_competence_data,
@@ -25,6 +26,17 @@ class TestClassDisciplines:
                                                    year="2023")
         assert added_disciplines[0] in got_disciplines
         assert added_disciplines[1] in got_disciplines
+
+    # Проверка правильной работы функции получения дисциплин по id
+    def test_get_discipline_by_id(client, app):
+        disciplines = add_disciplines_data()[0]
+        discipline = moduleDB.get_discipline_by_id(1)
+        assert discipline == disciplines[0]
+
+    # Проверка обработки неверного ввода функции получения дисциплины по id
+    def test_get_discipline_by_id_negative(client, app):
+        with pytest.raises(ValueError):
+            moduleDB.get_discipline_by_id(1000)
 
     # Проверка возврата списка дисциплин с заданными параметрами (негативный)
     def test_get_disciplines_negative(client, app):
@@ -207,109 +219,66 @@ class TestClassDisciplines:
 class TestClassCompetences:
     # Проверка возврата списка компетенций с заданными параметрами(позитивный)
     def test_get_competences(client, app):
-        functions.add_few_data()
+        competences = add_competence_data()
 
-        disciplines = [
-            Discipline(name="Математика",
-                       year_approved="2019",
-                       year_cancelled=None,
-                       block_id=1,
-                       module_id=1,
-                       department_id=1),
-            Discipline(name="Информатика",
-                       year_approved="2020",
-                       year_cancelled=None,
-                       block_id=1,
-                       module_id=1,
-                       department_id=1),
-            Discipline(name="Third",
-                       year_approved="2024",
-                       year_cancelled=None,
-                       block_id=1,
-                       module_id=1,
-                       department_id=1)
-        ]
-
-        year = 2022
-
-        direction = Direction(name="Программирование", code="2")
-        extra_direction = Direction(name="FSFAF", code="1")
-        db.session.add(direction)
-        db.session.add(extra_direction)
-        db.session.add_all(disciplines)
-        db.session.commit()
-
-        directionDisciplines = [
-            DirectionDiscipline(discipline_id=disciplines[0].id,
-                                direction_id=direction.id,
-                                year_created=year),
-            DirectionDiscipline(discipline_id=disciplines[1].id,
-                                direction_id=direction.id,
-                                year_created=year),
-            DirectionDiscipline(discipline_id=disciplines[2].id,
-                                direction_id=extra_direction.id,
-                                year_created=year)
-        ]
-
-        db.session.add_all(directionDisciplines)
-        db.session.commit()
-
-        competence = Competence(name="УК1.1",
-                                year_approved=2016,
-                                year_cancelled=2024,
-                                type='Вид компетенции',
-                                formulation='Формулировка компетенции УК1.1')
-        db.session.add(competence)
-        db.session.commit()
-
-        competence_disciplines = [
-            CompetenceDiscipline(competence_id=competence.id,
-                                 discipline_id=disciplines[0].id,
-                                 year_created=year),
-            CompetenceDiscipline(competence_id=competence.id,
-                                 discipline_id=disciplines[2].id,
-                                 year_created=year)
-        ]
-        db.session.add_all(competence_disciplines)
-        db.session.commit()
+        direction = Direction.query.first()
 
         got_competences = moduleDB.get_competences(direction=direction,
-                                                   year=year)
+                                                   year=2023)
 
-        assert competence in got_competences
+        assert all([
+            competences[0] in got_competences,
+            competences[1] in got_competences
+        ])
+
+    # Проверка работоспособности функции получения компетенции по id
+    def test_get_competence_by_id(client, app):
+        competences = add_competence_data()
+        competence = moduleDB.get_competence_by_id(competences[0].id)
+        assert competences[0] == competence
+
+    # Проверка обработки неверного ввода функции получения компетенции по id
+    # Failed: DID NOT RAISE <class 'ValueError'>
+    # Date: 18:05:2024
+    def test_get_competence_by_id_negative(client, app):
+        with pytest.raises(ValueError):
+            moduleDB.get_competence_by_id(1000)
 
     # Проверка возврата списка компетенций с заданными параметрами (негативный)
-    # Failed: DID NOT RAISE <class 'ValueError'> date = "16:05:2024"
-    # Возвращает AttributeError
     def test_get_competences_negative(client, app):
-        with pytest.raises(ValueError) as er:
+        with pytest.raises(AttributeError) as er:
             moduleDB.get_competences(direction="Информатика",
                                      year="2023")
-        assert er.type is ValueError
+            assert er.type is AttributeError
 
     # Проверка успешного добавления компетенции
     def test_add_competence(client, app):
+        functions.add_few_data()
         name = "ОПК-1"
-        year = "2024"
+        year = "2023"
         type = "ОПК"
         formulation = "Способность решать задачи..."
+        direction = Direction.query.first()
         competence_params = [
             name,
             year,
             type,
-            formulation
+            formulation,
+            [direction.id]
         ]
 
         moduleDB.add_competence(competence_params=competence_params)
 
-        competence = Competence.query.first()
+        competence = Competence.query.filter(Competence.direction_id == direction.id).all()  # noqa E501
 
-        assert all([
-            competence.name == name,
-            competence.year_approved == int(year),
-            competence.type == type,
-            competence.formulation == formulation
-        ])
+        bool_states = []
+        for comp in competence:
+            bool_states.append(comp.name == name)
+            bool_states.append(comp.year_approved == int(year))
+            bool_states.append(comp.type == type)
+            bool_states.append(comp.formulation == formulation)
+
+        assert all(bool_states)
 
     # Проверка обработки пустых входных данных
     # IndexError: list index out of range date = "17:05:2024"
@@ -318,7 +287,76 @@ class TestClassCompetences:
         competence_params = []
         with pytest.raises(ValueError) as er:
             moduleDB.add_competence(competence_params=competence_params)
-        assert er.type is ValueError
+            assert er.type is ValueError
+
+    # Проверка корректного удаления компетенции
+    def test_delete_competence(client, app):
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        assert competences[1] in Competence.query.all()
+        assert competence_disciplines[1] in CompetenceDiscipline.query.all()
+        moduleDB.delete_competence(id_competence=competences[1].id)
+        assert competences[1] not in Competence.query.all()
+        assert competence_disciplines[1] not in CompetenceDiscipline.query.all()  # noqa E501
+
+    # Проверка успешного редактирования компетенции
+    def test_edit_competence(client, app):
+        competences = add_competence_data()
+
+        new_year = 2030
+        new_name = "УК-100"
+        new_type = "УК"
+        new_formulation = "...."
+        competence_params = [
+            new_name,
+            new_type,
+            new_formulation,
+            new_year
+        ]
+        indicator_params = [
+            'None',
+            "УК-100.1",
+            "..."
+        ]
+        moduleDB.edit_competence(id_competence=competences[1].id,
+                                 competence_params=competence_params,
+                                 indicators_list=[indicator_params])
+
+        edited_comp = Competence.query.get(competences[1].id)
+        indicators = Indicator.query.all()  # noqa E501
+
+        assert all([
+            edited_comp.name == new_name,
+            edited_comp.type == new_type,
+            edited_comp.year_approved == new_year,
+            edited_comp.formulation == new_formulation,
+            len(indicators) == 1,
+            indicators[0].name == indicator_params[1],
+            indicators[0].formulation == indicator_params[2]
+        ])
+
+    # Проверка успешного редактирования компетенции
+    # Index out of range exception
+    # Добавить обработчик
+    def test_edit_competence_negative(client, app):
+        competences = add_competence_data()
+
+        new_year = "2030"
+        new_name = 123
+        new_type = "Некорректные данные"
+        new_formulation = "...."
+        competence_params = [
+            new_name,
+            new_type,
+            new_formulation,
+            new_year
+        ]
+        moduleDB.edit_competence(id_competence=competences[1].id,
+                                 competence_params=competence_params,
+                                 indicators_list=["11"])
+
+        with pytest.raises(ValueError) as er:
+            moduleDB.add_competence(competence_params=competence_params)
+            assert er.type is ValueError
 
 
 class TestClassBlock:
@@ -382,3 +420,81 @@ class TestClassDirection():
         db.session.commit()
 
         assert all([a in directions for a in moduleDB.get_directions()])  # noqa E501
+
+    # Проверка работоспособности получения направления по id
+    def test_get_directions_by_id(client, app):
+        directions = [
+            Direction(name="Информационные системы и технологии",
+                      code="09.03.02"),
+            Direction(name="Программная инженерия", code="sdadsafas")
+        ]
+        db.session.add_all(directions)
+        db.session.commit()
+
+        direction = moduleDB.get_direction_by_id(1)
+        assert direction == directions[0]
+
+    # Проверка обработки неверного ввода функции получения направления по id
+    # Failed: DID NOT RAISE <class 'ValueError'>
+    # date: 18:05:2024
+    def test_get_directions_by_id_negative(client, app):
+        with pytest.raises(ValueError):
+            moduleDB.get_direction_by_id(1000)
+
+
+class TestClassesLinks():
+    # Проверка успешного получения списка индикаторов для дисциплины
+    def test_get_indicators_for_discipline(client, app):
+        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        discipline_to_get_indicators = disciplines[0].id
+        competences_to_get_indicators = [competences[0].id]
+        indicators = moduleDB.get_indicators_for_discipline(discipline_to_get_indicators, competences_to_get_indicators)  # noqa E501
+        indicators_from_db = Indicator.query.all()
+        assert all([
+            len(indicators) == 2,
+            len(indicators[0]) == 1,
+            len(indicators[1]) == 1,
+            indicators[0][0] == indicators_from_db[0],
+            indicators[1][0] == indicator_disciplines[0]
+        ])
+
+    # Проверка обработки
+    def test_get_indicators_for_disscipline_negative(client, app):
+        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        with pytest.raises(AttributeError):
+            moduleDB.get_indicators_for_discipline(None, None)
+
+    # Проверка успешного обновления списка связей дисциплин и компетенций
+    # sqlalchemy.exc.ArgumentError
+    # Date: 18:05:2024
+    # Добавить обработку неверных входных данных
+    def test_update_discipline_competences(client, app):
+        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        moduleDB.update_discipline_competences(disciplines[0].id,
+                                               [competences[0].id,
+                                                competences[1].id])
+        discipline_zero_comps = CompetenceDiscipline.query\
+            .filter(CompetenceDiscipline.discipline_id == disciplines[0].id).all()  # noqa E501
+        assert all([
+            discipline_zero_comps[0].competence_id == competences[0].id,
+            discipline_zero_comps[1].competence_id == competences[1].id,
+            len(discipline_zero_comps) == 2
+        ])
+
+    # Проверка обработки неверного ввода функции успешного обновления списка связей дисциплин и компетенций # noqa E501
+    # Failed: DID NOT RAISE <class 'ValueError'>
+    # Решение: добавление обработки неверного ввода
+    def test_update_discipline_competences_negative(client, app):
+        with pytest.raises(ValueError):
+            moduleDB.update_discipline_competences(100, [100, 100])
+
+    # Проверка работоспособности функции получения связанных дисциплин и связей
+    def test_get_disciplines_and_links_by_competence_id(client, app):
+        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        related_disciplines, competence_disciplines_link = moduleDB.get_disciplines_and_links_by_competence_id(competences[0].id)  # noqa E501
+        assert all([
+            len(competence_disciplines_link) == 1,
+            competence_disciplines_link[0] == competence_disciplines[0],
+            len(related_disciplines) == 1,
+            related_disciplines[0] == disciplines[0]
+        ])

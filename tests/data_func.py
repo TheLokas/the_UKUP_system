@@ -31,7 +31,7 @@ def add_disciplines_data():
                    module_id=1,
                    department_id=1)
     ]
-
+    
     direction = Direction(name="Информатика", code="1")
     extra_direction = Direction(name="FSFAF", code="1")
     db.session.add(direction)
@@ -61,7 +61,6 @@ def add_competence_data():
         functions.add_few_data()
 
     direction = Direction.query.get(1)
-    extra_direction = Direction.query.get(2)
 
     competences_to_add = [
         Competence(name="УК-1",
@@ -75,10 +74,10 @@ def add_competence_data():
                    formulation="...",
                    direction_id=direction.id),
         Competence(name="ОПК-1",
-                   year_approved="2023",
+                   year_approved="2024",
                    type="ОПК",
                    formulation="...",
-                   direction_id=extra_direction.id),
+                   direction_id=direction.id),
     ]
 
     db.session.add_all(competences_to_add)
