@@ -31,7 +31,7 @@ def add_disciplines_data():
                    module_id=1,
                    department_id=1)
     ]
-    
+
     direction = Direction(name="Информатика", code="1")
     extra_direction = Direction(name="FSFAF", code="1")
     db.session.add(direction)
@@ -117,14 +117,14 @@ def add_indicators():
 
 def add_competence_discipline_links():
     if len(Discipline.query.all()) == 0:
-        disciplines = add_disciplines_data()
+        disciplines = add_disciplines_data()[0]
     else:
         disciplines = Discipline.query.all()
 
     if len(Competence.query.all()) == 0:
-        competences = add_disciplines_data()
+        competences = add_competence_data()
     else:
-        competences = Discipline.query.all()
+        competences = Competence.query.all()
 
     links = [
         CompetenceDiscipline(competence_id=competences[0].id,

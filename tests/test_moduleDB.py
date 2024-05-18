@@ -445,7 +445,7 @@ class TestClassDirection():
 class TestClassesLinks():
     # Проверка успешного получения списка индикаторов для дисциплины
     def test_get_indicators_for_discipline(client, app):
-        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
         discipline_to_get_indicators = disciplines[0].id
         competences_to_get_indicators = [competences[0].id]
         indicators = moduleDB.get_indicators_for_discipline(discipline_to_get_indicators, competences_to_get_indicators)  # noqa E501
@@ -460,7 +460,7 @@ class TestClassesLinks():
 
     # Проверка обработки
     def test_get_indicators_for_disscipline_negative(client, app):
-        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
         with pytest.raises(AttributeError):
             moduleDB.get_indicators_for_discipline(None, None)
 
@@ -469,7 +469,7 @@ class TestClassesLinks():
     # Date: 18:05:2024
     # Добавить обработку неверных входных данных
     def test_update_discipline_competences(client, app):
-        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
         moduleDB.update_discipline_competences(disciplines[0].id,
                                                [competences[0].id,
                                                 competences[1].id])
@@ -490,7 +490,7 @@ class TestClassesLinks():
 
     # Проверка работоспособности функции получения связанных дисциплин и связей
     def test_get_disciplines_and_links_by_competence_id(client, app):
-        disciplines, competences, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
         related_disciplines, competence_disciplines_link = moduleDB.get_disciplines_and_links_by_competence_id(competences[0].id)  # noqa E501
         assert all([
             len(competence_disciplines_link) == 1,
@@ -498,3 +498,53 @@ class TestClassesLinks():
             len(related_disciplines) == 1,
             related_disciplines[0] == disciplines[0]
         ])
+
+    # Проверка работоспособности функции редактирования индикаторов дисциплины
+    def test_update_discipline_indicators(client, app):
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        moduleDB.update_discipline_indicators(disciplines[0].id,
+                                              [competences[0].id,
+                                               competences[1].id,
+                                               competences[2].id],
+                                              [1, 2, 3, 4, 5])
+        connected_competences = moduleDB.get_connected_competences(disciplines[0].id) # noqa E501
+        conncted_indicators = moduleDB.get_indicators_for_discipline(disciplines[0].id, # noqa E501
+                                                                     [competences[0].id,competences[1].id, competences[2].id]) # noqa E501
+        assert all(
+            [ind.id in [1, 2, 3, 4, 5] for ind in conncted_indicators[0]]
+        )
+
+    # Проверка работоспособности функции получения связей дисциплин
+    # с индикаторами по id компетенции
+    def test_get_indicators_disciplines_links_by_competence_id(client, app):
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        indicators, dises, ind_disciplines = moduleDB.get_indicators_disciplines_links_by_competence_id(competences[1].id)  # noqa E501
+        assert 2 == indicators[0].id
+        assert 3 == indicators[1].id
+        assert disciplines[1] == dises[0]
+        assert indicator_disciplines[1] == ind_disciplines[0]
+        assert indicator_disciplines[2] == ind_disciplines[1]
+
+    # Проверка работоспособности функции редактирования компетенций,
+    # привязанных к дисциплине
+    def test_update_competence_disciplines(client, app):
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+
+        disciplines_ids = [discipline.id for discipline in disciplines]
+
+        competence_id = competences[0].id
+
+        moduleDB.update_competence_disciplines(competence_id=competence_id,
+                                               discipline_ids=disciplines_ids)
+
+        # competence_disciplines = moduleDB.get_disciplines_by_competence_id(competence_id) # noqa E501
+        competence_disciplines = [c.discipline_id for c in CompetenceDiscipline.query.filter(CompetenceDiscipline.competence_id == competence_id)]   # noqa E501
+        real_ids_bools = [dis.id in competence_disciplines for dis in disciplines]
+        assert all(real_ids_bools, len(real_ids_bools) == 3)
+
+    # Проверка работоспособности функции 
+    # удаления связи компетенции и дисциплины
+    def test_delete_connection(client, app):
+        competence_disciplines = add_competence_discipline_links()
+        moduleDB.delete_connection(competence_disciplines[1].id)
+        assert competence_disciplines[1] not in CompetenceDiscipline.query.all()
