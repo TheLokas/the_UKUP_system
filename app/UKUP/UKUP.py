@@ -90,7 +90,7 @@ def add_discipline_page():
 def add_discipline_post():
     form = DisciplineForm(request.form)
     add_discipline([form.name.data, form.year_approved.data, form.block.data, form.module.data, form.department.data], form.direction.data)
-    return redirect("/UKUP/discipline")
+    return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
 @UKUP.route("/competence/add")
@@ -123,7 +123,7 @@ def add_competence_post():
         flash("Номер компетенции недопустим")
     else:
         add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data])
-    return redirect("/UKUP/competence")
+    return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
 @UKUP.route('/discipline/<discipline_id>', methods=['GET'])
