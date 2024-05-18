@@ -25,6 +25,7 @@ class Discipline(db.Model):
     department = db.relationship('Department', backref='disciplines')
     directions = db.relationship('Direction', secondary='direction_disciplines', backref=db.backref('disciplines', lazy='dynamic'))
 
+
 class Department(db.Model):
     __tablename__ = 'departments'
     id = db.Column(db.Integer, primary_key=True)

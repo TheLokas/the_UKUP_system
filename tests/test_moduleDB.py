@@ -538,13 +538,68 @@ class TestClassesLinks():
                                                discipline_ids=disciplines_ids)
 
         # competence_disciplines = moduleDB.get_disciplines_by_competence_id(competence_id) # noqa E501
-        competence_disciplines = [c.discipline_id for c in CompetenceDiscipline.query.filter(CompetenceDiscipline.competence_id == competence_id)]   # noqa E501
-        real_ids_bools = [dis.id in competence_disciplines for dis in disciplines]
+        competence_disciplines = \
+            [c.discipline_id for c in CompetenceDiscipline.query.filter(CompetenceDiscipline.competence_id == competence_id)] # noqa E501
+        real_ids_bools = [dis.id in competence_disciplines for dis in disciplines] # noqa E501
         assert all(real_ids_bools, len(real_ids_bools) == 3)
 
-    # Проверка работоспособности функции 
+    # Проверка работоспособности функции
     # удаления связи компетенции и дисциплины
     def test_delete_connection(client, app):
         competence_disciplines = add_competence_discipline_links()
         moduleDB.delete_connection(competence_disciplines[1].id)
-        assert competence_disciplines[1] not in CompetenceDiscipline.query.all()
+        assert competence_disciplines[1] not in CompetenceDiscipline.query.all()   # noqa E501
+
+    # Проверка работоспособности функции
+    # удаления связи компетенции и дисциплины с неверным входом
+    def test_delete_connection_negative(client, app):
+        add_competence_discipline_links()
+        assert not moduleDB.delete_connection(10000)
+
+    # Проверка работоспособности функции 
+    # удаления связи компетенции и дисциплины с неверным типом входа
+    def test_delete_connection_negative_bad_input(client, app):
+        with pytest.raises(ValueError):
+            moduleDB.delete_connection(None)
+
+    # Проверка работоспособности функции получения связанных
+    # компетенций для дисциплины
+    def test_get_connected_competences(client, app):
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        conn = CompetenceDiscipline.query\
+            .filter(CompetenceDiscipline.discipline_id == disciplines[1].id)\
+            .all()
+        real_connected = [c.competence_id for c in conn]
+        connected = moduleDB.get_connected_competences(disciplines[1].id)
+        assert all([c.id in real_connected for c in connected])
+
+    # Проверка работоспособности функции получения связанных
+    # компетенций для дисциплины
+    def test_get_connected_competences_negative(client, app):
+        with pytest.raises(ValueError):
+            moduleDB.get_connected_competences("sdad")
+
+    # Проверка работоспособности функции обновления связи индикаторы-дисциплины
+    def test_update_indicator_disciplines(client, app):
+        competences, disciplines, competence_disciplines, indicator_disciplines = add_all()  # noqa E501
+        indicators = Indicator.query.all()
+        new_connections = [
+            (indicators[0].id, [disciplines[0].id,
+                                disciplines[1].id,
+                                disciplines[2].id]),
+            (indicators[1].id, [disciplines[1].id])
+        ]
+        moduleDB.update_indicator_disciplines(new_connections)
+        disciplines_for_first = Indicator.query\
+                                         .filter_by(id=indicators[0].id)\
+                                         .all()
+        disciplines_for_second = Indicator.query\
+                                          .filter_by(id=indicators[1].id)\
+                                          .all()
+        assert all([dis.id in new_connections[0][1] for dis in disciplines_for_first])  # noqa E501
+        assert all([dis.id in new_connections[1][1] for dis in disciplines_for_second])  # noqa E501
+
+
+class TestClassReport():
+    # Проверка функции получения данных для генерации матрицы компетенций
+    def test_report_matrix(client, app)
