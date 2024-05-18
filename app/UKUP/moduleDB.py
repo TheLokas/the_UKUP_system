@@ -28,24 +28,37 @@ def get_directions():
 
 # Получает направление по его идентификатору
 def get_direction_by_id(direction_id):
-    return db.session.get(Direction, direction_id)
+    direction = db.session.get(Direction, direction_id)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
+    return direction
 
 
 # Получает дисциплину по её идентификатору
 def get_discipline_by_id(discipline_id):
-    return db.session.get(Discipline, discipline_id)
+    discipline = db.session.get(Discipline, discipline_id)
+    if discipline is None:
+        raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
+    return discipline
 
 
 # Получает компетенцию по её идентификатору
 def get_competence_by_id(competence_id):
-    return db.session.get(Competence, competence_id)
+    competence = db.session.get(Competence, competence_id)
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
+    return competence
 
 
 # Возвращает список дисциплин с указанными параметрами, а также информацией о модуле, блоке, кафедре и направлении.
-def get_disciplines(direction, year):
+def get_disciplines(directionID, year):
+    direction = db.session.get(Direction, directionID)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(directionID))
+    # Запрос дисциплин с учетом направления и года
     disciplines = Discipline.query \
         .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
-        .filter(DirectionDiscipline.direction_id == direction) \
+        .filter(DirectionDiscipline.direction_id == directionID) \
         .filter(Discipline.year_approved == year) \
         .all()
     return disciplines
@@ -55,6 +68,9 @@ def get_disciplines(direction, year):
 def delete_discipline(id_discipline):
     # Находим дисциплину по ее идентификатору
     discipline = db.session.query(Discipline).get(id_discipline)
+
+    if discipline is None:
+        raise ValueError("Дисциплина с идентификатором {} не найдена".format(id_discipline))
 
     # Удаляем связанные записи в таблице direction_disciplines
     DirectionDiscipline.query.filter_by(discipline_id=id_discipline).delete()
@@ -83,6 +99,9 @@ def add_discipline(discipline_params, directions_list):
     db.session.commit()
 
     for direction in directions_list:
+        direction_n = db.session.get(Direction, direction)
+        if direction_n is None:
+            raise ValueError("Направление с идентификатором {} не найдено".format(direction))
         direction_to_discipline = DirectionDiscipline(discipline_id=new_discipline.id,
                                                   direction_id=direction)
         db.session.add(direction_to_discipline)
@@ -92,10 +111,12 @@ def add_discipline(discipline_params, directions_list):
 def edit_discipline(id_discipline, discipline_params, directions_list):
     # Находим дисциплину по ее идентификатору
     discipline = db.session.get(Discipline, id_discipline)
-
+    if discipline is None:
+        raise ValueError("Дисциплина с идентификатором {} не найдена".format(id_discipline))
     if discipline:
         # Обновляем данные дисциплины
         discipline.name = discipline_params[0]
+
         discipline.block_id = discipline_params[2]
         discipline.module_id = discipline_params[3]
         discipline.department_id = discipline_params[4]
@@ -115,6 +136,9 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
 
             # Добавляем записи в таблицу direction_disciplines, если их нет в базе данных
             for direction_id in directions_list:
+                direction_n = db.session.get(Direction, direction_id)
+                if direction_n is None:
+                    raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
                 existing_entry = db.session.query(DirectionDiscipline).filter_by(
                     discipline_id=id_discipline, direction_id=direction_id
                 ).first()
@@ -172,6 +196,9 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
 
             # Добавляем записи в таблицу direction_disciplines, если их нет в базе данных
             for direction_id in directions_list:
+                direction_n = db.session.get(Direction, direction_id)
+                if direction_n is None:
+                    raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
                 existing_entry = db.session.query(DirectionDiscipline).filter_by(
                             discipline_id=id_discipline, direction_id=direction_id
                         ).first()
@@ -184,10 +211,14 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
 
 # Возвращает список компетенций с указанными параметрами
 def get_competences(direction, year):
+    direction_n = db.session.get(Direction, direction)
+    if direction_n is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(direction))
     competences = Competence.query \
         .filter_by(direction_id=direction) \
         .filter_by(year_approved=year) \
         .all()
+
     return competences
 
 
@@ -198,6 +229,9 @@ def add_competence(competence_params):
 
     # Создаем компетенцию для каждого направления
     for direction_id in direction_ids:
+        direction_n = db.session.get(Direction, direction_id)
+        if direction_n is None:
+            raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
         new_competence = Competence(name=name,
                                     year_approved=year_approved,
                                     type=competence_type,
@@ -212,12 +246,19 @@ def add_competence(competence_params):
 
 # Функция привязки дисциплины к компетенциям
 def update_discipline_competences(discipline_id, competence_ids):
+    discipline = db.session.get(Discipline, discipline_id)
+    if discipline is None:
+        raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
+
     existing_links = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).all()
     existing_competence_ids = {link.competence_id for link in existing_links}
 
     # Ищем компетенции, которые нужно добавить
     competence_ids_to_add = set(competence_ids) - existing_competence_ids
     for competence_id in competence_ids_to_add:
+        competence = db.session.get(Competence, competence_id)
+        if competence is None:
+            raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
         new_link = CompetenceDiscipline(discipline_id=discipline_id, competence_id=int(competence_id))
         db.session.add(new_link)
 
@@ -232,6 +273,15 @@ def update_discipline_competences(discipline_id, competence_ids):
 
 def get_indicators_for_discipline(discipline_id, competence_ids):
     # Получаем индикаторы для компетенций, привязанных к дисциплине
+    discipline = db.session.get(Discipline, discipline_id)
+    if discipline is None:
+        raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
+
+    for competence_id in competence_ids:
+        competence = db.session.get(Competence, competence_id)
+        if competence is None:
+            raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
+
     indicators = db.session.query(Indicator).join(Competence, Indicator.competence_id == Competence.id)\
                          .join(CompetenceDiscipline, Competence.id == CompetenceDiscipline.competence_id)\
                          .filter(CompetenceDiscipline.discipline_id == discipline_id)\
@@ -247,6 +297,16 @@ def get_indicators_for_discipline(discipline_id, competence_ids):
 # Функция создания связи между дисциплиной и индикатором для страницы дисциплин
 # Функция получает id дисциплины, id компетенций и id индикаторов, которые теперь привязаны к дисциплине.
 def update_discipline_indicators(discipline_id, competence_ids, indicator_ids):
+    discipline = db.session.get(Discipline, discipline_id)
+    if discipline is None:
+        raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
+
+    for competence_id in competence_ids:
+        competence = db.session.get(Competence, competence_id)
+        if competence is None:
+            raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
+
+
     # Получаем все индикаторы для переданных компетенций
     relevant_indicators = Indicator.query\
                                           .filter(Indicator.competence_id.in_(competence_ids))\
@@ -278,7 +338,8 @@ def update_discipline_indicators(discipline_id, competence_ids, indicator_ids):
 def delete_competence(id_competence):
     # Находим компетенцию по ее идентификатору
     competence = Competence.query.get(id_competence)
-
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(id_competence))
     # Удаляем все связи с дисциплинами для этой компетенции
     CompetenceDiscipline.query.filter_by(competence_id=id_competence).delete()
 
@@ -300,6 +361,8 @@ def delete_competence(id_competence):
 def edit_competence(id_competence, competence_params, indicators_list):
     # Находим компетенцию по ее идентификатору
     competence = db.session.get(Competence, id_competence)
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(id_competence))
 
     # Проверяем, совпадает ли год у компетенции и переданных параметров
     if competence.year_approved == int(competence_params[3]):
@@ -393,6 +456,8 @@ def edit_competence(id_competence, competence_params, indicators_list):
 def get_disciplines_and_links_by_competence_id(competence_id):
     # Получаем информацию о компетенции
     competence = db.session.get(Competence, competence_id)
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
 
     # Получаем направление и год компетенции
     direction_id = competence.direction_id
@@ -410,6 +475,11 @@ def get_disciplines_and_links_by_competence_id(competence_id):
 
 # Функция получения индикаторов, дисциплин и связей между ними для определенной компетенции
 def get_indicators_disciplines_links_by_competence_id(competence_id):
+
+    competence = db.session.get(Competence, competence_id)
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
+
     # Получаем список индикаторов, связанных с компетенцией
     indicators = db.session.query(Indicator)\
                            .filter(Indicator.competence_id == competence_id)\
@@ -432,6 +502,14 @@ def get_indicators_disciplines_links_by_competence_id(competence_id):
 
 # Функция обновления связи компетенция-дисциплины
 def update_competence_disciplines(competence_id, discipline_ids):
+    competence = db.session.get(Competence, competence_id)
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
+
+    for discipline_id in discipline_ids:
+        discipline = db.session.get(Discipline, discipline_id)
+        if discipline is None:
+            raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
     # Получаем текущие записи в таблице competence_disciplines для данной компетенции
     current_disciplines = CompetenceDiscipline.query.filter_by(competence_id=competence_id).all()
 
@@ -456,6 +534,11 @@ def update_competence_disciplines(competence_id, discipline_ids):
 # Функция обновления связи индикаторы-дисциплины
 def update_indicator_disciplines(indicator_discipline_pairs):
     for indicator_id, discipline_ids in indicator_discipline_pairs:
+
+        indicator = db.session.get(Indicator, indicator_id)
+        if indicator is None:
+            raise ValueError("Индикатор с идентификатором {} не найден".format(indicator_id))
+
         # Получаем текущие записи в таблице indicator_disciplines для данного индикатора
         current_disciplines = IndicatorDiscipline.query.filter_by(indicator_id=indicator_id).all()
 
@@ -464,6 +547,9 @@ def update_indicator_disciplines(indicator_discipline_pairs):
 
         # Удаляем записи, которые нужно удалить
         for discipline_id in current_discipline_ids:
+            discipline = db.session.get(Discipline, discipline_id)
+            if discipline is None:
+                raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
             if discipline_id not in discipline_ids:
                 IndicatorDiscipline.query.filter_by(indicator_id=indicator_id, discipline_id=discipline_id).delete()
 
@@ -477,25 +563,6 @@ def update_indicator_disciplines(indicator_discipline_pairs):
     db.session.commit()
 
 
-# Функция удаления связи дисциплины и компетенции по id связи
-def delete_connection(connection_id):
-    connection = CompetenceDiscipline.query.filter_by(id=connection_id).first()
-    if connection:
-        db.session.delete(connection)
-        db.session.commit()
-        return True
-    else:
-        return False
-
-
-# Функция получения компетенций, привязанных к дисциплине
-def get_connected_competences(discipline_id):
-    connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
-                                            .filter(CompetenceDiscipline.discipline_id == discipline_id)\
-                                            .all()
-    return connected_competences
-
-
 # Функция получения всех компетенций по году
 def get_competences_by_year(year):
     return Competence.query \
@@ -504,21 +571,24 @@ def get_competences_by_year(year):
         .all()
 
 
+def get_connected_competences(discipline_id):
+    connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
+                                            .filter(CompetenceDiscipline.discipline_id == discipline_id)\
+                                            .all()
+    return connected_competences
+
+
 # Функция для генерации отчета матрицы
-def report_matrix(direction=None, year=None):
-    if direction:
-        direction_disciplines = DirectionDiscipline.query \
-            .filter_by(direction_id=direction.id) \
-            .filter(DirectionDiscipline.year_created <= year) \
-            .filter((DirectionDiscipline.year_removed > year) | (DirectionDiscipline.year_removed == None)) \
-            .all()
-        discipline_ids = [dd.discipline_id for dd in direction_disciplines]
-        disciplines = Discipline.query.filter(Discipline.id.in_(discipline_ids)).all()
-    else:
-        disciplines = Discipline.query \
-            .filter(Discipline.year_approved <= year) \
-            .filter((Discipline.year_cancelled > year) | (Discipline.year_cancelled == None)) \
-            .all()
+def report_matrix(directionID, year):
+    direction = db.session.get(Direction, directionID)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(directionID))
+    direction_disciplines = DirectionDiscipline.query \
+        .filter_by(direction_id=direction.id) \
+        .all()
+    discipline_ids = [dd.discipline_id for dd in direction_disciplines]
+    disciplines = Discipline.query.filter(Discipline.id.in_(discipline_ids)).all()
+
 
     # Получаем все компетенции этого года
     competences = get_competences_by_year(year)
@@ -526,45 +596,45 @@ def report_matrix(direction=None, year=None):
     # Получаем все связи дисциплин и компетенций за выбранный год
     discipline_competence_links = CompetenceDiscipline.query \
         .filter(CompetenceDiscipline.discipline_id.in_([d.id for d in disciplines])) \
-        .filter(CompetenceDiscipline.year_created <= year) \
-        .filter((CompetenceDiscipline.year_removed > year) | (CompetenceDiscipline.year_removed == None)) \
         .all()
 
     return disciplines, competences, discipline_competence_links
 
 
 # Функция для генерации отчета компетенций
-def get_competences_and_indicators(direction, year):
-    # Получаем список дисциплин для данного направления и года
-    direction_disciplines = DirectionDiscipline.query \
-        .filter_by(direction_id=direction.id) \
-        .filter(DirectionDiscipline.year_created <= year) \
-        .filter((DirectionDiscipline.year_removed > year) | (DirectionDiscipline.year_removed == None)) \
-        .all()
-    discipline_ids = [dd.discipline_id for dd in direction_disciplines]
-
-    # Получаем все компетенции для этих дисциплин и указанного года
-    competence_ids = [cd.competence_id for cd in CompetenceDiscipline.query.filter(CompetenceDiscipline.discipline_id.in_(discipline_ids)).all()]
+def get_competences_and_indicators(direction_id, year):
+    direction = db.session.get(Direction, direction_id)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
+    # Получаем список компетенций для данного направления и года
     competences = Competence.query \
-        .filter(Competence.id.in_(competence_ids)) \
-        .filter(Competence.year_approved <= year) \
-        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+        .filter_by(direction_id=direction_id) \
+        .filter_by(year_approved=year) \
         .all()
 
-    # Получаем все индикаторы для этих компетенций
-    indicator_ids = [i.id for competence in competences for i in competence.indicator]
-    indicators = Indicator.query \
-        .filter(Indicator.id.in_(indicator_ids)) \
-        .all()
+    # Создаем список для компетенций
+    competences_list = []
 
-    return competences, indicators
+    # Создаем список для индикаторов
+    indicators_list = []
+
+    # Для каждой компетенции получаем список ее индикаторов
+    for competence in competences:
+        competences_list.append(competence)
+        indicators = Indicator.query \
+            .filter_by(competence_id=competence.id) \
+            .all()
+        indicators_list.append(indicators)
+
+    return competences_list, indicators_list
 
 
 # Получает список дисциплин, привязанных к компетенции по её идентификатору.
 def get_disciplines_by_competence_id(competence_id):
     # Находим объект компетенции по её идентификатору
     competence = db.session.get(Competence, competence_id)
-
+    if competence is None:
+        raise ValueError("Компетенция с идентификатором {} не найдена".format(competence_id))
     if competence:
         # Получаем список компетенций для данной дисциплины
         disciplines = [cd.discipline for cd in competence.competence_disciplines]
@@ -575,21 +645,14 @@ def get_disciplines_by_competence_id(competence_id):
 
 
 # Функция возвращает компетенции определенного типа
-def get_competences_and_indicators_type(direction, year, competence_type):
-    # Получаем список дисциплин для данного направления и года
-    direction_disciplines = DirectionDiscipline.query \
-        .filter_by(direction_id=direction.id) \
-        .filter(DirectionDiscipline.year_created <= year) \
-        .filter((DirectionDiscipline.year_removed > year) | (DirectionDiscipline.year_removed == None)) \
-        .all()
-    discipline_ids = [dd.discipline_id for dd in direction_disciplines]
-
-    # Получаем все компетенции для этих дисциплин, указанного года и типа
+def get_competences_and_indicators_type(direction_id, year, competence_type):
+    direction = db.session.get(Direction, direction_id)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
+    # Получаем все компетенции для данного направления, указанного года и типа
     competences = Competence.query \
-        .join(CompetenceDiscipline) \
-        .filter(CompetenceDiscipline.discipline_id.in_(discipline_ids)) \
-        .filter(Competence.year_approved <= year) \
-        .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
+        .filter_by(direction_id=direction.id) \
+        .filter_by(year_approved=year) \
         .filter_by(type=competence_type) \
         .all()
 
@@ -600,3 +663,7 @@ def get_competences_and_indicators_type(direction, year, competence_type):
         .all()
 
     return competences, indicators
+
+
+
+
