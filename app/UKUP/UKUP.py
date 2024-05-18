@@ -1,174 +1,162 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence
-from .forms import DisciplineForm, CompetenceForm
+from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline, Indicator
+from .forms import DisciplineForm, CompetenceForm, CompetenceConnectForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
-
-# class Discipline:
-# def __init__(self, name, block, faculty, module):
-#   self.name = name
-#   self.block = block
-#   self.faculty = faculty
-#   self.module = module
-
-
-# class Competence:
-# def __init__(self, code, description,  type):
-#   self.code = code
-#   self.description = description
-#   self.type = type
-
-# disciplines = [Discipline("Линейная алгебра", "Б1.Б", "МА", "Математические и естественнонаучные дисциплины"), Discipline("Матанализ", "Б1.Б", "МА", "Математические и естественнонаучные дисциплины"), Discipline("Дискретная математика", "Б1.Б", "ПМиК", "Модуль 2")]
-
-# competencies = [Competence("УК-1", "Способен осуществлять поиск, критический анализ и синтез информации, применять системный подход для решения поставленных задач", "Универсальные компетенции"),
-#         Competence("УК-2", "Способен определять круг задач в рамках поставленной цели и выбирать оптимальные способы их решения, исходя из действующих правовых норм, имеющихся ресурсов и ограничений", "Универсальные компетенции"),
-#         Competence("ОПК-1", "Способен применять естественнонаучные и общеинженерные знания, методы математического анализа и моделирования, теоретического и экспериментального исследования в профессиональной деятельности", "Общепрофессиональные компетенции"),
-#         Competence("ОПК-2", "Способен понимать принципы работы современных информационных технологий и программных средств, в том числе отечественного производства, и использовать их при решении задач профессиональной деятельности", "Общепрофессиональные компетенции"),
-#         Competence("ОПК-3", "Способен решать стандартные задачи профессиональной деятельности на основе информационной и библиографической культуры с применением информационно-коммуникационных технологий и с учетом основных требований информационной безопасности", "Общепрофессиональные компетенции"),
-#         Competence("ПК-1", "Способен осуществлять выявление требований к информационным системам", "Профессиональные компетенции"),
-#         Competence("ПК-2", "Способность осуществлять проектирование и дизайн ИС", "Профессиональные компетенции"),
-#         Competence("ПК-3", "Способность осуществлять разработку прототипов ИС", "Профессиональные компетенции")]
+from .module_db import connect_discipline_with_competence
+from .moduleDB import get_disciplines, get_competences, add_discipline, add_competence, get_modules, get_block, get_directions, get_departments, edit_discipline, edit_competence, get_connected_competences
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
 
 
-@UKUP.route("/discipline")
+@UKUP.route("/discipline", methods=["GET"])
 def discipline():
-    disciplines = Discipline.query.order_by(Discipline.module_id)
-    return render_template("Discipline.html", disciplines=disciplines)
+    type = "discipline"
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        # Необходима функция
+        current_direction = Direction.query.get(request.args["direction"])
+
+    disciplines = get_disciplines(direction=current_direction, year=current_year)
+    return render_template("Discipline.html", type=type, disciplines=disciplines, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
-@UKUP.route("/competence")
+
+@UKUP.route("/competence", methods=['GET'])
 def competence():
-    competence = Competence.query.all()
-    return render_template("Competence.html", competencies=competence)
+    type = "competence"
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        # Необходима функция
+        current_direction = Direction.query.get(request.args["direction"])
+    competence = get_competences(direction=current_direction, year=current_year)
+    #print(competence)
+
+    return render_template("Competence.html", type=type, competencies=competence, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
-@UKUP.route("/discipline/add")
-def add_discipline():
+@UKUP.route("/discipline/add", methods=['GET'])
+def add_discipline_page():
+    type = "discipline"
     year_choices = generate_year(2019)
 
     # Заменить на функции из модуля бд
-    directions = Direction.query.all()
+    directions = get_directions()
     direction_choices = []
     for direction in directions:
         direction_choices.append((direction.id, direction.name))
 
-    departments = Department.query.all()
+    departments = get_departments()
     department_choices = []
     for department in departments:
         department_choices.append((department.id, department.name))
 
-    modules = Module.query.all()
+    modules = get_modules()
     module_choices = []
     for module in modules:
         module_choices.append((module.id, module.name))
 
-    blocks = Block.query.all()
+    blocks = get_block()
     block_choices = []
     for block in blocks:
         block_choices.append((block.id, block.name))
 
-    form = DisciplineForm()
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        # Необходима функция
+        current_direction = Direction.query.get(request.args["direction"])
+
+    form = DisciplineForm(year_approved=current_year, direction=(current_direction.id, current_direction.name))
     form.addData(year=year_choices, block=block_choices,
                  module=module_choices, direction=direction_choices,
                  department=department_choices)
-    return render_template("addDiscipline.html", form=form)
+    return render_template("addDiscipline.html",type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
 @UKUP.route("/discipline/add", methods=['POST'])
 def add_discipline_post():
     form = DisciplineForm(request.form)
-    discipline = Discipline(name=form.name.data,
-                            year_approved=form.year_approved.data,
-                            year_cancelled=None,
-                            block_id=form.block.data[0],
-                            module_id=form.module.data[0],
-                            department_id=form.department.data[0])
-    direction_to_discipline_list = []
-    if form.direction.data:
-        for direction in form.direction.data:
-            direction_to_discipline = DirectionDiscipline(discipline_id=discipline.id,
-                                                          direction_id=direction,
-                                                          year_created=form.year_approved.data,
-                                                          year_removed=None)
-            direction_to_discipline_list.append(direction_to_discipline)
-    try:
-        db.session.add(discipline)
-        db.session.flush()
-        db.session.add_all(direction_to_discipline_list)
-        db.session.flush()
-        db.session.commit()
-    except Exception as e:
-        print(e)
-        db.session.rollback()
-    return redirect("/UKUP/discipline")
+    add_discipline([form.name.data, form.year_approved.data, form.block.data, form.module.data, form.department.data], form.direction.data)
+    return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
 @UKUP.route("/competence/add")
-def add_competence():
+def add_competence_page():
+    type = "competence"
     UK = get_not_available_comp_numbers_for_type("УК")
     OPK = get_not_available_comp_numbers_for_type("ОПК")
     PK = get_not_available_comp_numbers_for_type("ПК")
     year_choices = generate_year(2019)
 
-    form = CompetenceForm()
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    form = CompetenceForm(year_approved=current_year)
     form.addData(year=year_choices)
-    return render_template("addCompetence.html", form=form, UK=UK, OPK=OPK, PK=PK)
+    return render_template("addCompetence.html", type=type, form=form, UK=UK, OPK=OPK, PK=PK, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
 @UKUP.route("/competence/add", methods=["POST"])
-def add_competence_to_DB():
+def add_competence_post():
     form = CompetenceForm(request.form)
     not_available_numbers = get_not_available_comp_numbers_for_type(form.type.data)
     number = int(str(form.name.data).split("-")[1])
     if number in not_available_numbers:
         flash("Номер компетенции недопустим")
     else:
-        competence = Competence(name=form.name.data,
-                                year_approved=form.year_approved.data,
-                                type=form.type.data,
-                                year_cancelled=None,
-                                formulation=form.formulation.data)
-        try:
-            db.session.add(competence)
-            db.session.flush()
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            flash("Произошла ошибка, компетенция не добавлена")
-    return redirect("/UKUP/competence")
+        add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data])
+    return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
-@UKUP.route('/discipline/<discipline_id>')
-def edit_discipline(discipline_id):
+@UKUP.route('/discipline/<discipline_id>', methods=['GET'])
+def edit_discipline_page(discipline_id):
+    type = "discipline"
+
+    # Необходима функция
     discipline = Discipline.query.get(discipline_id)
 
     year_approved = generate_year(2019)
 
     year_cancelled = generate_year(discipline.year_approved)
 
-    # Заменить на функции из модуля бд
-    directions = Direction.query.all()
+    directions = get_directions()
     direction_choices = []
     for direction in directions:
         direction_choices.append((direction.id, direction.name))
 
-    departments = Department.query.all()
+    departments = get_departments()
     department_choices = []
     for department in departments:
         department_choices.append((department.id, department.name))
 
-    modules = Module.query.all()
+    modules = get_modules()
     module_choices = []
     for module in modules:
         module_choices.append((module.id, module.name))
 
-    blocks = Block.query.all()
+    blocks = get_block()
     block_choices = []
     for block in blocks:
         block_choices.append((block.id, block.name))
+
 
     form = DisciplineForm(name=discipline.name, year_approved=discipline.year_approved,
                           year_cancelled=discipline.year_cancelled, block=discipline.block_id,
@@ -176,44 +164,169 @@ def edit_discipline(discipline_id):
                           department=discipline.department_id, direction=discipline.direction)
     form.addData(year_approved, block_choices, module_choices, department_choices, direction_choices)
     form.addYearCancelled(year_cancelled)
-    return render_template("editDiscipline.html", form=form)
+
+    years = generate_year(2019)[::-1]
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        # Необходима функция
+        current_direction = Direction.query.get(request.args["direction"])
+
+    return render_template("editDiscipline.html", type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
 @UKUP.route('/discipline/<discipline_id>', methods=['POST'])
-def edit_discipline_post(exam_id):
+def edit_discipline_post(discipline_id):
     form = DisciplineForm(request.form)
-    # функция занесения данных в таблицу
-    return redirect("/UKUP/discipline")
+    #print(request.form)
+    edit_discipline(discipline_id, [form.name.data, "1970", form.block.data, form.module.data, form.department.data], form.direction.data, request.form.get("current_year"))
+    return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
 @UKUP.route('/competence/<competence_id>')
-def edit_competence(competence_id):
+def edit_competence_page(competence_id):
+    type = "competence"
     UK = get_not_available_comp_numbers_for_type("УК")
     OPK = get_not_available_comp_numbers_for_type("ОПК")
     PK = get_not_available_comp_numbers_for_type("ПК")
 
-    current_year = date.today().year
-    # Заменить на функции из модуля бд
+    # Необходима функция
     competence = Competence.query.get(competence_id)
 
     year_approved = generate_year(2019)
 
     year_cancelled = generate_year(competence.year_approved)
 
-    print(competence.name.split("-")[1])
-    print(competence.name)
+    indicators = Indicator.query.filter_by(competence_id=competence_id).all()
+    #print(competence_id)
+    #print(indicators)
+
+    #print(competence.name.split("-")[1])
+    #print(competence.name)
     form = CompetenceForm(name=competence.name, year_approved=competence.year_approved,
                           year_cancelled=competence.year_cancelled, num=int(competence.name.split("-")[1]),
                           type=competence.type, formulation=competence.formulation)
     form.addData(year_approved)
     form.addYearCancelled(year_cancelled)
-    return render_template("editCompetence.html", form=form, UK=UK, OPK=OPK, PK=PK)
+
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        # Необходима функция
+        current_direction = Direction.query.get(request.args["direction"])
+
+    return render_template("editCompetence.html", type=type, form=form, UK=UK, OPK=OPK, PK=PK, years=years, directions=directions, current_year=current_year, current_direction=current_direction, indicators=indicators)
 
 
 @UKUP.route('/competence/<competence_id>', methods=['POST'])
 def edit_competence_post(competence_id):
     form = CompetenceForm(request.form)
-    # функция занесения данных в таблицу
+    #print(request.form.getlist("indicator"))
+    indicators = []
+    for indicator in request.form.getlist("indicator"):
+        a = indicator.split("||")
+        if a[2].strip()!="":
+            indicators.append((a[0], a[1], a[2]))
+    print(indicators)
+    edit_competence(competence_id, [form.name.data, form.type.data, form.formulation.data])
+    return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
+
+
+@UKUP.route('/competence/connect_discipline/<competence_id>', methods=['GET'])
+def connect_disciplines_to_competence(competence_id):
+    type = "competence"
+    # Необходима функция
+    competence = Competence.query.get(competence_id)
+    form = CompetenceConnectForm()
+    checked=[]
+    # Необходима функция
+    check = CompetenceDiscipline.query.filter_by(competence_id=competence_id).all()
+    for ch in check:
+        checked.append(ch.discipline_id)
+    print(checked)
+
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        # Необходима функция
+        current_direction = Direction.query.get(request.args["direction"])
+    disciplines = get_disciplines(direction=current_direction, year=current_year)
+
+    return render_template("CompetenceDisciplines.html", type=type, form=form, competence=competence, disciplines=disciplines, years=years, directions=directions, current_year=current_year, current_direction=current_direction, checked=checked)
+
+
+@UKUP.route('/competence/connect_discipline/<competence_id>', methods=['POST'])
+def connect_disciplines_to_competence_post(competence_id):
+    req = request.form.getlist("connect")
+    # В будущем заменить на другую функцию
+    for check in req:
+        connect_discipline_with_competence(competence_id, check, request.args["year"])
+    return redirect("/UKUP/competence")
+
+
+@UKUP.route('/discipline/connect_competence/<discipline_id>', methods=["GET"])
+def connect_competences_to_discipline(discipline_id):
+    type = "discipline"
+
+    # Необходима функция
+    discipline = Discipline.query.get(discipline_id)
+
+
+    form = CompetenceConnectForm()
+    checked = []
+    check = get_connected_competences(discipline_id)
+    #check = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).all()
+    for ch in check:
+        checked.append(ch.id)
+
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    # Необходима функция
+    competence = Competence.query.all()
+
+    return render_template('connectCompetences.html', type=type, form=form,
+                           competences=competence,
+                           discipline=discipline,
+                           years=years,
+                           directions=directions,
+                           current_direction=current_direction,
+                           current_year=current_year,
+                           checked=checked)
+
+
+@UKUP.route('/discipline/connect_competence/<discipline_id>', methods=['POST'])
+def connect_competences_to_discipline_db(discipline_id):
+
+    checked = request.form.getlist("connect")
+    year = request.args["year"]
+
+    already_exist = CompetenceDiscipline.query\
+                                        .filter_by(discipline_id=discipline_id)\
+                                        .filter_by(year_created=year)\
+                                        .all()
+
+    # НЕ ПРОТЕСТИРОВАНО
+    #for ref in already_exist:
+    #    if ref.competence_id not in checked:
+    #        delete_connection(connection_id=ref.id)
+
+    for check in checked:
+        connect_discipline_with_competence(discipline_id=discipline_id,
+                                           competence_id=check,
+                                           year=year)
     return redirect("/UKUP/discipline")
 
 

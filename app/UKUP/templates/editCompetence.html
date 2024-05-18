@@ -7,60 +7,74 @@
       <input type="hidden" id="UK" value="{{ UK }}">
       <input type="hidden" id="OPK" value="{{ OPK }}">
       <input type="hidden" id="PK" value="{{ PK }}">
+      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name", readonly=True) }}
-      {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num") }}
-      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
-       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled") }}
-      {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type") }}
+      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved", disabled=True) }}
+       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled", disabled=True) }}
+      {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type", disabled=True)}}
       {{ form.formulation(class="form-select", style="width:80%; margin-top:5px", id="module") }}
+      <div id="indicators">
+      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:5px; border:solid 1px;">+</button>
+         {% for indicator in indicators %}
+         <div id="{{ indicator.name }}"><input id="i-{{indicator.name.split('.')[1]}}" name="indicator" type="hidden" class="form-control" value="{{ indicator.id }}||{{ indicator.name }}||{{ indicator.formulation }}"><input type="text" class="form-control" readonly value="{{ indicator.name }}" style="width:20%" ><input id="f-{{indicator.name.split('.')[1]}}" class="form-control" style="width:60%; margin-top:5px;" value="{{  indicator.formulation  }}"></div>
+         {% endfor %}
+      </div>
+      <button class="btn" type="button" onclick="RemoveIndicator() "style="width:80%; margin-top:5px; border:solid 1px;">-</button>
       {{ form.submit() }}
    </form>
 </div>
 <script>
    var type = document.getElementById("type");
    var num = document.getElementById("num");
-   type.addEventListener("change",function(){
-      var name = document.getElementById("name");
-      if (type.value=="УК"){
-         var UK = document.getElementById("UK");
-         if (UK.value=="[]")
-         {
-            num.value = 1
-         }
-         else{
-            var numValue = UK.value.slice(1,-1).split(", ")
-            num.value = Number(numValue.at(-1)) + 1
-         }
-      }
-      if (type.value=="ОПК"){
-         var OPK = document.getElementById("OPK");
-         if (OPK.value=="[]")
-         {
-            num.value = 1
-         }
-         else{
-            var numValue = OPK.value.slice(1,-1).split(", ")
-            num.value = Number(numValue.at(-1)) + 1
-         }
-      }
-      if (type.value=="ПК"){
-         var PK = document.getElementById("PK");
-         if (PK.value=="[]")
-         {
-            num.value = 1
-         }
-         else{
-            var numValue = PK.value.slice(1,-1).split(", ")
-            num.value = Number(numValue.at(-1)) + 1
-         }
-      }
-      name.value = `${type.value}-${num.value}`;
-   });
-   num.addEventListener("change",function(){
-      var name = document.getElementById("name");
+   var count = 1;
+   var names = []
+   window.addEventListener("load",function(){
 
-      name.value = `${type.value}-${num.value}`;
-   });
+      var name = document.getElementsByName("indicator");
+      console.log(name.length)
+      //console.log(name);
+      name.forEach(function(item){
+         console.log(item.value);
+         names.push(item.value?.split("||")[1]);
+         let input = document.getElementById(`f-${count}`);
+         input.addEventListener('change', (event) => {
+            let a = document.getElementById(`i-${input.id.split("-")[1]}`);
+            console.log(a.value)
+            let indicator_name = a.value?.split("||")[1];
+            let indicator_id = a.value?.split("||")[0];
+            a.value = `${indicator_id}||${indicator_name}||${input.value}`
+         });
+         count = count + 1;
+      });
+      console.log(names);
+   })
+   var type = document.getElementById("type");
+   var num = document.getElementById("num");
+   var count = 1;
+   function AddIndicator() {
+        var name = document.getElementById("name");
+        var newIndicator = document.createElement('div');
+        newIndicator.setAttribute("id",`${name.value}.${count}`)
+        newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${ name.value }.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%" ><input id="f-${count}" class="form-control" style="width:60%; margin-top:5px;">`;
+        names.push(`${ name.value }.${count}`);
+        document.getElementById('indicators').appendChild(newIndicator);
+        let input = document.getElementById(`f-${count}`)
+        input.addEventListener('change', (event) => {
+            let a = document.getElementById(`i-${input.id.split("-")[1]}`);
+            console.log(a.value)
+            let indicator_name = a.value?.split("||")[1];
+            let indicator_id = a.value?.split("||")[0];
+            a.value = `${indicator_id}||${indicator_name}||${input.value}`
+         });
+        count = count + 1;
+   }
+   function RemoveIndicator()
+   {
+      let indicator = names.pop()
+      count = count - 1;
+      document.getElementById(indicator).remove();
+   }
 </script>
 </div>
 {% endblock %}\

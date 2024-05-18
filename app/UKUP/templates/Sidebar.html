@@ -4,71 +4,81 @@
   <nav class="navbar navbar-expand-lg bg-body-tertiary" id="navbar">
   <div class="container-fluid">
     <div class="collapse navbar-collapse nav-button" id="navbarSupportedContent">
+      <form id="form" method="get">
+        <input name="year" id="year" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       <ul class="navbar-nav  mb-2 mb-lg-0 justify-content-end">
         <li class="nav-item dropdown nav-button">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            2024
+          <a class="nav-link dropdown-toggle"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{ current_year }}
           </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">2024</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">2023</a></li>
-            <li><a class="dropdown-item" href="#">2022</a></li>
+          <ul class="dropdown-menu year">
+            {% for year in years %}
+            <li><span style="cursor: pointer" class="dropdown-item">{{  year  }}</span></li>
+            {% endfor %}
           </ul>
         </li>
          <li class="nav-item" style="width:20px;">
         </li>
         <li class="nav-item dropdown nav-button">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Программные инженеры
+            {{ current_direction.name }}
           </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Программные инженеры</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Информационные Системы и Технологии</a></li>
-            <li><a class="dropdown-item" href="#">Прикладная Информатика и Математика</a></li>
+          <ul class="dropdown-menu direction">
+            {% for direction in directions %}
+            <li><span id="{{ direction.id }}" style="cursor: pointer" class="dropdown-item">{{  direction.name  }}</span></li>
+            {% endfor %}
           </ul>
         </li>
-        </li>
-         <li class="nav-item" style="width:20px;">
-        </li>
-        <li class="nav-item dropdown nav-button">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            {% if request.path == "/UKUP/discipline" %}
-            Модуль
-            </a>
-            <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Математические и естественнонаучные дисциплины</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Гуманитарные и социально-экономические дисциплины</a></li>
-            <li><a class="dropdown-item" href="#">Программное обеспечение</a></li>
-          </ul>
-            {% elif request.path == "/UKUP/competence" %}
-            Что-то другое
-          </a>
-            <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Надо будет</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Написать сюда</a></li>
-            <li><a class="dropdown-item" href="#">Что-нибудь связанное с компетенциями</a></li>
-          </ul>
-            {% else %}
-            Ты как сюда попал?
-          </a>
-            {% endif %}
-          </a>
-
         </li>
       </ul>
+        </form>
+       <form id="form2" method="get" action="/UKUP/{{ type }}/add">
+        <input name="year" id="year3" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction3" type="hidden" value="{{ current_direction.id }}">
+         <input type="submit" class="btn btn-secondary btn-lg" value="Добавить">
+       </form>
     </div>
+
   </div>
 </nav>
+<script>
+var listYears = document.querySelectorAll('.year li > span');
+var listDirections = document.querySelectorAll('.direction li > span');
 
+listYears.forEach((item, index) => {
+  item.addEventListener('click', (event) => {
+     let year = document.getElementById("year");
+     let form = document.getElementById("form");
+     year.value = item.innerHTML;
+     form.submit()
+  });
+})
+
+listDirections.forEach((item, index) => {
+  item.addEventListener('click', (event) => {
+     let direction = document.getElementById("direction");
+     let form = document.getElementById("form");
+     direction.value = item.id;
+     form.submit()
+  });
+})
+</script>
 </div>
 <div class="row">
     <div class="col-2 sidebar" style=" margin-right:5px;" id="sidebar">
-      <div class="side-button"><a href="/UKUP/discipline" class="btn btn-secondary btn-lg">Дисциплины</a></div>
-      <div class="side-button"><a href="/UKUP/competence" class="btn btn-secondary btn-lg">Компетенции</a></div>
+      <div style="margin-top:0px; margin-left:10px; width:80%">Инструменты</div>
+      <hr class="dropdown-divider" style="margin: 0 0 .5rem; width:90%">
+      <div class="side-button"><form action="/UKUP/discipline" method="get">
+        <input name="year" id="year1" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction1" type="hidden" value="{{ current_direction.id }}">
+      <input type="submit" class="btn btn-secondary btn-lg" value="Дисциплины">
+      </form></div>
+      <div class="side-button"><form action="/UKUP/competence" method="get">
+        <input name="year" id="year2" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
+      <input type="submit" class="btn btn-secondary btn-lg" value="Компетенции">
+      </form></div>
       <div style="margin-top:35px;width:80%">Отчёты</div>
       <hr class="dropdown-divider" style="margin: 0 0 .5rem; width:90%">
       <div class="side-button"><a href="/UKUP/test" class="btn btn-secondary btn-lg">Компетенции</a></div>

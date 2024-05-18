@@ -1,0 +1,40 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+    <span><b>{{  competence.name  }}</b> - {{  competence.formulation  }}</span>
+    <form method="post">
+        {{ form.csrf_token }}
+    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
+      <thead class="table-light">
+      <tr>
+          <th>Yes</th>
+          <th>Блок</th>
+          <th>Дисциплина</th>
+      </tr>
+      </thead>
+      <tbody>
+        {{  form.hidden(id="hidden", value=checked)  }}
+        {%  for discipline in disciplines  %}
+        <tr class="this">
+            <td>{{  form.connect(value=discipline.id, id="connect-{}".format(discipline.id))  }}</td>
+            <td>{{  discipline.block.name  }}</td>
+            <td>{{  discipline.name  }}</td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+        {{ form.submit(value="Спаси и сохрани") }}
+    </form>
+</div>
+<script>
+    var hidden = JSON.parse(document.getElementById("hidden").value);
+    console.log(hidden)
+    for (let discipline_id in hidden){
+        console.log(hidden[discipline_id]);
+        document.getElementById(`connect-${hidden[discipline_id]}`).checked = true
+    }
+</script>
+</div>
+{% endblock %}
