@@ -13,6 +13,7 @@
       {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num") }}
       {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
       {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type") }}
+      {{ form.direction(class="", style="width:80%; margin-top:5px", id="direction") }}
       {{ form.formulation(class="form-select", style="width:80%; margin-top:5px", id="module") }}
       {{ form.submit() }}
    </form>
@@ -76,6 +77,14 @@
       }
       name.value = `УК-${num.value}`
    })
+   document.querySelector('select[multiple]').addEventListener('mousedown', (e) => {
+  if (e.target.tagName === 'OPTION') {
+    e.preventDefault(); // Отменяем действие по умолчанию
+    const option = e.target;
+    option.selected = !option.selected; // Инвертируем выбранный элемент
+    e.target.parentNode.dispatchEvent(new Event('change')); // Генерируем событие изменения
+  }
+});
 </script>
 </div>
 {% endblock %}\

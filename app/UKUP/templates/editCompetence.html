@@ -10,9 +10,8 @@
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name", readonly=True) }}
-      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved", disabled=True) }}
-       {{ form.year_cancelled(class="form-select", style="width:80%; margin-top:5px", id="year_cancelled", disabled=True) }}
-      {{ form.type(class="form-select", style="width:80%; margin-top:5px", id="type", disabled=True)}}
+      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
+      {{ form.type(type="hidden", class="form-select", style="width:80%; margin-top:5px", id="type", disabled=True)}}
       {{ form.formulation(class="form-select", style="width:80%; margin-top:5px", id="module") }}
       <div id="indicators">
       <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:5px; border:solid 1px;">+</button>

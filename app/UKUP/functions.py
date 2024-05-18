@@ -3,8 +3,11 @@ from .forms import DisciplineForm, CompetenceForm
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence
 
 
-def get_not_available_comp_numbers_for_type(type: str):
-    competence_names = Competence.query.filter(Competence.type == type).with_entities(Competence.name).all()
+def get_not_available_comp_numbers_for_type(type: str, direction, year):
+    competence_names = Competence.query.filter_by(type= type) \
+        .filter_by(direction_id=direction) \
+        .filter_by(year_approved=year) \
+        .with_entities(Competence.name).all()
     numbers = []
     if competence_names is not None:
         for competence_name in competence_names:

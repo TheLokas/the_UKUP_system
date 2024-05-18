@@ -32,14 +32,15 @@ class CompetenceForm(FlaskForm):
     year_approved = SelectField()
     type = SelectField(choices=["УК", "ОПК", "ПК"])
     formulation = TextAreaField()
+    direction = SelectMultipleField()
     submit = SubmitField()
 
-    def addData(self, year):
+    def addYear(self, year):
         self.year_approved.choices = year
 
-    def addYearCancelled(self, year):
-        NoneArray = ["-"]
-        self.year_cancelled.choices = NoneArray + year
+    def addDirection(self, direction):
+        self.direction.choices = direction
+
 
 class CompetenceConnectForm(FlaskForm):
     connect = BooleanField()
