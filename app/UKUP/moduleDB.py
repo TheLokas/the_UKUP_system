@@ -245,7 +245,7 @@ def add_competence(competence_params):
 
 
 # Функция привязки дисциплины к компетенциям
-def update_discipline_competences(discipline_id, competence_ids):
+def update_discipline_competences(discipline_id, direction_id, competence_ids):
     discipline = db.session.get(Discipline, discipline_id)
     if discipline is None:
         raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
