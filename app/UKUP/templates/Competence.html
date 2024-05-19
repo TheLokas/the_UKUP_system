@@ -28,6 +28,13 @@
                         <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
                     </label>
                </form>
+                <form action="/UKUP/competence/delete/{{  competence.id  }}" method="post" style="margin:5px;">
+                    <input name="year" id="deleteYear{{competence.id}}" type="hidden" value="{{ current_year }}">
+                    <input name="direction" id="deleteDirection-{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                    <label class="edit-icon-delete">
+                        <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
+                    </label>
+                </form>
                <form action="/UKUP/competence/connect_discipline/{{ competence.id }}" method="get" style="margin:5px;">
                    <input name="year" id="connectYear{{competence.id}}" type="hidden" value="{{ current_year }}">
                    <input name="direction" id="connectDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">

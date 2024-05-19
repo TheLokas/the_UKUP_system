@@ -42,7 +42,7 @@ class CompetenceForm(FlaskForm):
         self.direction.choices = direction
 
 
-class CompetenceConnectForm(FlaskForm):
+class ConnectForm(FlaskForm):
     connect = BooleanField()
     hidden = HiddenField()
     submit = SubmitField()

@@ -5,6 +5,8 @@
     <span><b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }} </span>
     <form method="post">
         {{ form.csrf_token }}
+      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
     <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
       <thead class="table-light">
       <tr>
@@ -27,6 +29,11 @@
     </table>
         {{ form.submit(value="Подтвердить") }}
     </form>
+<div class="side-button"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
+      <input name="year" id="year2" type="hidden" value="{{ current_year }}">
+      <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
+    <input type="submit" class="btn btn-secondary btn-lg" value="Индикаторы">
+</form></div>
  </div>
  <script>
     var hidden = JSON.parse(document.getElementById("hidden").value);
@@ -37,4 +44,5 @@
     }
 </script>
  </div>
+
 {% endblock %}

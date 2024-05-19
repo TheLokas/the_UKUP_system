@@ -60,6 +60,7 @@ def get_disciplines(directionID, year):
         .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
         .filter(DirectionDiscipline.direction_id == directionID) \
         .filter(Discipline.year_approved == year) \
+        .order_by(Discipline.module_id) \
         .all()
     return disciplines
 
@@ -217,8 +218,7 @@ def get_competences(direction, year):
     competences = Competence.query \
         .filter_by(direction_id=direction) \
         .filter_by(year_approved=year) \
-        .all()
-
+        .order_by(Competence.type.desc()).order_by(Competence.name).all()
     return competences
 
 
@@ -245,12 +245,13 @@ def add_competence(competence_params):
 
 
 # Функция привязки дисциплины к компетенциям
-def update_discipline_competences(discipline_id, direction_id, competence_ids):
+def update_discipline_competences(discipline_id, competence_ids, direction_id):
     discipline = db.session.get(Discipline, discipline_id)
     if discipline is None:
         raise ValueError("Дисциплина с идентификатором {} не найдена".format(discipline_id))
-
-    existing_links = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).all()
+    existing_links = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).join(Competence) \
+        .filter(Competence.direction_id == direction_id) \
+        .all()
     existing_competence_ids = {link.competence_id for link in existing_links}
 
     # Ищем компетенции, которые нужно добавить
@@ -340,17 +341,25 @@ def delete_competence(id_competence):
     competence = Competence.query.get(id_competence)
     if competence is None:
         raise ValueError("Компетенция с идентификатором {} не найдена".format(id_competence))
+
+
     # Удаляем все связи с дисциплинами для этой компетенции
     CompetenceDiscipline.query.filter_by(competence_id=id_competence).delete()
 
     # Находим все связи с индикаторами для этой компетенции
     indicator_links = IndicatorDiscipline.query \
+        .join(Indicator, Indicator.id == IndicatorDiscipline.indicator_id) \
         .filter(Indicator.competence_id == id_competence) \
         .all()
 
-    # Удаляем все связи с индикаторами для этой компетенции
+    indicators = Indicator.query.filter(Indicator.competence_id == id_competence).all()
+
+    # Удаляем все связи с индикаторами и дисциплинами для этой компетенции
     for link in indicator_links:
         db.session.delete(link)
+
+    for indicator in indicators:
+        db.session.delete(indicator)
 
     # Удаляем саму компетенцию
     db.session.delete(competence)
@@ -493,7 +502,7 @@ def get_indicators_disciplines_links_by_competence_id(competence_id):
 
     # Получаем список связей дисциплин и индикаторов
     links = db.session.query(IndicatorDiscipline)\
-                      .join(IndicatorDiscipline.indicator)\
+                      .join(Indicator, IndicatorDiscipline.indicator_id == Indicator.id)\
                       .filter_by(competence_id=competence_id)\
                       .all()
 
@@ -563,19 +572,34 @@ def update_indicator_disciplines(indicator_discipline_pairs):
     db.session.commit()
 
 
+# Функция удаления связи дисциплины и компетенции по id связи
+def delete_connection(connection_id):
+    connection = CompetenceDiscipline.query.filter_by(id=connection_id).first()
+    if connection:
+        db.session.delete(connection)
+        db.session.commit()
+        return True
+    else:
+        return False
+
+
+# Функция получения компетенций, привязанных к дисциплине
+def get_connected_competences(discipline_id, direction_id, year):
+    connected_competences = Competence.query \
+        .join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id) \
+        .filter(CompetenceDiscipline.discipline_id == discipline_id) \
+        .filter(Competence.direction_id == direction_id) \
+        .filter(Competence.year_approved == year) \
+        .all()
+    return connected_competences
+
+
 # Функция получения всех компетенций по году
 def get_competences_by_year(year):
     return Competence.query \
         .filter(Competence.year_approved <= year) \
         .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
         .all()
-
-
-def get_connected_competences(discipline_id):
-    connected_competences = Competence.query.join(CompetenceDiscipline, CompetenceDiscipline.competence_id == Competence.id)\
-                                            .filter(CompetenceDiscipline.discipline_id == discipline_id)\
-                                            .all()
-    return connected_competences
 
 
 # Функция для генерации отчета матрицы

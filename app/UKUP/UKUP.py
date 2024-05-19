@@ -1,14 +1,17 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline, Indicator
-from .forms import DisciplineForm, CompetenceForm, CompetenceConnectForm
+from .forms import DisciplineForm, CompetenceForm, ConnectForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
 from .moduleDB import (get_disciplines, get_competences, add_discipline, add_competence,
                        get_modules, get_block, get_directions, get_departments, edit_discipline,
                        edit_competence, get_connected_competences, get_discipline_by_id,
                        get_competence_by_id, get_direction_by_id, get_disciplines_and_links_by_competence_id,
-                       update_discipline_competences, update_competence_disciplines)
+                       update_discipline_competences, update_competence_disciplines, get_indicators_for_discipline,
+                       get_connected_competences, update_discipline_indicators,
+                       get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
+                       delete_discipline, delete_competence)
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
@@ -250,7 +253,7 @@ def connect_disciplines_to_competence(competence_id):
     type = "competence"
     # Необходима функция
     competence = get_competence_by_id(competence_id)
-    form = CompetenceConnectForm()
+    form = ConnectForm()
     checked=[]
     # Необходима функция
     disciplines, check = get_disciplines_and_links_by_competence_id(competence_id)
@@ -279,17 +282,6 @@ def connect_disciplines_to_competence_post(competence_id):
 def connect_competences_to_discipline(discipline_id):
     type = "discipline"
 
-    # Необходима функция
-    discipline = get_discipline_by_id(discipline_id)
-
-
-    form = CompetenceConnectForm()
-    checked = []
-    check = get_connected_competences(discipline_id)
-    #check = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).all()
-    for ch in check:
-        checked.append(ch.id)
-
     years = generate_year(2019)[::-1]
     directions = get_directions()
     current_direction = directions[0]
@@ -297,6 +289,19 @@ def connect_competences_to_discipline(discipline_id):
     if request and {"year", "direction"} <= set(request.args):
         current_year = request.args["year"]
         current_direction = Direction.query.get(request.args["direction"])
+
+    # Необходима функция
+    discipline = get_discipline_by_id(discipline_id)
+
+
+    form = ConnectForm()
+    checked = []
+    check = get_connected_competences(discipline_id, current_direction.id, current_year)
+    #check = CompetenceDiscipline.query.filter_by(discipline_id=discipline_id).all()
+    for ch in check:
+        checked.append(ch.id)
+
+
 
     # Необходима функция
     competence = get_competences(current_direction.id, discipline.year_approved)
@@ -314,9 +319,144 @@ def connect_competences_to_discipline(discipline_id):
 @UKUP.route('/discipline/connect_competence/<discipline_id>', methods=['POST'])
 def connect_competences_to_discipline_db(discipline_id):
     checked = request.form.getlist("connect")
-    update_discipline_competences(discipline_id, checked)
+    update_discipline_competences(discipline_id, checked, request.form.get('current_direction'))
+   #print(request.form.get('year'))
 
     return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
+
+
+@UKUP.route("/discipline/<discipline_id>/indicators")
+def connect_indicators_discipline(discipline_id):
+    type = "discipline"
+    form = ConnectForm()
+
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    discipline = get_discipline_by_id(discipline_id)
+    competencies = get_connected_competences(discipline_id, current_direction.id, current_year)
+    competencies_id = []
+    for competence in competencies:
+        competencies_id.append(competence.id)
+    indicators, checked = get_indicators_for_discipline(discipline_id, competencies_id)
+    indicators.sort(key=lambda x: x.name)
+    #print(checked[0].indicator_id)
+    checked_id = []
+    for check in checked:
+        checked_id.append(check.indicator_id)
+
+    #print(competencies)
+    #print(indicators[0].name)
+
+
+    return render_template('IndicatorsDiscipline.html', type=type, form=form,
+                           competencies=competencies,
+                           discipline=discipline,
+                           indicators=indicators,
+                           years=years,
+                           directions=directions,
+                           current_direction=current_direction,
+                           current_year=current_year,
+                           checked=checked_id)
+
+
+@UKUP.route("/discipline/<discipline_id>/indicators", methods=['POST'])
+def connect_indicators_discipline_post(discipline_id):
+    indicators_id = []
+    indicators = request.form.getlist("connect")
+    for indicator in indicators:
+        indicators_id.append(int(indicator))
+
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    competencies = get_connected_competences(discipline_id, current_direction.id, current_year)
+    competencies_id = []
+    for competence in competencies:
+        competencies_id.append(competence.id)
+
+    update_discipline_indicators(discipline_id, competencies_id, indicators_id)
+    return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
+
+
+@UKUP.route("/competence/<competence_id>/indicators")
+def connect_indicators_competence(competence_id):
+    type = "competence"
+    form = ConnectForm()
+
+    competence = get_competence_by_id(competence_id)
+
+    indicators, disciplines, checked = get_indicators_disciplines_links_by_competence_id(competence_id)
+    indicators.sort(key=lambda x: x.name)
+
+    checked_id = []
+    for check in checked:
+        checked_id.append(f"{check.indicator_id}-{check.discipline_id}")
+
+    #print(competencies)
+    #print(indicators[0].name)
+
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+
+    return render_template('IndicatorsCompetence.html', type=type, form=form,
+                           competence=competence,
+                           disciplines=disciplines,
+                           indicators=indicators,
+                           years=years,
+                           directions=directions,
+                           current_direction=current_direction,
+                           current_year=current_year,
+                           checked=checked_id)
+
+
+@UKUP.route("/competence/<competence_id>/indicators", methods=['POST'])
+def connect_indicators_competence_post(competence_id):
+    #print(request.form)
+    indicators, he, hi = get_indicators_disciplines_links_by_competence_id(competence_id)
+    indicator_disciplines = []
+    #indicators = request.form.getlist("connect")
+    for indicator in indicators:
+        indicator_disciplines.append((indicator.id, request.form.getlist(str(indicator.id))))
+
+    #print(hehe)
+
+    update_indicator_disciplines(indicator_disciplines)
+
+    #competencies = get_connected_competences(competence_id)
+    #competencies_id = []
+    #for competence in competencies:
+    #    competencies_id.append(competence.id)
+
+    #update_discipline_indicators(discipline_id, competencies_id, indicators_id)
+    return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
+
+
+@UKUP.route("/discipline/delete/<discipline_id>", methods=['POST'])
+def delete_discipline_post(discipline_id):
+    delete_discipline(discipline_id)
+    return redirect(f"/UKUP/discipline?year={request.form.get('year')}&direction={request.form.get('direction')}")
+
+
+@UKUP.route("/competence/delete/<competence_id>", methods=['POST'])
+def delete_competence_post(competence_id):
+    delete_competence(competence_id)
+    return redirect(f"/UKUP/competence?year={request.form.get('year')}&direction={request.form.get('direction')}")
 
 
 @UKUP.route("/addData")
