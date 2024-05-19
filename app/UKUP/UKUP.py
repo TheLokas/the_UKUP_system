@@ -11,7 +11,7 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        update_discipline_competences, update_competence_disciplines, get_indicators_for_discipline,
                        get_connected_competences, update_discipline_indicators,
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
-                       delete_discipline, delete_competence)
+                       delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type)
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
@@ -28,7 +28,7 @@ def discipline():
         current_year = request.args["year"]
         current_direction = get_direction_by_id(request.args["direction"])
 
-    disciplines = get_disciplines(direction=current_direction.id, year=current_year)
+    disciplines = get_disciplines(directionID=current_direction.id, year=current_year)
     return render_template("Discipline.html", type=type, disciplines=disciplines, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
@@ -317,7 +317,7 @@ def connect_competences_to_discipline(discipline_id):
 
 
 @UKUP.route('/discipline/connect_competence/<discipline_id>', methods=['POST'])
-def connect_competences_to_discipline_db(discipline_id):
+def connect_competences_to_discipline_post(discipline_id):
     checked = request.form.getlist("connect")
     update_discipline_competences(discipline_id, checked, request.form.get('current_direction'))
    #print(request.form.get('year'))
@@ -458,6 +458,53 @@ def delete_competence_post(competence_id):
     delete_competence(competence_id)
     return redirect(f"/UKUP/competence?year={request.form.get('year')}&direction={request.form.get('direction')}")
 
+
+@UKUP.route("report/competence/<type>")
+def report_competence(type):
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    competences, indicators = get_competences_and_indicators_type(current_direction.id, current_year, type)
+    #competences, indicators = get_competences_and_indicators(current_direction.id, current_year)
+    #print(type)
+    print(competences)
+    print(indicators)
+    return render_template('reportCompetence.html', type=type,
+                           competences=competences,
+                           indicators=indicators,
+                           direction=current_direction,
+                           year=current_year)
+
+
+@UKUP.route("report/competence/all")
+def report_all_competence():
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    UK_competences, UK_indicators = get_competences_and_indicators_type(current_direction.id, current_year, "УК")
+    OPK_competences, OPK_indicators = get_competences_and_indicators_type(current_direction.id, current_year, "ОПК")
+    PK_competences, PK_indicators = get_competences_and_indicators_type(current_direction.id, current_year, "ПК")
+    type = ["Универсальная компетенция", "Общепрофессиональная компетенция", "Профессиональная компетенция"]
+    competences = [UK_competences, OPK_competences, PK_competences]
+    indicators = [UK_indicators, OPK_indicators, PK_indicators]
+    #competences, indicators = get_competences_and_indicators(current_direction.id, current_year)
+    #print(type)
+    #print(competences)
+    #print(indicators)
+    return render_template('reportAllCompetence.html', types=type,
+                           competences=competences, indicators=indicators,
+                           direction=current_direction,
+                           year=current_year)
 
 @UKUP.route("/addData")
 def addData():

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+table {
+  border: 1px solid #000;
+  box-sizing: border-box;
+  border-collapse: collapse;
+  margin: 50px auto;
+}
+
+tr {
+  border: 1px solid #000;
+  box-sizing: border-box;
+  height: 25%;
+}
+td {
+  border: 1px solid #000;
+  margin:5px;
+  padding:5px;
+}
+</style></head>
+<div style="text-align:center;">
+    <h3>Компетенции, формируемые при освоении программы бакалавриата по направлению подготовки</h3>
+    <span>{{ direction.code }} {{ direction.name }}, год приема - {{year}}</span>
+    <table style="width:100%; margin-top:5px">
+      <thead>
+      <tr>
+          <th>Код</th>
+          <th>Компетенция</th>
+          <th>Индикаторы компетенции</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% set ns = namespace(iCount = 0) %}
+      {%  for competence in competences  %}
+        <tr>
+            <td>{{  competence.name  }}</td>
+            <td style="text-align:left; vertical-align:top;">{{  competence.formulation }}</td>
+            <td style="text-align:left;">
+                {% for indicator in indicators[ns.iCount] %}
+                <div style="margin: 2px 2px 2px 0;"><b style="margin-right:5px;">{{ indicator.name }} </b> <span style="margin:5px;">{{ indicator.formulation }}</span><br></div>
+                {% endfor %}
+            </td>
+        </tr>
+            {%  set ns.iCount = ns.iCount + 1  %}
+      {%  endfor  %}
+      </tbody>
+   </table>
+</div>
+<body>
+
+</body>
+</html>

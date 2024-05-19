@@ -671,6 +671,7 @@ def get_disciplines_by_competence_id(competence_id):
 # Функция возвращает компетенции определенного типа
 def get_competences_and_indicators_type(direction_id, year, competence_type):
     direction = db.session.get(Direction, direction_id)
+    #print(type(competence_type))
     if direction is None:
         raise ValueError("Направление с идентификатором {} не найдено".format(direction_id))
     # Получаем все компетенции для данного направления, указанного года и типа
@@ -680,13 +681,20 @@ def get_competences_and_indicators_type(direction_id, year, competence_type):
         .filter_by(type=competence_type) \
         .all()
 
-    # Получаем все индикаторы для этих компетенций
-    indicator_ids = [indicator.id for competence in competences for indicator in competence.indicators]
-    indicators = Indicator.query \
-        .filter(Indicator.id.in_(indicator_ids)) \
-        .all()
 
-    return competences, indicators
+    # Получаем все индикаторы для этих компетенций
+    #indicator_ids = [indicator.id for competence in competences for indicator in competence.indicators]
+    #indicators = Indicator.query \
+    #    .filter(Indicator.id.in_(indicator_ids)) \
+    #    .all()
+    indicators_list = []
+    for competence in competences:
+        indicators = Indicator.query \
+            .filter_by(competence_id=competence.id) \
+            .all()
+        indicators_list.append(indicators)
+
+    return competences, indicators_list
 
 
 
