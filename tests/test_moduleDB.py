@@ -600,6 +600,6 @@ class TestClassesLinks():
         assert all([dis.id in new_connections[1][1] for dis in disciplines_for_second])  # noqa E501
 
 
-class TestClassReport():
+# class TestClassReport():
     # Проверка функции получения данных для генерации матрицы компетенций
-    def test_report_matrix(client, app)
+    # def test_report_matrix(client, app)

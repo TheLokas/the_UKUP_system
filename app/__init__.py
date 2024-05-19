@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_login import LoginManager
+# from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from app import UKUP
 from .models import db
@@ -9,7 +9,7 @@ from .models import db
 # db = SQLAlchemy()
 def create_app(database_uri=None):
     app = Flask(__name__)
-    # app.app_context().push()
+    app.app_context().push()
     app.config.from_object('config')
     if database_uri is not None:
         app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
@@ -19,8 +19,8 @@ def create_app(database_uri=None):
     # migrate.init_app(app, db)
     # from . import models
 
-    # with app.app_context():
-    #     db.create_all()
+    with app.app_context():
+        db.create_all()
     return app
 
 
