@@ -1,0 +1,32 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+    <span><b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }} </span>
+    <form method="post">
+        <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+        <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+    {% for competence in competencies %}
+        <div style="margin:15px;">
+        {{ competence.name }} - {{ competence.formulation }}
+
+        {% for indicator in indicators %}
+            {% if indicator.name.split(".")[0] == competence.name %}
+                <div style="margin:5px;">
+                    {% if indicator.id in checked %}
+                        {{ form.connect(id=indicator.id, value=indicator.id, checked=True) }} {{ indicator.name }} - {{ indicator.formulation }}
+                    {% else %}
+                        {{ form.connect(id=indicator.id, value=indicator.id) }} {{ indicator.name }} - {{ indicator.formulation }}
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+    {% endfor %}
+    {{ form.submit(value="Подтвердить") }}
+    </form>
+ <script>
+</script>
+ </div>
+
+{% endblock %}
