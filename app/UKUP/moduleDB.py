@@ -614,8 +614,8 @@ def report_matrix(directionID, year):
     disciplines = Discipline.query.filter(Discipline.id.in_(discipline_ids)).all()
 
 
-    # Получаем все компетенции этого года
-    competences = get_competences_by_year(year)
+    # Получаем все компетенции этого года и направления
+    competences = get_competences(directionID, year)
 
     # Получаем все связи дисциплин и компетенций за выбранный год
     discipline_competence_links = CompetenceDiscipline.query \
