@@ -72,6 +72,35 @@ class DirectionDiscipline(db.Model):
     direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
 
 
+class Competence(db.Model):
+    __tablename__ = 'competences'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    year_approved = db.Column(db.Integer)
+    type = db.Column(db.String(100))
+    formulation = db.Column(db.String(255))
+    direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
+
+    direction = db.relationship('Direction', backref='competences')
+
+
+class Indicator(db.Model):
+    __tablename__ = 'indicators'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    formulation = db.Column(db.String(255))
+    competence_id = db.Column(db.Integer, db.ForeignKey('competences.id'))
+
+    competence = db.relationship('Competence', backref='indicators')
+
+
+class DirectionDiscipline(db.Model):
+    __tablename__ = 'direction_disciplines'
+    id = db.Column(db.Integer, primary_key=True)
+    discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+    direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
+
+
 class CompetenceDiscipline(db.Model):
     __tablename__ = 'competence_disciplines'
     id = db.Column(db.Integer, primary_key=True)
