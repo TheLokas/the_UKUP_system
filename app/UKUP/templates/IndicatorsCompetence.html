@@ -1,0 +1,35 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
+    <div class="card">
+        <div class="card-body">
+            <b>{{  competence.name  }}</b> - {{  competence.formulation  }}
+        </div>
+      </div>
+      <div style="margin-top:15px;"></div>
+    <form method="post">
+        <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+        <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+        <div class="card" >
+            <ul class="list-group list-group-flush">
+                {% for indicator in indicators %}
+                <li class="list-group-item">
+                {{ indicator.name }} - {{ indicator.formulation }}
+                {% for discipline in disciplines %}
+            <div style="margin:5px;">
+                <input id="{{ indicator.id }}-{{ discipline.id }}" name="{{ indicator.id }}" type="checkbox" value="{{ discipline.id }}"
+                       {% if "{}-{}".format(indicator.id, discipline.id) in checked %} checked {% endif %} > {{ discipline.name }}
+            </div>
+            
+                {% endfor %}
+                </li>
+                {% endfor %}
+            </ul>
+          </div>
+    
+    {{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:10%;") }}
+    </form>
+ </div>
+
+{% endblock %}

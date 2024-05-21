@@ -3,8 +3,11 @@ from .forms import DisciplineForm, CompetenceForm
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence
 
 
-def get_not_available_comp_numbers_for_type(type: str):
-    competence_names = Competence.query.filter(Competence.type == type).with_entities(Competence.name).all()
+def get_not_available_comp_numbers_for_type(type: str, direction, year):
+    competence_names = Competence.query.filter_by(type= type) \
+        .filter_by(direction_id=direction) \
+        .filter_by(year_approved=year) \
+        .with_entities(Competence.name).all()
     numbers = []
     if competence_names is not None:
         for competence_name in competence_names:
@@ -24,7 +27,11 @@ def generate_year(year):
 
 def add_few_data():
     directions = [
-        Direction(name="Информационные системы и технологии", code="09.03.02")
+        Direction(name="Математика", code="01.03.01"),
+        Direction(name="Прикладная математика и информатика", code="01.03.02"),
+        Direction(name="Информационные системы и технологии", code="09.03.02"),
+        Direction(name="Программная инженерия", code="09.03.04"),
+        Direction(name="Педагогическое образование", code="44.03.05")
     ]
     modules = [
         Module(name="Гуманитарные и социально-экономические дисциплины"),

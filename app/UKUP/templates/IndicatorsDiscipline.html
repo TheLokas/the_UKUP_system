@@ -1,0 +1,45 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px; width: calc(100% - 500px);">
+    <div class="card">
+        <div class="card-body" >
+          <b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }}
+        </div>
+      </div>
+    <form method="post">
+        <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+        <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+    {% for competence in competencies %}
+        <div style="margin-top:15px;">
+        
+        <div class="card">
+            <div class="card-header">
+                {{ competence.name }} - {{ competence.formulation }}
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for indicator in indicators %}
+            {% if indicator.name.split(".")[0] == competence.name %}
+                <div style="margin:5px;">
+                    {% if indicator.id in checked %}
+                    <li class="list-group-item">{{ form.connect(id=indicator.id, value=indicator.id, checked=True) }} {{ indicator.name }} - {{ indicator.formulation }}</li>
+                        
+                    {% else %}
+                    <li class="list-group-item">{{ form.connect(id=indicator.id, value=indicator.id) }} {{ indicator.name }} - {{ indicator.formulation }}</li>
+                        
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+            </ul>
+          </div>
+        
+        </div>
+    {% endfor %}
+    {{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:10%;") }}
+    </form>
+ <script>
+</script>
+ </div>
+
+{% endblock %}

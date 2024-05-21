@@ -1,0 +1,53 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content"  style="flex:1; height:2000px;  padding:0px;  width: calc(100% - 500px);">
+  <div class="card">
+    <div class="card-body">
+      <b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }}
+    </div>
+  </div>
+    <form method="post">
+        
+      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+      {{ form.csrf_token }}
+    <table class="table table-bordered table-hover" style="width:100%; margin-top:15px;">
+      <thead class="table-light">
+      <tr>
+          <th style="max-width: 100px;">Отметить</th>
+          <th style="min-width: 100px; max-width: 200px;">Название</th>
+          <th style="min-width: 500px;">Формулировка</th>
+      </tr>
+      </thead>
+      <tbody>
+        {{  form.hidden(id="hidden", value=checked)  }}
+        {%  for competence in competences  %}
+        <tr class="this">
+            <td style="max-width: 100px;">{{  form.connect(value=competence.id, id="connect-{}".format(competence.id))  }}</td>
+            <td style="min-width: 100px; max-width: 200px;">{{  competence.name  }}</td>
+            <td style="min-width: 500px;">{{  competence.formulation  }}</td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+        {{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:10%;") }}
+    </form>
+<div class="side-button"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
+      <input name="year" id="year2" type="hidden" value="{{ current_year }}">
+      <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
+    <input type="submit" class="btn btn-secondary btn-lg" value="Индикаторы">
+</form></div>
+ </div>
+ <script>
+    var hidden = JSON.parse(document.getElementById("hidden").value);
+    console.log(hidden)
+    for (let competence_id in hidden){
+        console.log(hidden[competence_id]);
+        document.getElementById(`connect-${hidden[competence_id]}`).checked = true
+    }
+</script>
+ </div>
+
+{% endblock %}

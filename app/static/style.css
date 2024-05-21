@@ -1,0 +1,158 @@
+body {
+    background:#F9F9F9;
+    font-family: 'PT Serif', sans-serif;
+}
+.navbar {
+    background:#F9F9F9
+}
+
+.card {
+    background:#F9F9F9;
+}
+.side-button a {
+    color: #0000eb; /* Синий цвет текста для ссылки */
+    text-decoration: none; /* Убираем подчеркивание ссылки */
+    background: #F9F9F9;
+    border: none;
+    font-size: 16px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border: 1px solid #F9F9F9; /* Черная рамка при наведении */
+}
+
+.side-button a:hover {
+    color: red; /* Красный цвет текста при наведении */
+    background-color: #f4f4f4; /* Серый цвет фона при наведении */
+    border: 1px solid black; /* Черная рамка при наведении */
+}
+
+.sidebar {
+    display: block;
+}
+
+.btn {
+    color: #0000eb; /* Синий цвет текста для ссылки */
+    text-decoration: none; /* Убираем подчеркивание ссылки */
+    background: #F9F9F9;
+    border: none;
+    font-size: 16px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border: 1px solid #F9F9F9; /* Черная рамка при наведении */
+}
+
+.btn:hover {
+    color: red; /* Красный цвет текста при наведении */
+    background-color: #f4f4f4; /* Серый цвет фона при наведении */
+    border: 1px solid black; /* Черная рамка при наведении */
+}
+
+.nav-link {
+    color: #0000eb;
+}
+
+input[type="image"] {
+    height: 32px;
+    max-width: 100%;
+}
+
+th:nth-child(2), td:nth-child(2) {
+    flex-grow: 1;
+    flex-basis: 0;
+    word-break: break-word;
+    width: 1000px;
+}
+
+th:nth-child(5), td:nth-child(5) {
+    flex-shrink: 0;
+    width: max-content;
+    white-space: nowrap;
+}
+
+.edit-icon {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+}
+
+.edit-icon input[type="image"] {
+    position: relative;
+    z-index: 0;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    filter: brightness(1); /* Исходная яркость */
+    transition: filter 0.3s ease; /* Плавная анимация */
+}
+
+.edit-icon:hover input[type="image"] {
+    animation-play-state: paused; /* Остановка анимации при наведении */
+    filter: brightness(100%) saturate(10) hue-rotate(100deg); /* Красный цвет при наведении */
+}
+
+.edit-icon::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("{{ url_for('static', filename='bin 17.png') }}");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 0;
+}
+
+
+.edit-icon-delete {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+}
+
+.edit-icon-delete input[type="image"] {
+    position: relative;
+    z-index: 0;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    filter: brightness(1); /* Исходная яркость */
+    transition: filter 0.3s ease; /* Плавная анимация */
+}
+
+.edit-icon-delete:hover input[type="image"] {
+    animation-play-state: paused; /* Остановка анимации при наведении */
+    filter: brightness(100%) saturate(10) hue-rotate(100deg); /* Красный цвет при наведении */
+}
+
+.edit-icon-delete::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("{{ url_for('static', filename='bin 3.png') }}");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 0;
+}
+
+th:nth-child(2), td:nth-child(2) {
+    flex-grow: 1;
+    flex-basis: 0;
+    word-break: break-word;
+    width: 1000px;
+}
+
+th:nth-child(5), td:nth-child(5) {
+    flex-shrink: 0;
+    width: max-content;
+    white-space: nowrap;
+}
+
+.image-button {
+   width: 30px;
+}

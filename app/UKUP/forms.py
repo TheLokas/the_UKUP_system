@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, IntegerField, SelectField, EmailField, PasswordField, Field, SelectMultipleField, TextAreaField, SubmitField, HiddenField
+from wtforms import StringField, BooleanField, IntegerField, SelectField, EmailField, PasswordField, Field, SelectMultipleField, TextAreaField, SubmitField, HiddenField, widgets
 from wtforms.validators import input_required, data_required, ValidationError, Length
 
 
@@ -11,7 +11,7 @@ class DisciplineForm(FlaskForm):
     module = SelectField()
     department = SelectField()
     direction = SelectMultipleField()
-    submit = SubmitField()
+    submit = SubmitField("Добавить")
 
     def addData(self, year, block, module, department, direction):
         self.year_approved.choices = year
@@ -21,7 +21,8 @@ class DisciplineForm(FlaskForm):
         self.direction.choices = direction
 
     def addYearCancelled(self, year):
-        self.year_cancelled.choices = year
+        NoneArray = ["-"]
+        self.year_cancelled.choices = NoneArray + year
 
 
 class CompetenceForm(FlaskForm):
@@ -31,10 +32,17 @@ class CompetenceForm(FlaskForm):
     year_approved = SelectField()
     type = SelectField(choices=["УК", "ОПК", "ПК"])
     formulation = TextAreaField()
-    submit = SubmitField()
+    direction = SelectMultipleField()
+    submit = SubmitField("Добавить")
 
-    def addData(self, year):
+    def addYear(self, year):
         self.year_approved.choices = year
 
-    def addYearCancelled(self, year):
-        self.year_cancelled.choices = year
+    def addDirection(self, direction):
+        self.direction.choices = direction
+
+
+class ConnectForm(FlaskForm):
+    connect = BooleanField()
+    hidden = HiddenField()
+    submit = SubmitField()
