@@ -1,31 +1,32 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
+<div class="content"  style="flex:1; height:2000px;  padding:0px;  width: calc(100% - 500px);">
   <div class="card">
     <div class="card-body">
       <b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }}
     </div>
   </div>
     <form method="post">
-        {{ form.csrf_token }}
+        
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
-    <table class="table table-bordered table-hover" style="width:100%; margin-top:15px">
+      {{ form.csrf_token }}
+    <table class="table table-bordered table-hover" style="width:100%; margin-top:15px;">
       <thead class="table-light">
       <tr>
-          <th>Отметить</th>
-          <th>Название</th>
-          <th>Формулировка</th>
+          <th style="max-width: 100px;">Отметить</th>
+          <th style="min-width: 100px; max-width: 200px;">Название</th>
+          <th style="min-width: 500px;">Формулировка</th>
       </tr>
       </thead>
       <tbody>
         {{  form.hidden(id="hidden", value=checked)  }}
         {%  for competence in competences  %}
-        <tr>
-            <td>{{  form.connect(value=competence.id, id="connect-{}".format(competence.id))  }}</td>
-            <td>{{  competence.name  }}</td>
-            <td>{{  competence.formulation  }}</td>
+        <tr class="this">
+            <td style="max-width: 100px;">{{  form.connect(value=competence.id, id="connect-{}".format(competence.id))  }}</td>
+            <td style="min-width: 100px; max-width: 200px;">{{  competence.name  }}</td>
+            <td style="min-width: 500px;">{{  competence.formulation  }}</td>
         </tr>
         {% endfor %}
 

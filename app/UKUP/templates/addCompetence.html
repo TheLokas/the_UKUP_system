@@ -28,10 +28,10 @@
        <p style="margin-top:10px">Направление</p>
       {{ form.direction(class="", style="width:80%; height:100px", id="direction") }}
       <div class="form-floating">
-         {{ form.formulation(class="form-select", style="width:80%; margin-top:15px", id="module") }}
+         {{ form.formulation(class="form-control", style="width:80%; margin-top:15px", id="module") }}
          <label for="floatingTextarea2">Формулировка</label>
        </div>
-      {{ form.submit(class="btn", style="margin-top:20px; width:10%;") }}
+       {{ form.submit(value="Сохранить", class="btn", style="margin-top:20px; width:10%; display: block") }}
    </form>
 </div>
 <script>
