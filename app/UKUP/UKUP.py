@@ -11,7 +11,7 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        update_discipline_competences, update_competence_disciplines, get_indicators_for_discipline,
                        get_connected_competences, update_discipline_indicators,
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
-                       delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type)
+                       delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type, report_matrix)
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
@@ -505,6 +505,36 @@ def report_all_competence():
                            competences=competences, indicators=indicators,
                            direction=current_direction,
                            year=current_year)
+
+
+@UKUP.route("report/matrix")
+def report_matrix_page():
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+
+    disciplines, competences, discipline_competence_link = report_matrix(current_direction.id, current_year)
+    print(discipline_competence_link)
+
+    UK_competences, UK_indicators = get_competences_and_indicators_type(current_direction.id, current_year, "УК")
+    OPK_competences, OPK_indicators = get_competences_and_indicators_type(current_direction.id, current_year, "ОПК")
+    PK_competences, PK_indicators = get_competences_and_indicators_type(current_direction.id, current_year, "ПК")
+    type = ["Универсальная компетенция", "Общепрофессиональная компетенция", "Профессиональная компетенция"]
+    competences = [UK_competences, OPK_competences, PK_competences]
+
+    return render_template('reportMatrix.html', types=type,
+                           UK_competences=UK_competences,
+                           OPK_competences=OPK_competences,
+                           PK_competences=PK_competences,
+                           disciplines=disciplines,
+                           dis_comp_link=discipline_competence_link,
+                           direction=current_direction,
+                           year=current_year)
+
 
 @UKUP.route("/addData")
 def addData():

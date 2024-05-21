@@ -611,7 +611,7 @@ def report_matrix(directionID, year):
         .filter_by(direction_id=direction.id) \
         .all()
     discipline_ids = [dd.discipline_id for dd in direction_disciplines]
-    disciplines = Discipline.query.filter(Discipline.id.in_(discipline_ids)).all()
+    disciplines = Discipline.query.filter(Discipline.id.in_(discipline_ids)).order_by(Discipline.block_id).all()
 
 
     # Получаем все компетенции этого года и направления

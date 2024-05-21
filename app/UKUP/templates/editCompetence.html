@@ -30,13 +30,13 @@
          <label for="floatingTextarea2">Формулировка</label>
        </div>
       <div id="indicators">
-      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:15px; border:solid 1px;">+</button>
+      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:5px; border:solid 1px;">Добавить индикатор</button>
          {% for indicator in indicators %}
          <div id="{{ indicator.name }}"><input id="i-{{indicator.name.split('.')[1]}}" name="indicator" type="hidden" class="form-control" value="{{ indicator.id }}||{{ indicator.name }}||{{ indicator.formulation }}"><input type="text" class="form-control" readonly value="{{ indicator.name }}" style="width:20%" ><input id="f-{{indicator.name.split('.')[1]}}" class="form-control" style="width:60%; margin-top:5px;" value="{{  indicator.formulation  }}"></div>
          {% endfor %}
       </div>
-      <button class="btn" type="button" onclick="RemoveIndicator() "style="width:80%; margin-top:5px; border:solid 1px;">-</button>
-      {{ form.submit(value="Сохранить", class="btn btn-outline-secondary", style="margin-top:20px; width:10%; display:block;") }}
+      <button class="btn" type="button" onclick="RemoveIndicator() "style="width:80%; margin-top:5px; border:solid 1px;">Удалить индикатор</button>
+      {{ form.submit() }}
    </form>
 </div>
 <script>
@@ -87,8 +87,10 @@
    function RemoveIndicator()
    {
       let indicator = names.pop()
-      count = count - 1;
+      try{
       document.getElementById(indicator).remove();
+      count = count - 1;}
+      catch{}
    }
 </script>
 </div>

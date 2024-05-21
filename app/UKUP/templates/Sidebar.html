@@ -34,8 +34,8 @@
       </ul>
         </form>
        <form id="form2" method="get" action="/UKUP/{{ type }}/add">
-        <input name="year" id="year3" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction3" type="hidden" value="{{ current_direction.id }}">
+        <input name="year" id="year0" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
          <input type="submit" class="btn btn-secondary btn-lg" value="Добавить">
        </form>
     </div>
@@ -99,12 +99,16 @@ listDirections.forEach((item, index) => {
         <input name="direction" id="direction5" type="hidden" value="{{ current_direction.id }}">
         <input type="submit" class="btn btn-secondary btn-lg" value="ОПК">
       </form></div>
-            <div class="side-button"><form action="/UKUP/report/competence/ПК" method="get">
+      <div class="side-button"><form action="/UKUP/report/competence/ПК" method="get">
         <input name="year" id="year6" type="hidden" value="{{ current_year }}">
         <input name="direction" id="direction6" type="hidden" value="{{ current_direction.id }}">
         <input type="submit" class="btn btn-secondary btn-lg" value="ПК">
       </form></div>
-      <div class="side-button"><a href="/UKUP/test" class="btn btn-secondary btn-lg">Матрица</a></div>
+            <div class="side-button"><form action="/UKUP/report/matrix" method="get">
+        <input name="year" id="year7" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction7" type="hidden" value="{{ current_direction.id }}">
+        <input type="submit" class="btn btn-secondary btn-lg" value="Матрица">
+      </form></div>
     </div>
 
 {% endblock %}

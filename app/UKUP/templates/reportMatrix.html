@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+table {
+  border: 1px solid #000;
+  box-sizing: border-box;
+  border-collapse: collapse;
+  margin: 50px auto;
+}
+
+tr {
+  border: 1px solid #000;
+  box-sizing: border-box;
+  height: 25%;
+}
+td {
+  border: 1px solid #000;
+  margin:5px;
+  padding:5px;
+}
+th {
+  border: 1px solid #000;
+}
+</style></head>
+<div style="text-align:center;">
+    <h3>Матрица соответствия компетенций и составных частей, образовательной программы бакалавриата по направлению подготовки</h3>
+    <span>{{ direction.code }} {{ direction.name }}, год приема - {{year}}</span>
+    <table style="width:100%; margin-top:5px">
+      <thead>
+        <tr>
+          <th rowspan="2">Наименование дисциплин</th>
+          {% if UK_competences != [] %}
+            <th colspan="{{ UK_competences | length() }}"> Универсальная компетенция </th>
+          {% endif %}
+          {% if OPK_competences != [] %}
+            <th colspan="{{ OPK_competences | length() }}"> Общепрофессиональная компетенция </th>
+          {% endif %}
+          {% if PK_competences != [] %}
+            <th colspan="{{ PK_competences | length() }}"> Профессиональная компетенция </th>
+          {% endif %}
+        </tr>
+        <tr>
+            {% for competence in UK_competences %}
+                <th>{{ competence.name }}</th>
+            {% endfor %}
+            {% for competence in OPK_competences %}
+                <th>{{ competence.name }}</th>
+            {% endfor %}
+            {% for competence in PK_competences %}
+                <th>{{ competence.name }}</th>
+            {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+      {% for discipline in disciplines %}
+      {% set links = dis_comp_link | selectattr("discipline_id", "equalto" ,discipline.id) | map(attribute='competence_id') | list %}
+        <tr>
+            <td>{{ discipline.name }}</td>
+            {% if UK_competences != [] %}
+            {% for competence in UK_competences %}
+                {% if competence.id in links %}<td>+</td>{% else %} <td></td> {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if OPK_competences != [] %}
+            {% for competence in OPK_competences %}
+                {% if competence.id in links %}<td>+</td>{% else %} <td></td> {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if PK_competences != [] %}
+            {% for competence in PK_competences %}
+                {% if competence.id in links %}<td>+</td>{% else %} <td></td> {% endif %}
+            {% endfor %}
+            {% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+   </table>
+</div>
+<body>
+
+</body>
+</html>
