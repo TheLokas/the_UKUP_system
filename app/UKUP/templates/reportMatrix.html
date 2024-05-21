@@ -6,6 +6,8 @@ table {
   box-sizing: border-box;
   border-collapse: collapse;
   margin: 50px auto;
+  width: 100%;
+  max-width: 100%;
 }
 
 tr {
@@ -21,6 +23,23 @@ td {
 th {
   border: 1px solid #000;
 }
+        @media print {
+            @page {
+                margin: 20px;
+                size: A4 landscape; /* Изменение ориентации страницы на альбомную */
+            }
+            body {
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+            }
+            .buttons {
+                display: none; /* Скрыть кнопки при печати */
+            }
+            table {
+                width: 100vw; /* Ширина таблицы для печати */
+                max-width: 100vw; /* Максимальная ширина таблицы для печати */
+            }
+        }
 </style></head>
 <div style="text-align:center;">
     <h3>Матрица соответствия компетенций и составных частей, образовательной программы бакалавриата по направлению подготовки</h3>
@@ -75,6 +94,10 @@ th {
       {% endfor %}
       </tbody>
    </table>
+    <div class="buttons" style="text-align:center; margin-top: 20px;">
+        <button onclick="window.print()">Сохранить</button>
+    </div>
+
 </div>
 <body>
 
