@@ -1,8 +1,12 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;">
-    <span><b>{{  competence.name  }}</b> - {{  competence.formulation  }}</span>
+<div class="content"  style="flex:1; height:2000px;  padding:0px;   width: calc(100% - 500px);">
+    <div class="card">
+        <div class="card-body">
+            <b>{{  competence.name  }}</b> - {{  competence.formulation  }}
+        </div>
+      </div>
     <form method="post">
         <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
         <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
@@ -10,8 +14,8 @@
     <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
       <thead class="table-light">
       <tr>
-          <th>Yes</th>
-          <th>Блок</th>
+          <th>Отметить</th>
+          <th style="width:20%;">Блок</th>
           <th>Дисциплина</th>
       </tr>
       </thead>
@@ -20,14 +24,14 @@
         {%  for discipline in disciplines  %}
         <tr class="this">
             <td>{{  form.connect(value=discipline.id, id="connect-{}".format(discipline.id))  }}</td>
-            <td>{{  discipline.block.name  }}</td>
+            <td style="width:20%;">{{  discipline.block.name  }}</td>
             <td>{{  discipline.name  }}</td>
         </tr>
         {% endfor %}
 
       </tbody>
     </table>
-        {{ form.submit(value="Спаси и сохрани") }}
+    {{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:10%;") }}
     </form>
     <div class="side-button"><form action="/UKUP/competence/{{ competence.id }}/indicators" method="get">
       <input name="year" id="year2" type="hidden" value="{{ current_year }}">

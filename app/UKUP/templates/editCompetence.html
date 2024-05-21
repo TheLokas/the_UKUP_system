@@ -1,7 +1,7 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;">
+<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
    <form action="" method="post" style="width:100%; margin-top:5px">
       <div>Добавьте свою собственную компетенцию на нашем сайте</div>
       <input type="hidden" id="UK" value="{{ UK }}">
@@ -9,18 +9,34 @@
       <input type="hidden" id="PK" value="{{ PK }}">
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
-      {{ form.name(class="form-control", style="width:80%; margin-top:5px", id="name", readonly=True) }}
-      {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
-      {{ form.type(type="hidden", class="form-select", style="width:80%; margin-top:5px", id="type", disabled=True)}}
-      {{ form.formulation(class="form-select", style="width:80%; margin-top:5px", id="module") }}
+      <div class="form-floating mb-3">
+         {{ form.name(class="form-control", style="width:80%; margin-top:15px", id="name", readonly=True) }}
+         <label for="floatingInput">Название</label>
+       </div>
+       <div class="form-floating mb-3">
+         {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num") }}
+         <label for="floatingInput">Номер</label>
+       </div>
+       <div class="form-floating">
+         {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
+         <label for="floatingSelect">Год</label>
+       </div>
+       <div class="form-floating">
+         {{ form.type(class="form-select", style="width:80%; margin-top:15px", id="type") }}
+         <label for="floatingSelect">Тип</label>
+       </div>
+      <div class="form-floating">
+         {{ form.formulation(class="form-select", style="width:80%; margin-top:15px", id="module") }}
+         <label for="floatingTextarea2">Формулировка</label>
+       </div>
       <div id="indicators">
-      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:5px; border:solid 1px;">+</button>
+      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:15px; border:solid 1px;">+</button>
          {% for indicator in indicators %}
          <div id="{{ indicator.name }}"><input id="i-{{indicator.name.split('.')[1]}}" name="indicator" type="hidden" class="form-control" value="{{ indicator.id }}||{{ indicator.name }}||{{ indicator.formulation }}"><input type="text" class="form-control" readonly value="{{ indicator.name }}" style="width:20%" ><input id="f-{{indicator.name.split('.')[1]}}" class="form-control" style="width:60%; margin-top:5px;" value="{{  indicator.formulation  }}"></div>
          {% endfor %}
       </div>
       <button class="btn" type="button" onclick="RemoveIndicator() "style="width:80%; margin-top:5px; border:solid 1px;">-</button>
-      {{ form.submit() }}
+      {{ form.submit(value="Сохранить", class="btn btn-outline-secondary", style="margin-top:20px; width:10%; display:block;") }}
    </form>
 </div>
 <script>
@@ -55,7 +71,7 @@
         var name = document.getElementById("name");
         var newIndicator = document.createElement('div');
         newIndicator.setAttribute("id",`${name.value}.${count}`)
-        newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${ name.value }.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%" ><input id="f-${count}" class="form-control" style="width:60%; margin-top:5px;">`;
+        newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${ name.value }.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%; margin-top:10px" ><input id="f-${count}" class="form-control" style="width:60%; margin-top:5px;">`;
         names.push(`${ name.value }.${count}`);
         document.getElementById('indicators').appendChild(newIndicator);
         let input = document.getElementById(`f-${count}`)

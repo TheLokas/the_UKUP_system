@@ -1,13 +1,17 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;">
-    <span><b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }} </span>
+<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
+  <div class="card">
+    <div class="card-body">
+      <b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }}
+    </div>
+  </div>
     <form method="post">
         {{ form.csrf_token }}
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
-    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
+    <table class="table table-bordered table-hover" style="width:100%; margin-top:15px">
       <thead class="table-light">
       <tr>
           <th>Отметить</th>
@@ -27,7 +31,7 @@
 
       </tbody>
     </table>
-        {{ form.submit(value="Подтвердить") }}
+        {{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:10%;") }}
     </form>
 <div class="side-button"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
       <input name="year" id="year2" type="hidden" value="{{ current_year }}">

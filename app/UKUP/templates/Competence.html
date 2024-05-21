@@ -1,7 +1,7 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:1000px;  padding:0px;">
+<div class="content"  style="flex:1; height:1000px;  padding:0px;  width: calc(100% - 500px);">
    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
       <thead class="table-light">
       <tr>
@@ -24,14 +24,14 @@
                <form action="/UKUP/competence/{{ competence.id }}" method="get" style="margin:5px;">
                    <input name="year" id="editYear{{competence.id}}" type="hidden" value="{{ current_year }}">
                    <input name="direction" id="editDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
-                   <label class="edit-icon">
+                   <label class="edit-icon image-button">
                         <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
                     </label>
                </form>
                 <form action="/UKUP/competence/delete/{{  competence.id  }}" method="post" style="margin:5px;">
                     <input name="year" id="deleteYear{{competence.id}}" type="hidden" value="{{ current_year }}">
                     <input name="direction" id="deleteDirection-{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
-                    <label class="edit-icon-delete">
+                    <label class="edit-icon-delete image-button">
                         <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
                     </label>
                 </form>
