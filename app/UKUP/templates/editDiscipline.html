@@ -1,7 +1,7 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
+<div class="content">
    <form action="" method="post" style="width:100%; margin-top:5px">
       <div>Отредактируй свою собственную дисциплину на нашем сайте, и в будущем её будет кто-то изучать</div>
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
@@ -28,6 +28,10 @@
          {{ form.department(class="form-select", style="width:80%; margin-top:15px", id="department") }}
          <label for="floatingSelect">Кафедра</label>
        </div>
+       <div class="form-floating">
+        {{ form.required(class="form-select", style="width:80%; margin-top:15px", id="required") }}
+        <label for="floatingSelect">Необходимая дисциплина</label>
+      </div>
       {{ form.submit(value="Сохранить", class="btn", style="margin-top:20px; width:10%;") }}
    </form>
 </div>

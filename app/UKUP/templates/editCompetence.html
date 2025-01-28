@@ -1,9 +1,8 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
+<div class="content" >
    <form action="" method="post" style="width:100%; margin-top:5px">
-      <div>Добавьте свою собственную компетенцию на нашем сайте</div>
       <input type="hidden" id="UK" value="{{ UK }}">
       <input type="hidden" id="OPK" value="{{ OPK }}">
       <input type="hidden" id="PK" value="{{ PK }}">
@@ -14,7 +13,7 @@
          <label for="floatingInput">Название</label>
        </div>
        <div class="form-floating mb-3">
-         {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num") }}
+         {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num", disabled=true) }}
          <label for="floatingInput">Номер</label>
        </div>
        <div class="form-floating">
@@ -22,12 +21,16 @@
          <label for="floatingSelect">Год</label>
        </div>
        <div class="form-floating">
-         {{ form.type(class="form-select", style="width:80%; margin-top:15px", id="type") }}
+         {{ form.type(class="form-select", style="width:80%; margin-top:15px", id="type", disabled=true) }}
          <label for="floatingSelect">Тип</label>
        </div>
       <div class="form-floating">
-         {{ form.formulation(class="form-select", style="width:80%; margin-top:15px", id="formulation") }}
+         {{ form.formulation(class="form-control", style="width:80%; margin-top:15px; height:85px;", id="formulation") }}
          <label for="floatingTextarea2">Формулировка</label>
+       </div>
+       <div class="form-floating" id="source_label" style="display:none;">
+         {{ form.source(class="form-control", style="width:80%; margin-top:15px; height:85px;", id="source") }}
+         <label for="floatingTextarea2">Источник</label>
        </div>
       <div id="indicators">
       <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:10px; border:solid 1px;">Добавить индикатор</button>
@@ -45,7 +48,10 @@
    var count = 1;
    var names = []
    window.addEventListener("load",function(){
-
+      if (type.value=="ПК"){
+      var source = document.getElementById('source_label');
+      source.style.display = 'block';}
+      
       var name = document.getElementsByName("indicator");
       console.log(name.length)
       //console.log(name);

@@ -1,11 +1,12 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;  width: calc(100% - 500px);">
+<div class="content">
   <div class="card">
     <div class="card-body">
       <b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }}
     </div>
+    <div style="display:none;" id="block_id">{{  discipline.block_id }}</div>
   </div>
     <form method="post">
         
@@ -23,7 +24,7 @@
       <tbody>
         {{  form.hidden(id="hidden", value=checked)  }}
         {%  for competence in competences  %}
-        <tr class="this">
+        <tr class="this" name="competence">
             <td style="max-width: 100px;">{{  form.connect(value=competence.id, id="connect-{}".format(competence.id))  }}</td>
             <td style="min-width: 100px; max-width: 200px;">{{  competence.name  }}</td>
             <td style="min-width: 500px;">{{  competence.formulation  }}</td>
@@ -32,9 +33,9 @@
 
       </tbody>
     </table>
-        {{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:10%;") }}
+        {{ form.submit(value="Подтвердить", class="btn mainbtn", style="margin-top:5px;") }}
     </form>
-<div class="side-button"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
+<div class="side-button mainbtn"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
       <input name="year" id="year2" type="hidden" value="{{ current_year }}">
       <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
     <input type="submit" class="btn btn-secondary btn-lg" value="Индикаторы">
@@ -42,11 +43,45 @@
  </div>
  <script>
     var hidden = JSON.parse(document.getElementById("hidden").value);
-    console.log(hidden)
+    //console.log(hidden)
     for (let competence_id in hidden){
-        console.log(hidden[competence_id]);
+        //console.log(hidden[competence_id]);
         document.getElementById(`connect-${hidden[competence_id]}`).checked = true
     }
+
+    window.addEventListener("load",function(){
+      var err_count = 0;
+      var name = document.getElementsByName("competence");
+      var block_id = Number(document.getElementById("block_id").innerHTML);
+      
+      name.forEach(function(item){
+         var checkbox = item.querySelector("input[type='checkbox']");
+         var type = checkbox.parentElement.nextElementSibling;
+         type = type.innerHTML.split("-")[0]
+         
+         if(type=="ПК" && [2, 3, 5].includes(block_id))
+          {
+            if(checkbox.checked)
+            { item.style.backgroundColor = "rgba(255,0,0,0.4)";
+              err_count = err_count + 1}
+            else
+            { item.style.backgroundColor = ""
+              err_count = err_count - 1}
+          }
+         checkbox.addEventListener('change', (event) => {
+          if(type=="ПК" && [2, 3, 5].includes(block_id))
+          {
+            if(checkbox.checked)
+            { item.style.backgroundColor = "rgba(255,0,0,0.4)";
+              err_count = err_count + 1}
+            else
+            { item.style.backgroundColor = ""
+              err_count = err_count - 1}
+          }
+         });
+
+      });
+   })
 </script>
  </div>
 

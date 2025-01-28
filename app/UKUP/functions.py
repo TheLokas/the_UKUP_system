@@ -44,12 +44,11 @@ def add_few_data():
         ]
     blocks = [
         Block(name="Б1.Б"),
-        Block(name="Б1.В.ВД"),
         Block(name="Б1.В.ОД"),
-        Block(name="Б2"),
-        Block(name="Б2.В"),
+        Block(name="Б1.В.ВД"),
         Block(name="Б2.Б"),
-        Block(name="Б3.Б"),
+        Block(name="Б2.В"),
+        Block(name="Б3"),
         ]
     departments = [
         Department(name="ИМО"),

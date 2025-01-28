@@ -1,6 +1,6 @@
 {% extends "Header.html" %}
 {% block content %}
-<div class="row nav  min-width:700px;">
+<div class="row nav"  style="min-width:700px; margin-left: auto;">
   <nav class="navbar navbar-expand-lg bg-body-tertiary" id="navbar">
   <div class="container-fluid">
     <div class="navbar-collapse nav-button" id="navbarSupportedContent">
@@ -65,8 +65,9 @@ listDirections.forEach((item, index) => {
 })
 </script>
 </div>
-<div class="row">
-    <div class="col-2 sidebar" style=" margin-right:5px; min-width:200px;" id="sidebar">
+<div class="row" style="display:flex; justify-content: center;">
+  <!-- margin-right:5px; -->
+    <div class="col-2 sidebar" style="  min-width:200px;" id="sidebar">
       <div style="margin-top:0px; margin-left:10px; width:80%">Инструменты</div>
       <hr class="dropdown-divider" style="margin: 0 0 .5rem; width:90%">
       <div class="side-button"><form action="/UKUP/discipline" method="get">

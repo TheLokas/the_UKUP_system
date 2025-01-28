@@ -1,4 +1,4 @@
-from app.models import db, Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline, Indicator, IndicatorDiscipline
+from app.models import db, Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline, Indicator, IndicatorDiscipline, RequiredDiscipline
 from sqlalchemy import and_
 
 
@@ -65,6 +65,39 @@ def get_disciplines(directionID, year):
     return disciplines
 
 
+# Возвращает список необходимых(базовых) дисциплин.
+def get_required_disciplines(directionID, year, current_discipline_id):
+    direction = db.session.get(Direction, directionID)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(directionID))
+    # Запрос дисциплин с учетом направления и года
+    disciplines = Discipline.query \
+        .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
+        .filter(DirectionDiscipline.direction_id == directionID) \
+        .filter(Discipline.year_approved == year) \
+        .filter(Discipline.id != current_discipline_id) \
+        .order_by(Discipline.module_id) \
+        .all()
+    return disciplines
+
+
+# Возвращает необходимую(базовую) дисциплину для дисциплины по её идентификатору.
+def get_required_discipline(discipline_id): 
+    discipline = Discipline.query \
+        .join(RequiredDiscipline, Discipline.id == RequiredDiscipline.required_discipline_id) \
+        .filter(RequiredDiscipline.dependent_discipline_id == discipline_id) \
+        .first()
+    return discipline
+
+# Возвращает список зависимых дисциплин для дисциплины по её идентификатору.
+def get_dependent_disciplines(discipline_id): 
+    disciplines = Discipline.query \
+        .join(RequiredDiscipline, Discipline.id == RequiredDiscipline.dependent_discipline_id) \
+        .filter(RequiredDiscipline.required_discipline_id == discipline_id) \
+        .all()
+    return disciplines
+
+
 # Функция удаления дисциплины
 def delete_discipline(id_discipline):
     # Находим дисциплину по ее идентификатору
@@ -82,6 +115,12 @@ def delete_discipline(id_discipline):
     # Удаляем связанные записи в таблице competence_disciplines
     CompetenceDiscipline.query.filter_by(discipline_id=id_discipline).delete()
 
+    # Удаляем связанные необходимые дисциплины
+    RequiredDiscipline.query.filter_by(dependent_discipline_id=id_discipline).delete()
+
+    # Удаляем связанные зависимые дисциплины
+    RequiredDiscipline.query.filter_by(required_discipline_id=id_discipline).delete()
+
     # Удаляем дисциплину
     db.session.delete(discipline)
 
@@ -90,7 +129,7 @@ def delete_discipline(id_discipline):
 
 
 # Функция для добавления новой дисциплины в базу данных
-def add_discipline(discipline_params, directions_list):
+def add_discipline(discipline_params, directions_list, required_discipline_id):
     new_discipline = Discipline(name=discipline_params[0],
                                 year_approved=discipline_params[1],
                                 block_id=discipline_params[2],
@@ -108,8 +147,14 @@ def add_discipline(discipline_params, directions_list):
         db.session.add(direction_to_discipline)
     db.session.commit()
 
+    required_discipline = RequiredDiscipline(required_discipline_id=required_discipline_id,
+                                              dependent_discipline_id=new_discipline.id)
+    db.session.add(required_discipline)
+    db.session.commit()
 
-def edit_discipline(id_discipline, discipline_params, directions_list):
+
+
+def edit_discipline(id_discipline, discipline_params, directions_list, required_discipline_id):
     # Находим дисциплину по ее идентификатору
     discipline = db.session.get(Discipline, id_discipline)
     if discipline is None:
@@ -122,7 +167,7 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
         discipline.module_id = discipline_params[3]
         discipline.department_id = discipline_params[4]
 
-        if discipline.year_approved == discipline_params[1]:
+        if discipline.year_approved == int(discipline_params[1]):
             # Находим текущие связанные направления дисциплины
             existing_directions = [direction.id for direction in discipline.directions]
 
@@ -168,7 +213,29 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
                         indicator_id=indicator.id, discipline_id=id_discipline
                     ).delete()
 
-        if discipline.year_approved != discipline_params[1]:
+            required_id = -1
+            required_discipline = get_required_discipline(id_discipline)
+            if not required_discipline is None:
+                required_id = required_discipline.id
+            required_discipline_id = int(required_discipline_id)
+            if required_id != required_discipline_id:
+                print(type(required_discipline_id))
+                if required_discipline_id == -1:
+                    # Удаляем связанные необходимые дисциплины
+                    RequiredDiscipline.query.filter_by(dependent_discipline_id=id_discipline).delete()
+                else:
+                    # Ищем необходимую дисциплину
+                    required = RequiredDiscipline.query.filter_by(dependent_discipline_id=id_discipline).first()
+                    # Если она отсутствует, то создаем
+                    if required is None:
+                        required = RequiredDiscipline()
+                        required.dependent_discipline_id = id_discipline
+                    required.required_discipline_id = required_discipline_id
+                    db.session.add(required)
+
+        if discipline.year_approved != int(discipline_params[1]):
+            print(discipline.year_approved)
+            print(discipline_params[1])
 
             removed_directions = [direction.id for direction in discipline.directions]
 
@@ -191,6 +258,12 @@ def edit_discipline(id_discipline, discipline_params, directions_list):
                     db.session.query(IndicatorDiscipline).filter_by(
                         indicator_id=indicator.id, discipline_id=id_discipline
                     ).delete()
+
+            # Удаляем связанные необходимые дисциплины
+            RequiredDiscipline.query.filter_by(dependent_discipline_id=id_discipline).delete()
+
+            # Удаляем связанные зависимые дисциплины
+            RequiredDiscipline.query.filter_by(required_discipline_id=id_discipline).delete()
 
             # Удаляем все записи в таблице direction_disciplines для данной дисциплины
             db.session.query(DirectionDiscipline).filter_by(discipline_id=id_discipline).delete()
@@ -225,8 +298,10 @@ def get_competences(direction, year):
 # Функция для добавления новой компетенции в базу данных
 def add_competence(competence_params):
     # Разделяем параметры компетенции
-    name, year_approved, competence_type, formulation, direction_ids = competence_params
+    name, year_approved, competence_type, formulation, direction_ids, source = competence_params
 
+    if source.strip() == "":
+        source = None
     # Создаем компетенцию для каждого направления
     for direction_id in direction_ids:
         direction_n = db.session.get(Direction, direction_id)
@@ -236,7 +311,8 @@ def add_competence(competence_params):
                                     year_approved=year_approved,
                                     type=competence_type,
                                     formulation=formulation,
-                                    direction_id=direction_id)
+                                    direction_id=direction_id,
+                                    source=source)
         # Добавляем компетенцию в базу данных
         db.session.add(new_competence)
 
@@ -379,6 +455,9 @@ def edit_competence(id_competence, competence_params, indicators_list):
         competence.name = competence_params[0]
         #competence.type = competence_params[1]
         competence.formulation = competence_params[2]
+        if competence_params[4].strip() == "":
+            competence_params[4] = None
+        competence.source = competence_params[4]
 
         # Список индикаторов, которые уже связаны с этой компетенцией
         existing_indicator_ids = {indicator.id for indicator in competence.indicators}
@@ -439,6 +518,9 @@ def edit_competence(id_competence, competence_params, indicators_list):
             indicator_id = indicator_params[0]
             indicator_name = indicator_params[1]
             indicator_formulation = indicator_params[2]
+            if competence_params[4].strip() == "":
+                competence_params[4] = None
+            competence.source = competence_params[4]
 
             # Если передан None в качестве идентификатора, создаем новый индикатор
             if indicator_id == 'None':

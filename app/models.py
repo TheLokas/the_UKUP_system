@@ -25,6 +25,12 @@ class Discipline(db.Model):
     department = db.relationship('Department', backref='disciplines')
     directions = db.relationship('Direction', secondary='direction_disciplines', backref=db.backref('disciplines', lazy='dynamic'))
 
+class RequiredDiscipline(db.Model):
+    __tablename__ = 'required_disciplines'
+    id = db.Column(db.Integer, primary_key=True)
+    required_discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+    dependent_discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+
 class Department(db.Model):
     __tablename__ = 'departments'
     id = db.Column(db.Integer, primary_key=True)
@@ -50,6 +56,7 @@ class Competence(db.Model):
     year_approved = db.Column(db.Integer)
     type = db.Column(db.String(100))
     formulation = db.Column(db.String(255))
+    source = db.Column(db.String(255))
     direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
 
     direction = db.relationship('Direction', backref='competences')

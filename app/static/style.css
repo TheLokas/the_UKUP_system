@@ -8,16 +8,35 @@ body {
 
 .card {
     background:#F9F9F9;
+    max-width: 1000px;
 }
+
+.main_content {
+    display: flex;
+    justify-content: space-between;
+}
+
+.add {
+    width:50%;
+    margin-left: 10%;
+}
+
+
+.mainbtn {
+    margin: 0px;
+    margin-top: 15px;
+    max-width: 1000px;
+}
+
 .side-button a {
     color: #0000eb; /* Синий цвет текста для ссылки */
     text-decoration: none; /* Убираем подчеркивание ссылки */
     background: #F9F9F9;
-    border: none;
+    /*border: none;*/
     font-size: 16px;
     padding-top: 4px;
     padding-bottom: 4px;
-    border: 1px solid #F9F9F9; /* Черная рамка при наведении */
+    border: 1px solid black; /* Черная рамка при наведении */
 }
 
 .side-button a:hover {
@@ -28,17 +47,31 @@ body {
 
 .sidebar {
     display: block;
+
+}
+
+.table {
+    max-width: 1000px;
+}
+
+.content{
+    height:1000px;  
+    padding:0px;    
+    max-width: calc(100% - 500px);
+    /*max-width: 1000px;*/
+    min-width: 300px;
 }
 
 .btn {
     color: #0000eb; /* Синий цвет текста для ссылки */
     text-decoration: none; /* Убираем подчеркивание ссылки */
     background: #F9F9F9;
-    border: none;
+    /*border: none;*/
     font-size: 16px;
     padding-top: 4px;
     padding-bottom: 4px;
-    border: 1px solid #F9F9F9; /* Черная рамка при наведении */
+    border: 1px solid black; /* Черная рамка при наведении */
+
 }
 
 .btn:hover {

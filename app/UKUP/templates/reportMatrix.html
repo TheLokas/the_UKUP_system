@@ -23,24 +23,25 @@ td {
 th {
   border: 1px solid #000;
 }
-        @media print {
-            @page {
-                margin: 20px;
-                size: A4 landscape; /* Изменение ориентации страницы на альбомную */
-            }
-            body {
-                margin: 0;
-                -webkit-print-color-adjust: exact;
-            }
-            .buttons {
-                display: none; /* Скрыть кнопки при печати */
-            }
-            table {
-                width: 100vw; /* Ширина таблицы для печати */
-                max-width: 100vw; /* Максимальная ширина таблицы для печати */
-            }
-        }
+@media print {
+  @page {
+    margin: 20px;
+    size: A4 landscape; /* Изменение ориентации страницы на альбомную */
+  }
+  body {
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+  }
+  .buttons {
+    display: none; /* Скрыть кнопки при печати */
+  }
+  table {
+    width: 100vw; /* Ширина таблицы для печати */
+    max-width: 100vw; /* Максимальная ширина таблицы для печати */
+  }
+}
 </style></head>
+{% set errors = namespace(error_PK=false) %}
 <div style="text-align:center;">
     <h3>Матрица соответствия компетенций и составных частей, образовательной программы бакалавриата по направлению подготовки</h3>
     <span>{{ direction.code }} {{ direction.name }}, год приема - {{year}}</span>
@@ -71,10 +72,26 @@ th {
         </tr>
       </thead>
       <tbody>
+      {% set blocks = namespace(list=[1, 2, 3, 4, 5], text=["Обязательная часть", "Нет описания", "Нет описания", "Обязательная часть", "Часть, формируемая участниками образовательных отношений"], count = 0, current_id=0) %}
+      {% set blocks_title = namespace(list=["Б1.Б", "Б2.Б", "Б3"], text=["Блок 1. Дисциплины", "Блок 2. Практика", "Блок 3. ГИА"], count=0, current_id="") %}
+      
       {% for discipline in disciplines %}
+
+      {%  if blocks_title.current_id != discipline.block.name and discipline.block.name in blocks_title.list %}
+        {% set blocks_title.current_id = discipline.block.name %}
+        <tr class="table-light"><th style="text-align:left; border-color: inherit; padding-left: 7px; background-color:lightgray;" >{{  blocks_title.text[blocks_title.count]  }}</th></tr>
+        {% set blocks_title.count = blocks_title.count + 1 %}
+      {% endif %}
+
+      {%  if blocks.current_id != discipline.block_id and discipline.block_id in blocks.list %}
+        {% set blocks.current_id = discipline.block_id %}
+        <tr class="table-light"><th style="text-align:left; border-color: inherit; padding-left: 7px;background-color:rgb(243, 243, 243);">{{  blocks.text[blocks.count]  }}</th></tr>
+        {% set blocks.count = blocks.count + 1 %}
+      {% endif %}
+
       {% set links = dis_comp_link | selectattr("discipline_id", "equalto" ,discipline.id) | map(attribute='competence_id') | list %}
         <tr>
-            <td>{{ discipline.name }}</td>
+            <td style="text-align:left; padding-left: 7px;">{{ discipline.name }}</td>
             {% if UK_competences != [] %}
             {% for competence in UK_competences %}
                 {% if competence.id in links %}<td>+</td>{% else %} <td></td> {% endif %}
@@ -87,13 +104,20 @@ th {
             {% endif %}
             {% if PK_competences != [] %}
             {% for competence in PK_competences %}
-                {% if competence.id in links %}<td>+</td>{% else %} <td></td> {% endif %}
+                {% if competence.id in links %} {% if discipline.block_id in [2,3,5] %} 
+                    <td style="background-color:rgba(255,0,0, 0.4);"> 
+                    {% set errors.error_PK = true %}{% else %}<td>{% endif %} +</td>{% else %} <td></td> 
+                {% endif %}
             {% endfor %}
             {% endif %}
         </tr>
       {% endfor %}
       </tbody>
    </table>
+   {% if errors.error_PK %}
+   <div class="errors" id="errors" style="border: solid black 1px; background-color: rgba(255,0,0,0.4); width: 80%; 
+   margin-left: auto; margin-right: auto;">Дисциплины из блока  Б1.В.ОД,  Б1.В.ВД,  Б2.В  не должны быть связаны с профессиональными компетенциями</div>
+   {% endif %}
     <div class="buttons" style="text-align:center; margin-top: 20px;">
         <button onclick="window.print()">Сохранить</button>
     </div>

@@ -1,34 +1,37 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content"  style="flex:1; height:2000px;  padding:0px;    width: calc(100% - 500px)">
-   <form action="" method="post" style="width:100%; margin-top:5px">
-      <div>Добавьте свою собственную дисциплину на нашем сайте, и в будущем её будет кто-то изучать</div>
+<div class="content">
+   <form action="" class="add" method="post" style="margin-top:5px">
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       <div class="form-floating mb-3">
-         {{ form.name(class="form-control", style="width:80%; margin-top:15px", id="name") }}
+         {{ form.name(class="form-control", style=" margin-top:15px", id="name") }}
          <label for="floatingInput">Название</label>
        </div>
        <div class="form-floating">
-         {{ form.year_approved(class="form-select", style="width:80%; margin-top:15px", id="year_approved") }}
+         {{ form.year_approved(class="form-select", style=" margin-top:15px", id="year_approved") }}
          <label for="floatingSelect">Год</label>
        </div>
        <div class="form-floating">
-         {{ form.block(class="form-select", style="width:80%; margin-top:15px", id="block") }}
+         {{ form.block(class="form-select", style=" margin-top:15px", id="block") }}
          <label for="floatingSelect">Блок</label>
        </div>
        <div class="form-floating">
-         {{ form.module(class="form-select", style="width:80%; margin-top:15px", id="module") }}
+         {{ form.module(class="form-select", style=" margin-top:15px", id="module") }}
          <label for="floatingSelect">Модуль</label>
        </div>
        <p style="margin-top:10px">Направление</p>
-       {{ form.direction(class="", style="width:80%; height:100px", id="direction") }}
+       {{ form.direction(class="", style=" height:100px", id="direction") }}
        <div class="form-floating">
-         {{ form.department(class="form-select", style="width:80%; margin-top:15px", id="department") }}
+         {{ form.department(class="form-select", style=" margin-top:15px", id="department") }}
          <label for="floatingSelect">Кафедра</label>
        </div>
-      {{ form.submit(class="btn", style="margin-top:20px; width:10%;") }}
+       <div class="form-floating">
+        {{ form.required(class="form-select", style=" margin-top:15px", id="required") }}
+        <label for="floatingSelect">Необходимая дисциплина</label>
+      </div>
+      {{ form.submit(value="Сохранить",class="btn mainbtn", style="margin-top:20px; ") }}
    </form>
 </div>
 </div>

@@ -11,14 +11,18 @@ class DisciplineForm(FlaskForm):
     module = SelectField()
     department = SelectField()
     direction = SelectMultipleField()
+    required = SelectField()
     submit = SubmitField("Добавить")
 
-    def addData(self, year, block, module, department, direction):
+    def addData(self, year, block, module, department, direction, required_discipines):
         self.year_approved.choices = year
         self.block.choices = block
         self.module.choices = module
         self.department.choices = department
         self.direction.choices = direction
+        self.required.choices = required_discipines
+
+    #def addRequiredDisciplines(self, )
 
     def addYearCancelled(self, year):
         NoneArray = ["-"]
@@ -32,6 +36,7 @@ class CompetenceForm(FlaskForm):
     year_approved = SelectField()
     type = SelectField(choices=["УК", "ОПК", "ПК"])
     formulation = TextAreaField()
+    source = TextAreaField()
     direction = SelectMultipleField()
     submit = SubmitField("Добавить")
 

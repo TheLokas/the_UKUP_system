@@ -11,12 +11,13 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        update_discipline_competences, update_competence_disciplines, get_indicators_for_discipline,
                        get_connected_competences, update_discipline_indicators,
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
-                       delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type, report_matrix)
+                       delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type,
+                       report_matrix, get_required_disciplines, get_required_discipline)
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
 
-
+# Страница дисциплин
 @UKUP.route("/discipline", methods=["GET"])
 def discipline():
     type = "discipline"
@@ -29,10 +30,12 @@ def discipline():
         current_direction = get_direction_by_id(request.args["direction"])
 
     disciplines = get_disciplines(directionID=current_direction.id, year=current_year)
-    return render_template("Discipline.html", type=type, disciplines=disciplines, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
+    return render_template("Discipline.html", type=type, disciplines=disciplines,
+                           years=years, directions=directions, current_year=current_year,
+                           current_direction=current_direction)
 
 
-
+# Страница компетенций
 @UKUP.route("/competence", methods=['GET'])
 def competence():
     type = "competence"
@@ -42,35 +45,36 @@ def competence():
     current_year = date.today().year
     if request and {"year", "direction"} <= set(request.args):
         current_year = request.args["year"]
-        # Необходима функция
         current_direction = get_direction_by_id(request.args["direction"])
     competence = get_competences(direction=current_direction.id, year=current_year)
-    #print(competence)
 
-    return render_template("Competence.html", type=type, competencies=competence, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
+    return render_template("Competence.html", type=type,
+                           competencies=competence, years=years, directions=directions,
+                           current_year=current_year, current_direction=current_direction)
 
 
+# Страница добавления дисциплин
 @UKUP.route("/discipline/add", methods=['GET'])
 def add_discipline_page():
     type = "discipline"
     year_choices = generate_year(2019)
-
-    # Заменить на функции из модуля бд
+    # Получение списков и формирование из них списков кортежей из id и name
+    # Направления
     directions = get_directions()
     direction_choices = []
     for direction in directions:
         direction_choices.append((direction.id, direction.name))
-
+    # Кафедры
     departments = get_departments()
     department_choices = []
     for department in departments:
         department_choices.append((department.id, department.name))
-
+    # Модули
     modules = get_modules()
     module_choices = []
     for module in modules:
         module_choices.append((module.id, module.name))
-
+    # Блоки
     blocks = get_block()
     block_choices = []
     for block in blocks:
@@ -82,23 +86,32 @@ def add_discipline_page():
     current_year = date.today().year
     if request and {"year", "direction"} <= set(request.args):
         current_year = request.args["year"]
-        # Необходима функция
         current_direction = Direction.query.get(request.args["direction"])
 
+    # Получение списка необходимых (базовых) дисциплин и формирование из них списка кортежей из id и name
+    disciplines = get_disciplines(directionID=current_direction.id, year=current_year)
+    required_disciplines_choices = [(-1, " - ")]
+    for discipline in disciplines:
+        required_disciplines_choices.append((discipline.id, discipline.name))
+
+    # Инициализация формы и установка начальных зачений
     form = DisciplineForm(year_approved=current_year, direction=(current_direction.id, current_direction.name))
+    # Заполнение формы
     form.addData(year=year_choices, block=block_choices,
                  module=module_choices, direction=direction_choices,
-                 department=department_choices)
+                 department=department_choices, required_discipines=required_disciplines_choices)
     return render_template("addDiscipline.html",type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
+# Обработка POST-запроса на добавление дисциплины
 @UKUP.route("/discipline/add", methods=['POST'])
 def add_discipline_post():
     form = DisciplineForm(request.form)
-    add_discipline([form.name.data, form.year_approved.data, form.block.data, form.module.data, form.department.data], form.direction.data)
+    add_discipline([form.name.data, form.year_approved.data, form.block.data, form.module.data, form.department.data], form.direction.data, form.required.data)
     return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
+# Страница добавления компетенций
 @UKUP.route("/competence/add")
 def add_competence_page():
     type = "competence"
@@ -126,6 +139,7 @@ def add_competence_page():
                            directions=directions, current_year=current_year, current_direction=current_direction)
 
 
+# Обработка POST-запроса на добавление компетенции
 @UKUP.route("/competence/add", methods=["POST"])
 def add_competence_post():
     form = CompetenceForm(request.form)
@@ -135,17 +149,17 @@ def add_competence_post():
         #flash("Номер компетенции недопустим")
     #else:
     #print(form.direction)
-    add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data, form.direction.data])
+    #print("this '" + form.source.data + "'." + " type '" + str(type(form.source.data)) + "'.")
+    add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data, form.direction.data, form.source.data])
     return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
+# Страница выбранной дисциплины
 @UKUP.route('/discipline/<discipline_id>', methods=['GET'])
 def edit_discipline_page(discipline_id):
+
     type = "discipline"
-
-    # Необходима функция
-    discipline = Discipline.query.get(discipline_id)
-
+    discipline = get_discipline_by_id(discipline_id)
     year_approved = generate_year(2019)
 
     directions = get_directions()
@@ -153,7 +167,6 @@ def edit_discipline_page(discipline_id):
     for direction in directions:
         direction_choices.append((direction.id, direction.name))
 
-    #print(direction_choices)
 
     departments = get_departments()
     department_choices = []
@@ -175,10 +188,8 @@ def edit_discipline_page(discipline_id):
         direction = get_direction_by_id(direction_link.direction_id)
         dirDiscipline.append((direction.id, direction.name))
 
-    #print(dirDiscipline)
 
-
-
+    # Установка текущего года и направления 
     years = generate_year(2019)[::-1]
     current_direction = directions[0]
     current_year = date.today().year
@@ -187,22 +198,38 @@ def edit_discipline_page(discipline_id):
         # Необходима функция
         current_direction = Direction.query.get(request.args["direction"])
 
+    # Получение списка необходимых дисциплин
+    required_disciplines = get_required_disciplines(directionID=current_direction.id, year=current_year, current_discipline_id=discipline_id)
+    required_disciplines_choices = [(-1, " - ")]
+    for required_discipline in required_disciplines:
+        required_disciplines_choices.append((required_discipline.id, required_discipline.name))
+
+    # Получение необходимой дисциплины
+    required_id = -1
+    required_discipline = get_required_discipline(discipline_id)
+    if not required_discipline is None:
+        required_id = required_discipline.id
+    
+
+    # Заполнение формы 
     form = DisciplineForm(name=discipline.name, year_approved=discipline.year_approved,
                           block=discipline.block_id, module=discipline.module_id,
-                          department=discipline.department_id, direction=dirDiscipline)
-    form.addData(year_approved, block_choices, module_choices, department_choices, direction_choices)
+                          department=discipline.department_id, direction=dirDiscipline, required= required_id)
+    form.addData(year_approved, block_choices, module_choices, department_choices, direction_choices, required_disciplines_choices)
 
     return render_template("editDiscipline.html", type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
 
 
+# Обработка POST-запроса на обновление выбранной дисциплины
 @UKUP.route('/discipline/<discipline_id>', methods=['POST'])
 def edit_discipline_post(discipline_id):
     form = DisciplineForm(request.form)
     #print(request.form)
-    edit_discipline(discipline_id, [form.name.data, form.year_approved.data, form.block.data, form.module.data, form.department.data], form.direction.data)
+    edit_discipline(discipline_id, [form.name.data, form.year_approved.data, form.block.data, form.module.data, form.department.data], form.direction.data, form.required.data)
     return redirect(f"/UKUP/discipline?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
+# Страница выбранной компетенции
 @UKUP.route('/competence/<competence_id>')
 def edit_competence_page(competence_id):
     type = "competence"
@@ -210,15 +237,15 @@ def edit_competence_page(competence_id):
     OPK = get_not_available_comp_numbers_for_type("ОПК", request.form.get('current_direction'), request.form.get('current_year'))
     PK = get_not_available_comp_numbers_for_type("ПК", request.form.get('current_direction'), request.form.get('current_year'))
 
-    # Необходима функция
-    competence = Competence.query.get(competence_id)
+    competence = get_competence_by_id(competence_id)
 
     year_approved = generate_year(2019)
 
     indicators = Indicator.query.filter_by(competence_id=competence_id).all()
 
     form = CompetenceForm(name=competence.name, year_approved=competence.year_approved,
-                          num=int(competence.name.split("-")[1]), type=competence.type, formulation=competence.formulation)
+                          num=int(competence.name.split("-")[1]), type=competence.type,
+                          formulation=competence.formulation, source=competence.source)
     form.addYear(year_approved)
 
     years = generate_year(2019)[::-1]
@@ -227,24 +254,22 @@ def edit_competence_page(competence_id):
     current_year = date.today().year
     if request and {"year", "direction"} <= set(request.args):
         current_year = request.args["year"]
-        # Необходима функция
-        current_direction = Direction.query.get(request.args["direction"])
+        current_direction = get_direction_by_id(request.args["direction"])
 
     return render_template("editCompetence.html", type=type, form=form, UK=UK, OPK=OPK, PK=PK, years=years, directions=directions, current_year=current_year, current_direction=current_direction, indicators=indicators)
 
 
+# Обработка POST-запроса на обновление выбранной компетенции
 @UKUP.route('/competence/<competence_id>', methods=['POST'])
 def edit_competence_post(competence_id):
     form = CompetenceForm(request.form)
-    #print(request.form.getlist("indicator"))
     indicators = []
     for indicator in request.form.getlist("indicator"):
         a = indicator.split("||")
         if a[2].strip()!="":
             indicators.append((a[0], a[1], a[2]))
-    #print(indicators)
-    #print(form.data)
-    edit_competence(competence_id, [form.name.data, form.type.data, form.formulation.data, form.year_approved.data], indicators)
+
+    edit_competence(competence_id, [form.name.data, form.type.data, form.formulation.data, form.year_approved.data, form.source.data], indicators)
     return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
@@ -449,7 +474,7 @@ def connect_indicators_competence_post(competence_id):
 
 @UKUP.route("/discipline/delete/<discipline_id>", methods=['POST'])
 def delete_discipline_post(discipline_id):
-    delete_discipline(discipline_id)
+    delete_discipline(int(discipline_id))
     return redirect(f"/UKUP/discipline?year={request.form.get('year')}&direction={request.form.get('direction')}")
 
 
