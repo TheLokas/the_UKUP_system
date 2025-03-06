@@ -1,15 +1,73 @@
 {% extends "Header.html" %}
 {% block content %}
-<div class="row nav"  style="min-width:700px; margin-left: auto;">
+<div class="row nav"  style="min-width:700px; ">
   <nav class="navbar navbar-expand-lg bg-body-tertiary" id="navbar">
   <div class="container-fluid">
-    <div class="navbar-collapse nav-button" id="navbarSupportedContent">
-      <form id="form" method="get">
+    <div class="navbar-collapse" style="justify-content: center;" id="navbarSupportedContent">
+
+      <form class="navbutton" action="/UKUP/discipline" method="get">
+        <input name="year" id="year1" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction1" type="hidden" value="{{ current_direction.id }}">
+      <input type="submit" class="btn btn-secondary btn-lg" value="Дисциплины">
+      </form>
+      <form class="navbutton" action="/UKUP/competence" method="get">
+        <input name="year" id="year2" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
+      <input type="submit" class="btn btn-secondary btn-lg" value="Компетенции">
+      </form>
+      <form class="navbutton" action="/UKUP/ze" method="get">
+        <input name="year" id="year3" type="hidden" value="{{ current_year }}">
+        <input name="direction" id="direction3" type="hidden" value="{{ current_direction.id }}">
+      <input type="submit" class="btn btn-secondary btn-lg" value="Зачетные единицы">
+      </form>
+
+      <div class="navbutton">
+        <ul class="navbar-nav  mb-2 mb-lg-0 justify-content-end">
+          <li class="nav-item dropdown nav-button">
+            <a class="nav-link dropdown-toggle btn btn-secondary btn-lg"  role="button" data-bs-toggle="dropdown" aria-expanded="false">Отчёты</a>
+            <ul class="dropdown-menu year">
+              <li><span style="cursor: pointer">
+                <form action="/UKUP/report/competence/all" method="get">
+                <input name="year" id="year3" type="hidden" value="{{ current_year }}">
+                <input name="direction" id="direction3" type="hidden" value="{{ current_direction.id }}">
+                <input type="submit" class="dropdown-item" value="Компетенции">
+              </form></span></li>
+
+              <li><span style="cursor: pointer"><form action="/UKUP/report/competence/УК" method="get">
+                <input name="year" id="year4" type="hidden" value="{{ current_year }}">
+                <input name="direction" id="direction4" type="hidden" value="{{ current_direction.id }}">
+                <input type="submit" class="dropdown-item" value="УК">
+              </form></span></li>
+
+              <li><span style="cursor: pointer"><form action="/UKUP/report/competence/ОПК" method="get">
+                <input name="year" id="year5" type="hidden" value="{{ current_year }}">
+                <input name="direction" id="direction5" type="hidden" value="{{ current_direction.id }}">
+                <input type="submit" class="dropdown-item" value="ОПК">
+              </form></span></li>
+
+              <li><span style="cursor: pointer"><form action="/UKUP/report/competence/ПК" method="get">
+                <input name="year" id="year6" type="hidden" value="{{ current_year }}">
+                <input name="direction" id="direction6" type="hidden" value="{{ current_direction.id }}">
+                <input type="submit" class="dropdown-item" value="ПК">
+              </form></span></li>
+
+              <li><span style="cursor: pointer"><form action="/UKUP/report/matrix" method="get">
+                <input name="year" id="year7" type="hidden" value="{{ current_year }}">
+                <input name="direction" id="direction7" type="hidden" value="{{ current_direction.id }}">
+                <input type="submit" class="dropdown-item" value="Матрица">
+              </form></span></li>
+              
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <form class="navbutton" id="form" method="get">
         <input name="year" id="year" type="hidden" value="{{ current_year }}">
         <input name="direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       <ul class="navbar-nav  mb-2 mb-lg-0 justify-content-end">
         <li class="nav-item dropdown nav-button">
-          <a class="nav-link dropdown-toggle"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <a class="nav-link dropdown-toggle btn btn-secondary btn-lg"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
             {{ current_year }}
           </a>
           <ul class="dropdown-menu year">
@@ -21,7 +79,7 @@
          <li class="nav-item" style="width:20px;">
         </li>
         <li class="nav-item dropdown nav-button">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <a class="nav-link dropdown-toggle btn btn-secondary btn-lg" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             {{ current_direction.name }}
           </a>
           <ul class="dropdown-menu direction">
@@ -33,7 +91,7 @@
         </li>
       </ul>
         </form>
-       <form id="form2" method="get" action="/UKUP/{{ type }}/add">
+       <form class="navbutton" id="form2" method="get" action="/UKUP/{{ type }}/add">
         <input name="year" id="year0" type="hidden" value="{{ current_year }}">
         <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
          <input type="submit" class="btn btn-secondary btn-lg" value="Добавить">
@@ -67,49 +125,6 @@ listDirections.forEach((item, index) => {
 </div>
 <div class="row" style="display:flex; justify-content: center;">
   <!-- margin-right:5px; -->
-    <div class="col-2 sidebar" style="  min-width:200px;" id="sidebar">
-      <div style="margin-top:0px; margin-left:10px; width:80%">Инструменты</div>
-      <hr class="dropdown-divider" style="margin: 0 0 .5rem; width:90%">
-      <div class="side-button"><form action="/UKUP/discipline" method="get">
-        <input name="year" id="year1" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction1" type="hidden" value="{{ current_direction.id }}">
-      <input type="submit" class="btn btn-secondary btn-lg" value="Дисциплины">
-      </form></div>
-      <div class="side-button"><form action="/UKUP/competence" method="get">
-        <input name="year" id="year2" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
-      <input type="submit" class="btn btn-secondary btn-lg" value="Компетенции">
-      </form></div>
-      <div style="margin-top:35px;width:80%">Отчёты</div>
-      <hr class="dropdown-divider" style="margin: 0 0 .5rem; width:90%">
-
-      <div class="side-button"><form action="/UKUP/report/competence/all" method="get">
-        <input name="year" id="year3" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction3" type="hidden" value="{{ current_direction.id }}">
-        <input type="submit" class="btn btn-secondary btn-lg" value="Компетенции">
-      </form></div>
-
-      <div class="side-button"><form action="/UKUP/report/competence/УК" method="get">
-        <input name="year" id="year4" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction4" type="hidden" value="{{ current_direction.id }}">
-        <input type="submit" class="btn btn-secondary btn-lg" value="УК">
-      </form></div>
-
-      <div class="side-button"><form action="/UKUP/report/competence/ОПК" method="get">
-        <input name="year" id="year5" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction5" type="hidden" value="{{ current_direction.id }}">
-        <input type="submit" class="btn btn-secondary btn-lg" value="ОПК">
-      </form></div>
-      <div class="side-button"><form action="/UKUP/report/competence/ПК" method="get">
-        <input name="year" id="year6" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction6" type="hidden" value="{{ current_direction.id }}">
-        <input type="submit" class="btn btn-secondary btn-lg" value="ПК">
-      </form></div>
-            <div class="side-button"><form action="/UKUP/report/matrix" method="get">
-        <input name="year" id="year7" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction7" type="hidden" value="{{ current_direction.id }}">
-        <input type="submit" class="btn btn-secondary btn-lg" value="Матрица">
-      </form></div>
-    </div>
+    
 
 {% endblock %}

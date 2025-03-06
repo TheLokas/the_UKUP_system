@@ -91,3 +91,20 @@ class IndicatorDiscipline(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     indicator_id = db.Column(db.Integer, db.ForeignKey('indicators.id'))
     discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+
+
+class ZE(db.Model):
+    __tablename__ = 'ze'
+    id = db.Column(db.Integer, primary_key=True)
+    discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+    c1 = db.Column(db.Integer())
+    c2 = db.Column(db.Integer())
+    c3 = db.Column(db.Integer())
+    c4 = db.Column(db.Integer())
+    c5 = db.Column(db.Integer())
+    c6 = db.Column(db.Integer())
+    c7 = db.Column(db.Integer())
+    c8 = db.Column(db.Integer())
+    ze = db.Column(db.Integer())
+
+    discipline = db.relationship('Discipline', backref='ze')

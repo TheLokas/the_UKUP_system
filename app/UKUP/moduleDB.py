@@ -1,4 +1,4 @@
-from app.models import db, Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline, Indicator, IndicatorDiscipline, RequiredDiscipline
+from app.models import db, Block, Module, Department, Direction, Discipline, Competence, DirectionDiscipline, CompetenceDiscipline, Indicator, IndicatorDiscipline, RequiredDiscipline, ZE
 from sqlalchemy import and_
 
 
@@ -121,6 +121,8 @@ def delete_discipline(id_discipline):
     # Удаляем связанные зависимые дисциплины
     RequiredDiscipline.query.filter_by(required_discipline_id=id_discipline).delete()
 
+    ZE.query.filter_by(discipline_id = id_discipline).delete()
+
     # Удаляем дисциплину
     db.session.delete(discipline)
 
@@ -150,8 +152,10 @@ def add_discipline(discipline_params, directions_list, required_discipline_id):
     required_discipline = RequiredDiscipline(required_discipline_id=required_discipline_id,
                                               dependent_discipline_id=new_discipline.id)
     db.session.add(required_discipline)
-    db.session.commit()
 
+    ze = ZE(discipline_id=new_discipline.id, c1=0, c2=0, c3=0, c4=0, c5=0, c6=0, c7=0, c8=0, ze=0)
+    db.session.add(ze)
+    db.session.commit()
 
 
 def edit_discipline(id_discipline, discipline_params, directions_list, required_discipline_id):
@@ -620,6 +624,7 @@ def update_competence_disciplines(competence_id, discipline_ids):
 
     # Применяем изменения
     db.session.commit()
+             
 
 
 # Функция обновления связи индикаторы-дисциплины
@@ -682,6 +687,38 @@ def get_competences_by_year(year):
         .filter(Competence.year_approved <= year) \
         .filter((Competence.year_cancelled > year) | (Competence.year_cancelled == None)) \
         .all()
+
+
+def get_ze(directionID, year):
+
+    direction = db.session.get(Direction, directionID)
+    if direction is None:
+        raise ValueError("Направление с идентификатором {} не найдено".format(directionID))
+    
+    # Запрос зачетных единиц с учетом направления и года
+    ze = ZE.query \
+        .join(Discipline, ZE.discipline_id == Discipline.id) \
+        .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
+        .filter(DirectionDiscipline.direction_id == directionID) \
+        .filter(Discipline.year_approved == year) \
+        .order_by(Discipline.module_id) \
+        .all()
+    return ze
+
+
+def update_ze(dict):
+    for id, subdict in dict.items():
+        ze = ZE.query.filter_by(discipline_id=id).first()
+        ze.c1 = subdict[1]
+        ze.c2 = subdict[2]
+        ze.c3 = subdict[3]
+        ze.c4 = subdict[4]
+        ze.c5 = subdict[5]
+        ze.c6 = subdict[6]
+        ze.c7 = subdict[7]
+        ze.c8 = subdict[8]
+        ze.ze = subdict["ze"]
+    db.session.commit()
 
 
 # Функция для генерации отчета матрицы
@@ -781,3 +818,11 @@ def get_competences_and_indicators_type(direction_id, year, competence_type):
 
 
 
+def update_data():
+    disciplines = Discipline.query.all()
+    for discipline in disciplines:
+        ze = ZE.query.filter(ZE.discipline_id == discipline.id).one_or_none()
+        if ze is None:
+            ze = ZE(discipline_id=discipline.id, c1=0, c2=0, c3=0, c4=0, c5=0, c6=0, c7=0, c8=0, ze=0)
+            db.session.add(ze)
+    db.session.commit()

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, IntegerField, SelectField, EmailField, PasswordField, Field, SelectMultipleField, TextAreaField, SubmitField, HiddenField, widgets
+from wtforms import StringField, BooleanField, IntegerField, SelectField, EmailField, PasswordField, Field, SelectMultipleField, TextAreaField, SubmitField, HiddenField, widgets, FieldList, FormField
 from wtforms.validators import input_required, data_required, ValidationError, Length
 
 
@@ -51,3 +51,25 @@ class ConnectForm(FlaskForm):
     connect = BooleanField()
     hidden = HiddenField()
     submit = SubmitField()
+
+class ZEForm(FlaskForm):
+    num = IntegerField()
+    id_discipline= IntegerField()
+    c = IntegerField()
+    submit = SubmitField()
+
+#class zeDiscipline(FlaskForm):
+#    id = IntegerField()
+#    ze = FieldList(FormField(ze), min_entries=8)
+
+#class ZEForm(FlaskForm):
+#    dis = FieldList(FormField(zeDiscipline))
+#    submit = SubmitField()
+#class ze(FlaskForm):
+#    num = IntegerField()
+#    id_discipline= IntegerField()
+#    c = IntegerField()
+
+#class ZEForm(FlaskForm):
+#    ze = FieldList(FormField(ze))
+#    submit = SubmitField()

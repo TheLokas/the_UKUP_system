@@ -33,9 +33,14 @@
 
       </tbody>
     </table>
+
+  <div class="errors" id="errors" style="display: none; border: solid black 1px; background-color: rgba(255,0,0,0.4); 
+    margin-left: auto; margin-right: auto;    padding: 5px; text-align: center;">Дисциплины из блока  Б1.В.ОД,  Б1.В.ВД,  Б2.В  не должны быть связаны с профессиональными компетенциями
+  </div>
+
         {{ form.submit(value="Подтвердить", class="btn mainbtn", style="margin-top:5px;") }}
     </form>
-<div class="side-button mainbtn"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
+<div class="mainbtn"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
       <input name="year" id="year2" type="hidden" value="{{ current_year }}">
       <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
     <input type="submit" class="btn btn-secondary btn-lg" value="Индикаторы">
@@ -53,11 +58,12 @@
       var err_count = 0;
       var name = document.getElementsByName("competence");
       var block_id = Number(document.getElementById("block_id").innerHTML);
+      var error_block = document.getElementById("errors");
       
       name.forEach(function(item){
          var checkbox = item.querySelector("input[type='checkbox']");
          var type = checkbox.parentElement.nextElementSibling;
-         type = type.innerHTML.split("-")[0]
+         type = type.innerHTML.split("-")[0];
          
          if(type=="ПК" && [2, 3, 5].includes(block_id))
           {
@@ -65,23 +71,33 @@
             { item.style.backgroundColor = "rgba(255,0,0,0.4)";
               err_count = err_count + 1}
             else
-            { item.style.backgroundColor = ""
-              err_count = err_count - 1}
+            { item.style.backgroundColor = ""}
           }
+          if (err_count > 0)
+            { error_block.style.display="block";
+            }else{
+              error_block.style.display="none";
+            }
          checkbox.addEventListener('change', (event) => {
           if(type=="ПК" && [2, 3, 5].includes(block_id))
           {
             if(checkbox.checked)
             { item.style.backgroundColor = "rgba(255,0,0,0.4)";
-              err_count = err_count + 1}
+              err_count = err_count + 1;}
             else
             { item.style.backgroundColor = ""
-              err_count = err_count - 1}
+              err_count = err_count - 1;}
+            if (err_count > 0)
+            { error_block.style.display="block";
+            }else{
+              error_block.style.display="none";
+            }
           }
          });
 
       });
    })
+   
 </script>
  </div>
 

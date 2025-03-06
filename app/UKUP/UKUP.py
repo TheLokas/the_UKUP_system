@@ -1,7 +1,7 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline, Indicator
-from .forms import DisciplineForm, CompetenceForm, ConnectForm
+from .forms import DisciplineForm, CompetenceForm, ConnectForm, ZEForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
 from .moduleDB import (get_disciplines, get_competences, add_discipline, add_competence,
@@ -12,7 +12,7 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        get_connected_competences, update_discipline_indicators,
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
                        delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type,
-                       report_matrix, get_required_disciplines, get_required_discipline)
+                       report_matrix, get_required_disciplines, get_required_discipline, update_data, get_ze, update_ze)
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
@@ -564,3 +564,43 @@ def report_matrix_page():
 @UKUP.route("/addData")
 def addData():
     return add_few_data()
+
+@UKUP.route("/updateData")
+def updateData():
+    update_data()
+    return "обновили зачетные единицы"
+
+
+@UKUP.route("/ze")
+def ze():
+    years = generate_year(2019)[::-1]
+    directions = get_directions()
+    current_direction = directions[0]
+    current_year = date.today().year
+    if request and {"year", "direction"} <= set(request.args):
+        current_year = request.args["year"]
+        current_direction = Direction.query.get(request.args["direction"])
+    ze = get_ze(current_direction.id, current_year)
+    form = ZEForm()
+    return render_template('ze.html', current_direction=current_direction,
+                           years=years,
+                           current_year=current_year, ze=ze, form=form)
+
+
+@UKUP.route("/ze", methods=['POST'])
+def ze_post():
+    ze = get_ze(request.form.get('current_direction'), request.form.get('current_year'))
+    ze_discipline_id_list = []
+    for z in ze:
+        ze_discipline_id_list.append(z.discipline.id)
+    ze_dict = {}
+    for id in ze_discipline_id_list:
+        ze_dict[id]={}
+        k = 0
+        for i in range(1,9):
+            number = int(request.form.get(f"{id}-{i}")) if request.form.get(f"{id}-{i}") else 0
+            ze_dict[id][i] = number
+            k = k + number
+        ze_dict[id]["ze"] = k
+    update_ze(ze_dict)
+    return redirect(f"/UKUP/ze?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")

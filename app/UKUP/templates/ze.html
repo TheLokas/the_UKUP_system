@@ -1,0 +1,86 @@
+{% extends "Sidebar.html" %}
+{% block content %}
+{{ super() }}
+<div class="content">
+    <form method="post">
+        <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
+        <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px; ">
+       <thead class="table-light">
+       <tr>
+           <th>Дисциплина</th>
+           <th>Кафедра</th>
+           <th>Блок</th>
+           <th>с-1</th>
+           <th>с-2</th>
+           <th>с-3</th>
+           <th>с-4</th>
+           <th>с-5</th>
+           <th>с-6</th>
+           <th>с-7</th>
+           <th>с-8</th>
+           <th>ЗЕ</th>
+       </tr>
+       </thead>
+       <tbody>
+        {%  for z in ze  %}
+        <tr>
+            
+            <td style="width:20%;">{{ z.discipline.name }}</td>
+            <td style="width:8%;">{{ z.discipline.department.name }}</td>
+            <td style="width:8%;">{{ z.discipline.block.name }}</td>
+            <!--
+            <td class="tdIn">
+                {{ form.c(value=1) }}
+                {% if z.c1 != 0 %}{{ form.num(id='{}-1'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c1) }}
+                {% else %} {{ form.num(id='{}-1'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>
+            <td class="tdIn">
+                {% if z.c2 != 0 %}{{ form.num(id='{}-2'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c2) }}
+                {% else %} {{ form.num(id='{}-2'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>
+            <td class="tdIn">
+                {% if z.c3 != 0 %}{{ form.num(id='{}-3'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c3) }}
+                {% else %} {{ form.num(id='{}-3'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>
+            <td class="tdIn">
+                {% if z.c4 != 0 %}{{ form.num(id='{}-4'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c4) }}
+                {% else %} {{ form.num(id='{}-4'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>  
+            <td class="tdIn">
+                {% if z.c5 != 0 %}{{ form.num(id='{}-5'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c5) }}
+                {% else %} {{ form.num(id='{}-5'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>
+            <td class="tdIn">
+                {% if z.c6 != 0 %}{{ form.num(id='{}-6'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c6) }}
+                {% else %} {{ form.num(id='{}-6'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+                </td>  
+            <td class="tdIn">
+                {% if z.c7 != 0 %}{{ form.num(id='{}-7'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c7) }}
+                {% else %} {{ form.num(id='{}-7'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>  
+            <td class="tdIn">
+                {% if z.c8 != 0 %}{{ form.num(id='{}-8'.format(z.discipline.id), min= '1', step = '1', max = '10', value=z.c8) }}
+                {% else %} {{ form.num(id='{}-8'.format(z.discipline.id), min= '1', step = '1', max = '10') }}{% endif %}
+            </td>   -->
+            
+            <td class="tdIn"><input id="{{ z.discipline.id }}-1" name="{{ z.discipline.id }}-1" type="number" min= 1 step = 1 max = 10 value="{%  if z.c1 != 0  %}{{ z.c1 }}{%  endif  %}"></td>
+            <td class="tdIn"><input id="{{ z.discipline.id }}-2" name="{{ z.discipline.id }}-2" type="number" min= 1 step = 1 max = 10 value="{%  if z.c2 != 0  %}{{ z.c2 }}{%  endif  %}"></td> 
+            <td class="tdIn"><input id="{{ z.discipline.id }}-3" name="{{ z.discipline.id }}-3" type="number" min= 1 step = 1 max = 10 value="{%  if z.c3 != 0  %}{{ z.c3 }}{%  endif  %}"></td>
+            <td class="tdIn"><input id="{{ z.discipline.id }}-4" name="{{ z.discipline.id }}-4" type="number" min= 1 step = 1 max = 10 value="{%  if z.c4 != 0  %}{{ z.c4 }}{%  endif  %}"></td>
+            <td class="tdIn"><input id="{{ z.discipline.id }}-5" name="{{ z.discipline.id }}-5" type="number" min= 1 step = 1 max = 10 value="{%  if z.c5 != 0  %}{{ z.c5 }}{%  endif  %}"></td>
+            <td class="tdIn"><input id="{{ z.discipline.id }}-6" name="{{ z.discipline.id }}-6" type="number" min= 1 step = 1 max = 10 value="{%  if z.c6 != 0  %}{{ z.c6 }}{%  endif  %}"></td>
+            <td class="tdIn"><input id="{{ z.discipline.id }}-7" name="{{ z.discipline.id }}-7" type="number" min= 1 step = 1 max = 10 value="{%  if z.c7 != 0  %}{{ z.c7 }}{%  endif  %}"></td>
+            <td class="tdIn"><input id="{{ z.discipline.id }}-8" name="{{ z.discipline.id }}-8" type="number" min= 1 step = 1 max = 10 value="{%  if z.c8 != 0  %}{{ z.c8 }}{%  endif  %}"></td>
+            
+            <td>{{ z.ze }}</td>
+        </tr>
+        {%  endfor  %}
+       </tbody>
+    </table>
+    <!--{{ form.submit(value="Подтвердить", class="btn", style="margin-top:5px; width:15%;") }}-->
+    <input type="submit">
+</form>
+ </div>
+ </div>
+{% endblock %}
