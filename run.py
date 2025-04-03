@@ -6,7 +6,7 @@ app.run(debug=True)
 # Работа с компетенциями
 # http://127.0.0.1:5000/UKUP/competence
 # http://127.0.0.1:5000/UKUP/competence/add
-
+#
 # Работа с дисциплинами
 # http://127.0.0.1:5000/UKUP/discipline
 # http://127.0.0.1:5000/UKUP/discipline/add
