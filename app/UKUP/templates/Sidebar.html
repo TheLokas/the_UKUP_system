@@ -98,7 +98,17 @@
        </form>
     </div>
 
+
+
+<div class="navbutton" style="display: inline-block;">  <!-- или d-inline-block -->
+  <button type="button" class="btn btn-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#checkboxModal">
+    Открыть выбор
+  </button>
+</div>
   </div>
+
+
+
 </nav>
 <script>
 var listYears = document.querySelectorAll('.year li > span');
@@ -125,6 +135,122 @@ listDirections.forEach((item, index) => {
 </div>
 <div class="row" style="display:flex; justify-content: center;">
   <!-- margin-right:5px; -->
-    
+
+<!-- Модальное окно с чекбоксами -->
+<div class="modal fade" id="checkboxModal" tabindex="-1" aria-labelledby="checkboxModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="checkboxModalLabel">Копирование данных на следующий год</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="sourceYear" class="form-label">Из какого года копировать:</label>
+          <select class="form-select" id="sourceYear">
+            {% for year in years %}
+            <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="targetYear" class="form-label">В какой год копировать:</label>
+          <input type="number" class="form-control" id="targetYear"
+                 value="{{ current_year|int + 1 }}">
+        </div>
+        <form id="checkboxesForm">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="disciplines" id="option1" checked>
+            <label class="form-check-label" for="option1">
+              Дисциплины
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="competences" id="option2" checked>
+            <label class="form-check-label" for="option2">
+              Компетенции
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="indicators" id="option3" checked>
+            <label class="form-check-label" for="option3">
+              Индикаторы
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="ze" id="option4" checked>
+            <label class="form-check-label" for="option4">
+              Зачётные единицы
+            </label>
+          </div>
+                <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="confirmSelection">Копировать</button>
+      </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+document.getElementById('confirmSelection').addEventListener('click', async function() {
+    const btn = this;
+    const sourceYear = document.getElementById('sourceYear').value;
+    const targetYear = document.getElementById('targetYear').value;
+
+    // Получаем выбранные опции
+    const selectedOptions = Array.from(
+        document.querySelectorAll('#checkboxesForm input[type="checkbox"]:checked')
+    ).map(checkbox => checkbox.value);
+
+    // Валидация
+    if (selectedOptions.length === 0) {
+        alert('Пожалуйста, выберите хотя бы один элемент для копирования');
+        return;
+    }
+
+    if (sourceYear === targetYear) {
+        alert('Годы должны отличаться');
+        return;
+    }
+
+    // Показать состояние загрузки
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Копирование...';
+
+    try {
+        // Отправляем запрос на сервер
+        const response = await fetch('/UKUP/copy-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sourceYear: sourceYear,
+                targetYear: targetYear,
+                entities: selectedOptions
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || 'Ошибка сервера');
+
+        alert('Данные успешно скопированы!');
+        window.location.reload();  // Обновить страницу
+
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при копировании: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Копировать';
+        bootstrap.Modal.getInstance(document.getElementById('checkboxModal')).hide();
+    }
+});
+</script>
+
 
 {% endblock %}

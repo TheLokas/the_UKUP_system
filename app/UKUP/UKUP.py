@@ -604,3 +604,86 @@ def ze_post():
         ze_dict[id]["ze"] = k
     update_ze(ze_dict)
     return redirect(f"/UKUP/ze?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
+
+
+
+from flask import request, jsonify
+from sqlalchemy.exc import SQLAlchemyError
+
+
+@UKUP.route('/copy-data', methods=['POST'])
+def copy_data():
+    try:
+        data = request.get_json()
+        source_year = int(data['sourceYear'])
+        target_year = int(data['targetYear'])
+        entities = data['entities']
+
+        result = {}
+
+        # 1. Копирование дисциплин
+        if 'disciplines' in entities:
+            disciplines = Discipline.query.filter_by(year_approved=source_year).all()
+            for disc in disciplines:
+                new_disc = Discipline(
+                    name=disc.name,
+                    year_approved=target_year,
+                    block_id=disc.block_id,
+                    module_id=disc.module_id,
+                    department_id=disc.department_id
+                )
+                db.session.add(new_disc)
+                db.session.flush()
+
+                # Копируем связи с направлениями
+                for direction in disc.directions:
+                    new_disc.directions.append(direction)
+
+            result['disciplines'] = f"Скопировано {len(disciplines)} дисциплин"
+
+        # 2. Копирование компетенций и индикаторов
+        if 'competences' in entities:
+            competences = Competence.query.filter_by(year_approved=source_year).all()
+            for comp in competences:
+                new_comp = Competence(
+                    name=comp.name,
+                    year_approved=target_year,
+                    type=comp.type,
+                    formulation=comp.formulation,
+                    source=comp.source,
+                    direction_id=comp.direction_id
+                )
+                db.session.add(new_comp)
+                db.session.flush()
+
+                if 'indicators' in entities:
+                    for indicator in comp.indicators:
+                        new_ind = Indicator(
+                            name=indicator.name,
+                            formulation=indicator.formulation,
+                            competence_id=new_comp.id
+                        )
+                        db.session.add(new_ind)
+
+            result['competences'] = f"Скопировано {len(competences)} компетенций"
+
+
+
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Данные успешно скопированы",
+            "details": result
+        })
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "error": "Ошибка базы данных: " + str(e)
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
