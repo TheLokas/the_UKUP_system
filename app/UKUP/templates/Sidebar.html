@@ -138,117 +138,359 @@ listDirections.forEach((item, index) => {
 
 <!-- Модальное окно с чекбоксами -->
 <div class="modal fade" id="checkboxModal" tabindex="-1" aria-labelledby="checkboxModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="checkboxModalLabel">Копирование данных на следующий год</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3">
-          <label for="sourceYear" class="form-label">Из какого года копировать:</label>
-          <select class="form-select" id="sourceYear">
-            {% for year in years %}
-            <option value="{{ year }}">{{ year }}</option>
-            {% endfor %}
-          </select>
+        <!-- Годы копирования в одной строке -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="sourceYear" class="form-label">Из какого года копировать:</label>
+            <select class="form-select" id="sourceYear">
+              {% for year in years %}
+              <option value="{{ year }}">{{ year }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="targetYear" class="form-label">В какой год копировать:</label>
+            <input type="number" class="form-control" id="targetYear" value="{{ current_year|int + 1 }}">
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="targetYear" class="form-label">В какой год копировать:</label>
-          <input type="number" class="form-control" id="targetYear"
-                 value="{{ current_year|int + 1 }}">
+
+        <!-- Таблица с направлениями -->
+        <div class="mb-4">
+          <h6>Выберите направления для копирования:</h6>
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="sticky-top bg-light">
+                <tr>
+                  <th width="40px"><input type="checkbox" id="selectAllDirections"></th>
+                  <th>Направление</th>
+                  <th>Код</th>
+                </tr>
+              </thead>
+              <tbody id="directionsTable">
+                {% for direction in directions %}
+                <tr>
+                  <td><input type="checkbox" class="direction-checkbox" value="{{ direction.id }}" checked></td>
+                  <td>{{ direction.name }}</td>
+                  <td>{{ direction.code }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <form id="checkboxesForm">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="disciplines" id="option1" checked>
-            <label class="form-check-label" for="option1">
-              Дисциплины
-            </label>
+
+        <!-- Чекбоксы в две колонки -->
+        <div class="row g-2">
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="selectAllOptions">
+              <label class="form-check-label" for="selectAllOptions">
+                Выбрать всё
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="disciplines" id="option1">
+              <label class="form-check-label" for="option1">
+                Дисциплины
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="competences" id="option2">
+              <label class="form-check-label" for="option2">
+                Компетенции
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="indicators" id="option3">
+              <label class="form-check-label" for="option3">
+                Индикаторы
+              </label>
+            </div>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="competences" id="option2" checked>
-            <label class="form-check-label" for="option2">
-              Компетенции
-            </label>
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="ze" id="option4">
+              <label class="form-check-label" for="option4">
+                Зачётные единицы
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="dependent_disciplines" id="option5">
+              <label class="form-check-label" for="option5">
+                Зависимые дисциплины
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="discipline_indicator_links" id="option6">
+              <label class="form-check-label" for="option6">
+                Связи дисциплина-индикатор
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="discipline_competence_links" id="option7">
+              <label class="form-check-label" for="option7">
+                Связи дисциплина-компетенция
+              </label>
+            </div>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="indicators" id="option3" checked>
-            <label class="form-check-label" for="option3">
-              Индикаторы
-            </label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="ze" id="option4" checked>
-            <label class="form-check-label" for="option4">
-              Зачётные единицы
-            </label>
-          </div>
-                <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-primary" id="confirmSelection">Копировать</button>
+        </div>
       </div>
-        </form>
-      </div>
+
+      <!-- Кнопки по краям -->
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-primary" style="width: 120px;" id="confirmSelection">
+        <i class="bi bi-files me-1"></i> Копировать
+      </button>
+      <button type="button" class="btn btn-outline-secondary" style="width: 120px;" data-bs-dismiss="modal">
+        <i class="bi bi-x-lg me-1"></i> Отмена
+      </button>
+    </div>
     </div>
   </div>
 </div>
 
+<style>
+  /* Стили для подсветки чекбоксов при наведении */
+  .form-check:hover {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .form-check-input:hover {
+    cursor: pointer;
+  }
+
+  .form-check-label:hover {
+    cursor: pointer;
+    color: #0d6efd;
+  }
+
+  /* Стили для таблицы направлений */
+  .direction-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .direction-checkbox:hover {
+    cursor: pointer;
+  }
+
+  /* Анимация для кнопок */
+  .btn {
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+</style>
 
 <script>
-document.getElementById('confirmSelection').addEventListener('click', async function() {
-    const btn = this;
-    const sourceYear = document.getElementById('sourceYear').value;
-    const targetYear = document.getElementById('targetYear').value;
+// Функция для обновления состояния чекбокса "Выбрать все направления"
+function updateSelectAllDirections() {
+    const checkboxes = document.querySelectorAll('.direction-checkbox');
+    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(checkbox => checkbox.checked);
+    document.getElementById('selectAllDirections').checked = allChecked;
+}
 
-    // Получаем выбранные опции
-    const selectedOptions = Array.from(
-        document.querySelectorAll('#checkboxesForm input[type="checkbox"]:checked')
-    ).map(checkbox => checkbox.value);
+// Функция для обновления состояния чекбокса "Выбрать всё" (основные опции)
+function updateSelectAllOptions() {
+    const mainCheckboxes = document.querySelectorAll('#option1, #option2, #option3, #option4, #option5, #option6, #option7');
+    const allChecked = mainCheckboxes.length > 0 && Array.from(mainCheckboxes).every(cb => cb.checked);
+    document.getElementById('selectAllOptions').checked = allChecked;
+}
 
-    // Валидация
-    if (selectedOptions.length === 0) {
-        alert('Пожалуйста, выберите хотя бы один элемент для копирования');
-        return;
-    }
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация состояний чекбоксов
+    updateSelectAllDirections();
+    updateSelectAllOptions();
 
-    if (sourceYear === targetYear) {
-        alert('Годы должны отличаться');
-        return;
-    }
+    // Обработчик для "Выбрать все направления"
+    document.getElementById('selectAllDirections').addEventListener('change', function() {
+        document.querySelectorAll('.direction-checkbox').forEach(checkbox => {
+            checkbox.checked = this.checked;
+            // Добавляем анимацию при изменении состояния
+            checkbox.parentElement.parentElement.style.transition = 'background-color 0.3s';
+            checkbox.parentElement.parentElement.style.backgroundColor = this.checked ? '#e9f5ff' : '';
+            setTimeout(() => {
+                checkbox.parentElement.parentElement.style.transition = '';
+                checkbox.parentElement.parentElement.style.backgroundColor = '';
+            }, 300);
+        });
+    });
 
-    // Показать состояние загрузки
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Копирование...';
+    // Обработчики для чекбоксов направлений
+    document.querySelectorAll('.direction-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllDirections();
+            // Визуальный эффект при изменении
+            this.parentElement.parentElement.style.backgroundColor = this.checked ? '#e9f5ff' : '';
+            setTimeout(() => {
+                this.parentElement.parentElement.style.backgroundColor = '';
+            }, 300);
+        });
+    });
 
-    try {
-        // Отправляем запрос на сервер
-        const response = await fetch('/UKUP/copy-data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sourceYear: sourceYear,
-                targetYear: targetYear,
-                entities: selectedOptions
-            })
+    // Обработчик для "Выбрать всё" (основные опции)
+    document.getElementById('selectAllOptions').addEventListener('change', function() {
+        const mainCheckboxes = document.querySelectorAll('#option1, #option2, #option3, #option4, #option5, #option6, #option7');
+        mainCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+            // Визуальный эффект при изменении
+            const label = checkbox.nextElementSibling;
+            label.style.color = this.checked ? '#0d6efd' : '';
+            setTimeout(() => {
+                label.style.color = '';
+            }, 300);
         });
 
-        const result = await response.json();
+        // Особые правила для связанных чекбоксов
+        if (this.checked) {
+            document.getElementById('option1').checked = true; // Дисциплины
+        }
+    });
 
-        if (!response.ok) throw new Error(result.error || 'Ошибка сервера');
+    // Обработчики для основных чекбоксов
+    const mainCheckboxes = document.querySelectorAll('#option1, #option2, #option3, #option4, #option5, #option6, #option7');
+    mainCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllOptions();
 
-        alert('Данные успешно скопированы!');
-        window.location.reload();  // Обновить страницу
+            // Визуальный эффект при изменении
+            const label = this.nextElementSibling;
+            label.style.fontWeight = '600';
+            setTimeout(() => {
+                label.style.fontWeight = '';
+            }, 300);
 
-    } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Ошибка при копировании: ' + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Копировать';
-        bootstrap.Modal.getInstance(document.getElementById('checkboxModal')).hide();
-    }
+            // Специальные правила для связанных чекбоксов
+        // 1. Правила для дисциплин и зачетных единиц
+        if (checkbox.id === 'option1' && !this.checked) {
+            document.getElementById('option4').checked = false; // Снять ЗЕ если сняли Дисциплины
+            document.getElementById('option5').checked = false; // Снять зависимые дисциплины
+            document.getElementById('option6').checked = false; // Снять связи дисциплина-индикатор
+            document.getElementById('option7').checked = false; // Снять связи дисциплина-компетенция
+        }
+        if (checkbox.id === 'option4' && this.checked) {
+            document.getElementById('option1').checked = true; // Выбрать Дисциплины при выборе ЗЕ
+        }
+
+        // 2. Правила для зависимых дисциплин
+        if (checkbox.id === 'option5' && this.checked) {
+            document.getElementById('option1').checked = true; // Выбрать Дисциплины при выборе зависимых
+        }
+
+        // 3. Правила для компетенций и индикаторов
+        if (checkbox.id === 'option2' && !this.checked) {
+            document.getElementById('option3').checked = false; // Снять индикаторы если сняли компетенции
+            document.getElementById('option6').checked = false; // Снять связи дисциплина-индикатор
+            document.getElementById('option7').checked = false; // Снять связи дисциплина-компетенция
+        }
+        if (checkbox.id === 'option3' && this.checked) {
+            document.getElementById('option2').checked = true; // Выбрать компетенции при выборе индикаторов
+        }
+
+        // 4. Правила для связей дисциплина-индикатор (option6)
+        if (checkbox.id === 'option6' && this.checked) {
+            document.getElementById('option1').checked = true; // Дисциплины
+            document.getElementById('option2').checked = true; // Компетенции
+            document.getElementById('option3').checked = true; // Индикаторы
+        }
+
+        // 5. Правила для связей дисциплина-компетенция (option7)
+        if (checkbox.id === 'option7' && this.checked) {
+            document.getElementById('option1').checked = true; // Дисциплины
+            document.getElementById('option2').checked = true; // Компетенции
+        }
+
+        });
+    });
+
+    // Обработчик кнопки "Копировать"
+    document.getElementById('confirmSelection').addEventListener('click', async function() {
+        const btn = this;
+        const sourceYear = document.getElementById('sourceYear').value;
+        const targetYear = document.getElementById('targetYear').value;
+
+        // Получаем выбранные направления
+        const selectedDirections = Array.from(
+            document.querySelectorAll('.direction-checkbox:checked')
+        ).map(checkbox => checkbox.value);
+
+        // Получаем выбранные опции
+        const selectedOptions = Array.from(
+            document.querySelectorAll('#option1:checked, #option2:checked, #option3:checked, #option4:checked, #option5:checked, #option6:checked, #option7:checked')
+        ).map(checkbox => checkbox.value);
+
+        // Валидация
+        if (selectedDirections.length === 0) {
+            alert('Пожалуйста, выберите хотя бы одно направление');
+            return;
+        }
+
+        if (selectedOptions.length === 0) {
+            alert('Пожалуйста, выберите хотя бы один элемент для копирования');
+            return;
+        }
+
+        if (sourceYear === targetYear) {
+            alert('Годы должны отличаться');
+            return;
+        }
+
+        // Показать состояние загрузки
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Копирование...';
+
+        try {
+            const response = await fetch('/UKUP/copy-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sourceYear: sourceYear,
+                    targetYear: targetYear,
+                    directions: selectedDirections,
+                    entities: selectedOptions
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Ошибка сервера');
+
+            // Визуальный эффект при успешном копировании
+            btn.classList.add('btn-success');
+            setTimeout(() => {
+                btn.classList.remove('btn-success');
+            }, 2000);
+
+            alert('Данные успешно скопированы!');
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            // Визуальный эффект при ошибке
+            btn.classList.add('btn-danger');
+            setTimeout(() => {
+                btn.classList.remove('btn-danger');
+            }, 2000);
+            alert('Ошибка при копировании: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-files me-1"></i> Копировать';
+        }
+    });
 });
 </script>
 
