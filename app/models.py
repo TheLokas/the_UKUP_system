@@ -25,11 +25,24 @@ class Discipline(db.Model):
     department = db.relationship('Department', backref='disciplines')
     directions = db.relationship('Direction', secondary='direction_disciplines', backref=db.backref('disciplines', lazy='dynamic'))
 
+    # Отношения для RequiredDiscipline
+    required_for = db.relationship(
+        'RequiredDiscipline',
+        foreign_keys='RequiredDiscipline.dependent_discipline_id',
+        backref='dependent_discipline'
+    )
+    depends_on = db.relationship(
+        'RequiredDiscipline',
+        foreign_keys='RequiredDiscipline.required_discipline_id',
+        backref='required_discipline'
+    )
+
 class RequiredDiscipline(db.Model):
     __tablename__ = 'required_disciplines'
     id = db.Column(db.Integer, primary_key=True)
     required_discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
     dependent_discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+
 
 class Department(db.Model):
     __tablename__ = 'departments'

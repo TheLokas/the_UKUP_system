@@ -1,6 +1,7 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline, Indicator
+from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, \
+    CompetenceDiscipline, Indicator, ZE, RequiredDiscipline
 from .forms import DisciplineForm, CompetenceForm, ConnectForm, ZEForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
@@ -13,7 +14,8 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
                        delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type,
                        report_matrix, get_required_disciplines, get_required_discipline, update_data, get_ze, update_ze)
-
+from flask import request, jsonify
+from sqlalchemy.exc import SQLAlchemyError
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
 
@@ -606,84 +608,218 @@ def ze_post():
     return redirect(f"/UKUP/ze?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
-
-from flask import request, jsonify
-from sqlalchemy.exc import SQLAlchemyError
-
-
+# Декоратор маршрута Flask для обработки POST-запросов на '/copy-data'
 @UKUP.route('/copy-data', methods=['POST'])
 def copy_data():
     try:
+        # Получаем JSON-данные из запроса
         data = request.get_json()
+
+        # Извлекаем и преобразуем год источника в целое число
         source_year = int(data['sourceYear'])
+        # Извлекаем и преобразуем год назначения в целое число
         target_year = int(data['targetYear'])
+        # Преобразуем список ID направлений в список целых чисел
+        direction_ids = list(map(int, data['directions']))
+        # Получаем список сущностей для копирования
         entities = data['entities']
+        print(entities)
+        # Инициализируем словарь для хранения результатов копирования
+        result = {
+            'copied': 0,  # Счетчик успешно скопированных элементов
+            'skipped': 0,  # Счетчик пропущенных элементов (уже существуют)
+            'details': {}  # Детальная информация по скопированным элементам
+        }
 
-        result = {}
-
-        # 1. Копирование дисциплин
+        # 1. Блок копирования дисциплин (если 'disciplines' в списке сущностей)
         if 'disciplines' in entities:
-            disciplines = Discipline.query.filter_by(year_approved=source_year).all()
-            for disc in disciplines:
-                new_disc = Discipline(
-                    name=disc.name,
-                    year_approved=target_year,
-                    block_id=disc.block_id,
-                    module_id=disc.module_id,
-                    department_id=disc.department_id
-                )
-                db.session.add(new_disc)
-                db.session.flush()
+            # Инициализируем список для хранения имен скопированных дисциплин
+            result['details']['disciplines'] = []
 
-                # Копируем связи с направлениями
-                for direction in disc.directions:
-                    new_disc.directions.append(direction)
+            # Перебираем все выбранные направления
+            for direction_id in direction_ids:
+                # Запрос для получения дисциплин конкретного направления и года
+                source_disciplines = Discipline.query.join(
+                    DirectionDiscipline  # Соединяем с таблицей связей направлений
+                ).filter(
+                    DirectionDiscipline.direction_id == direction_id,  # Фильтр по направлению
+                    Discipline.year_approved == source_year  # Фильтр по году
+                ).all()  # Получаем все соответствующие дисциплины
 
-            result['disciplines'] = f"Скопировано {len(disciplines)} дисциплин"
+                # Перебираем все найденные дисциплины
+                for disc in source_disciplines:
+                    # Проверяем, существует ли такая дисциплина в целевом году
+                    exists = Discipline.query.join(
+                        DirectionDiscipline
+                    ).filter(
+                        DirectionDiscipline.direction_id == direction_id,  # То же направление
+                        Discipline.name == disc.name,  # То же название
+                        Discipline.year_approved == target_year  # Целевой год
+                    ).first()  # Получаем первую найденную или None
 
-        # 2. Копирование компетенций и индикаторов
-        if 'competences' in entities:
-            competences = Competence.query.filter_by(year_approved=source_year).all()
-            for comp in competences:
-                new_comp = Competence(
-                    name=comp.name,
-                    year_approved=target_year,
-                    type=comp.type,
-                    formulation=comp.formulation,
-                    source=comp.source,
-                    direction_id=comp.direction_id
-                )
-                db.session.add(new_comp)
-                db.session.flush()
-
-                if 'indicators' in entities:
-                    for indicator in comp.indicators:
-                        new_ind = Indicator(
-                            name=indicator.name,
-                            formulation=indicator.formulation,
-                            competence_id=new_comp.id
+                    # Если дисциплина не существует в целевом году
+                    if not exists:
+                        # Создаем новую дисциплину с теми же параметрами, но новым годом
+                        new_disc = Discipline(
+                            name=disc.name,  # То же название
+                            year_approved=target_year,  # Новый год
+                            block_id=disc.block_id,  # Тот же блок
+                            module_id=disc.module_id,  # Тот же модуль
+                            department_id=disc.department_id  # Та же кафедра
                         )
-                        db.session.add(new_ind)
+                        db.session.add(new_disc)  # Добавляем в сессию
+                        db.session.flush()  # Фиксируем, чтобы получить ID
 
-            result['competences'] = f"Скопировано {len(competences)} компетенций"
+                        # Создаём пустые зачётные единицы для новой дисциплины
+                        new_ze = ZE(
+                            discipline_id=new_disc.id,
+                            c1=0, c2=0, c3=0, c4=0,
+                            c5=0, c6=0, c7=0, c8=0,
+                            ze=0
+                        )
+                        db.session.add(new_ze)
+
+                        # Копируем связь с направлением
+                        direction = Direction.query.get(direction_id)  # Находим направление
+                        new_disc.directions.append(direction)  # Добавляем связь
+
+                        # Если нужно копировать зачетные единицы и они есть у исходной дисциплины
+                        if 'ze' in entities and disc.ze:
+                            # Создаем новые зачетные единицы
+                            # Если нужно копировать ZE и они есть у исходной дисциплины
+                            if 'ze' in entities and disc.ze:
+                                source_ze = disc.ze[0] if disc.ze else None
+                                if source_ze:
+                                    new_ze.c1 = source_ze.c1
+                                    new_ze.c2 = source_ze.c2
+                                    new_ze.c3 = source_ze.c3
+                                    new_ze.c4 = source_ze.c4
+                                    new_ze.c5 = source_ze.c5
+                                    new_ze.c6 = source_ze.c6
+                                    new_ze.c7 = source_ze.c7
+                                    new_ze.c8 = source_ze.c8
+                                    new_ze.ze = source_ze.ze
+
+                        # Если нужно копировать зависимости между дисциплинами
+                        if 'dependent_disciplines' in entities:
+                            dependencies = RequiredDiscipline.query.filter(
+                                RequiredDiscipline.dependent_discipline_id == disc.id
+                            ).all()
+
+                            for dep in dependencies:
+                                # Получаем имя требуемой дисциплины через join
+                                required_disc_name = db.session.query(Discipline.name) \
+                                    .filter(Discipline.id == dep.required_discipline_id) \
+                                    .scalar()
+
+                                # Ищем дисциплину с таким именем в целевом году
+                                required_disc = Discipline.query.join(
+                                    DirectionDiscipline
+                                ).filter(
+                                    DirectionDiscipline.direction_id == direction_id,
+                                    Discipline.name == required_disc_name,
+                                    Discipline.year_approved == target_year
+                                ).first()
+
+                                if required_disc:
+                                    new_dep = RequiredDiscipline(
+                                        required_discipline_id=required_disc.id,
+                                        dependent_discipline_id=new_disc.id
+                                    )
+                                    db.session.add(new_dep)
 
 
 
+
+
+                        # Записываем информацию о скопированной дисциплине
+                        result['details']['disciplines'].append(disc.name)
+                        result['copied'] += 1  # Увеличиваем счетчик скопированных
+                    else:
+                        result['skipped'] += 1  # Увеличиваем счетчик пропущенных
+
+
+
+
+
+
+        # 2. Блок копирования компетенций (если 'competences' в списке сущностей)
+        if 'competences' in entities:
+            # Инициализируем список для хранения имен скопированных компетенций
+            result['details']['competences'] = []
+
+            # Перебираем все выбранные направления
+            for direction_id in direction_ids:
+                # Запрос для получения компетенций конкретного направления и года
+                source_competences = Competence.query.filter(
+                    Competence.direction_id == direction_id,  # Фильтр по направлению
+                    Competence.year_approved == source_year  # Фильтр по году
+                ).all()  # Получаем все соответствующие компетенции
+
+                # Перебираем все найденные компетенции
+                for comp in source_competences:
+                    # Проверяем, существует ли такая компетенция в целевом году
+                    exists = Competence.query.filter(
+                        Competence.direction_id == direction_id,  # То же направление
+                        Competence.name == comp.name,  # То же название
+                        Competence.year_approved == target_year  # Целевой год
+                    ).first()  # Получаем первую найденную или None
+
+                    # Если компетенция не существует в целевом году
+                    if not exists:
+                        # Создаем новую компетенцию с теми же параметрами, но новым годом
+                        new_comp = Competence(
+                            name=comp.name,  # То же название
+                            year_approved=target_year,  # Новый год
+                            type=comp.type,  # Тот же тип
+                            formulation=comp.formulation,  # Та же формулировка
+                            source=comp.source,  # Тот же источник
+                            direction_id=direction_id  # ID направления
+                        )
+                        db.session.add(new_comp)  # Добавляем в сессию
+                        db.session.flush()  # Фиксируем, чтобы получить ID
+
+                        # Если нужно копировать индикаторы
+                        if 'indicators' in entities:
+                            # Перебираем все индикаторы компетенции
+                            for indicator in comp.indicators:
+                                # Создаем новый индикатор
+                                new_ind = Indicator(
+                                    name=indicator.name,  # То же название
+                                    formulation=indicator.formulation,  # Та же формулировка
+                                    competence_id=new_comp.id  # ID новой компетенции
+                                )
+                                db.session.add(new_ind)  # Добавляем в сессию
+
+                        # Записываем информацию о скопированной компетенции
+                        result['details']['competences'].append(comp.name)
+                        result['copied'] += 1  # Увеличиваем счетчик скопированных
+                    else:
+                        result['skipped'] += 1  # Увеличиваем счетчик пропущенных
+
+
+        # 3. Блок копирования связей (если 'discipline_competence_links' в списке сущностей)
+        if 'discipline_competence_links' in entities:
+            # Инициализируем список для хранения информации о связях
+            result['details']['links'] = []
+            # Здесь должна быть реализована логика копирования связей
+            # с проверкой существующих связей в целевом году
+
+        # Фиксируем все изменения в базе данных
         db.session.commit()
+
+        # Возвращаем JSON-ответ с результатами
         return jsonify({
-            "success": True,
-            "message": "Данные успешно скопированы",
-            "details": result
+            "success": True,  # Флаг успешного выполнения
+            "message": "Копирование завершено",  # Сообщение
+            "stats": result  # Статистика копирования
         })
 
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({
-            "success": False,
-            "error": "Ошибка базы данных: " + str(e)
-        }), 500
     except Exception as e:
+        # В случае ошибки откатываем изменения
+        db.session.rollback()
+        # Возвращаем JSON-ответ с информацией об ошибке
         return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+            "success": False,  # Флаг неудачного выполнения
+            "error": str(e)  # Текст ошибки
+        }), 500  # HTTP-статус 500 (Internal Server Error)
