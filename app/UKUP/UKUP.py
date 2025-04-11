@@ -798,16 +798,61 @@ def copy_data():
                         result['skipped'] += 1  # Увеличиваем счетчик пропущенных
 
 
-        # 3. Блок копирования связей (если 'discipline_competence_links' в списке сущностей)
         if 'discipline_competence_links' in entities:
-            # Инициализируем список для хранения информации о связях
             result['details']['links'] = []
-            # Здесь должна быть реализована логика копирования связей
-            # с проверкой существующих связей в целевом году
 
-        # Фиксируем все изменения в базе данных
+            for direction_id in direction_ids:
+                # Получаем все связи для текущего направления и года
+                source_links = db.session.query(CompetenceDiscipline) \
+                    .join(Discipline, CompetenceDiscipline.discipline_id == Discipline.id) \
+                    .join(Competence, CompetenceDiscipline.competence_id == Competence.id) \
+                    .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
+                    .filter(
+                    Discipline.year_approved == source_year,
+                    Competence.year_approved == source_year,
+                    DirectionDiscipline.direction_id == direction_id
+                ).all()
+
+                for link in source_links:
+                    # Получаем связанные объекты через явные запросы
+                    source_discipline = Discipline.query.get(link.discipline_id)
+                    source_competence = Competence.query.get(link.competence_id)
+
+                    if not source_discipline or not source_competence:
+                        continue
+
+                    # Ищем дисциплину в целевом году
+                    target_discipline = Discipline.query.join(
+                        DirectionDiscipline,
+                        Discipline.id == DirectionDiscipline.discipline_id
+                    ).filter(
+                        DirectionDiscipline.direction_id == direction_id,
+                        Discipline.name == source_discipline.name,
+                        Discipline.year_approved == target_year
+                    ).first()
+
+                    # Ищем компетенцию в целевом году
+                    target_competence = Competence.query.filter(
+                        Competence.direction_id == direction_id,
+                        Competence.name == source_competence.name,
+                        Competence.year_approved == target_year
+                    ).first()
+
+                    if target_discipline and target_competence:
+                        # Проверяем существование связи
+                        exists = CompetenceDiscipline.query.filter(
+                            CompetenceDiscipline.discipline_id == target_discipline.id,
+                            CompetenceDiscipline.competence_id == target_competence.id
+                        ).first()
+
+                        if not exists:
+                            new_link = CompetenceDiscipline(
+                                discipline_id=target_discipline.id,
+                                competence_id=target_competence.id
+                            )
+                            db.session.add(new_link)
+
         db.session.commit()
-
         # Возвращаем JSON-ответ с результатами
         return jsonify({
             "success": True,  # Флаг успешного выполнения
