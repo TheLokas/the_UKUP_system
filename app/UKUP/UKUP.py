@@ -1,7 +1,7 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, \
-    CompetenceDiscipline, Indicator, ZE, RequiredDiscipline
+    CompetenceDiscipline, Indicator, ZE, RequiredDiscipline, IndicatorDiscipline
 from .forms import DisciplineForm, CompetenceForm, ConnectForm, ZEForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
@@ -614,7 +614,8 @@ def copy_data():
     try:
         # Получаем JSON-данные из запроса
         data = request.get_json()
-
+        overwrite = data.get('overwrite', False)
+        print(overwrite)
         # Извлекаем и преобразуем год источника в целое число
         source_year = int(data['sourceYear'])
         # Извлекаем и преобразуем год назначения в целое число
@@ -729,18 +730,11 @@ def copy_data():
                                     db.session.add(new_dep)
 
 
-
-
-
                         # Записываем информацию о скопированной дисциплине
                         result['details']['disciplines'].append(disc.name)
                         result['copied'] += 1  # Увеличиваем счетчик скопированных
                     else:
                         result['skipped'] += 1  # Увеличиваем счетчик пропущенных
-
-
-
-
 
 
         # 2. Блок копирования компетенций (если 'competences' в списке сущностей)
@@ -851,6 +845,65 @@ def copy_data():
                                 competence_id=target_competence.id
                             )
                             db.session.add(new_link)
+
+
+        if 'discipline_indicator_links' in entities:
+            result['details']['discipline_indicator_links'] = []
+
+            for direction_id in direction_ids:
+                # Получаем все связи дисциплина-индикатор для текущего направления и года
+                source_links = db.session.query(IndicatorDiscipline) \
+                    .join(Discipline, IndicatorDiscipline.discipline_id == Discipline.id) \
+                    .join(Indicator, IndicatorDiscipline.indicator_id == Indicator.id) \
+                    .join(Competence, Indicator.competence_id == Competence.id) \
+                    .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id) \
+                    .filter(
+                    Discipline.year_approved == source_year,
+                    Competence.year_approved == source_year,
+                    DirectionDiscipline.direction_id == direction_id
+                ).all()
+
+                for link in source_links:
+                    # Получаем имена связанных объектов
+                    source_disc = db.session.query(Discipline.name) \
+                        .filter(Discipline.id == link.discipline_id).scalar()
+                    source_ind = db.session.query(Indicator.name) \
+                        .filter(Indicator.id == link.indicator_id).scalar()
+
+                    if not source_disc or not source_ind:
+                        result['skipped'] += 1
+                        continue
+
+                    # Ищем дисциплину в целевом году
+                    target_disc = Discipline.query.join(DirectionDiscipline) \
+                        .filter(
+                        DirectionDiscipline.direction_id == direction_id,
+                        Discipline.name == source_disc,
+                        Discipline.year_approved == target_year
+                    ).first()
+
+                    # Ищем индикатор в целевом году
+                    target_ind = Indicator.query.join(Competence) \
+                        .filter(
+                        Competence.direction_id == direction_id,
+                        Indicator.name == source_ind,
+                        Competence.year_approved == target_year
+                    ).first()
+
+                    if target_disc and target_ind:
+                        # Проверяем существование связи
+                        link_exists = IndicatorDiscipline.query.filter(
+                            IndicatorDiscipline.discipline_id == target_disc.id,
+                            IndicatorDiscipline.indicator_id == target_ind.id
+                        ).first()
+
+                        if not link_exists:
+                            new_link = IndicatorDiscipline(
+                                discipline_id=target_disc.id,
+                                indicator_id=target_ind.id
+                            )
+                            db.session.add(new_link)
+
 
         db.session.commit()
         # Возвращаем JSON-ответ с результатами

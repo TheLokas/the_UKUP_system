@@ -186,6 +186,18 @@ listDirections.forEach((item, index) => {
           </div>
         </div>
 
+        <div class="mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="overwriteData">
+          <label class="form-check-label" for="overwriteData">
+            <strong>Перезаписать существующие данные</strong>
+          </label>
+          <small class="form-text text-muted d-block">
+            При включении этой опции существующие данные в целевом году будут перезаписаны
+          </small>
+        </div>
+      </div>
+
         <!-- Чекбоксы в две колонки -->
         <div class="row g-2">
           <div class="col-md-6">
@@ -404,6 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('option1').checked = true; // Дисциплины
             document.getElementById('option2').checked = true; // Компетенции
             document.getElementById('option3').checked = true; // Индикаторы
+            document.getElementById('option7').checked = true; // Дисциплина-компетенция
         }
 
         // 5. Правила для связей дисциплина-компетенция (option7)
@@ -420,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = this;
         const sourceYear = document.getElementById('sourceYear').value;
         const targetYear = document.getElementById('targetYear').value;
-
+        const overwriteData = document.getElementById('overwriteData').checked;
         // Получаем выбранные направления
         const selectedDirections = Array.from(
             document.querySelectorAll('.direction-checkbox:checked')
@@ -461,7 +474,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     sourceYear: sourceYear,
                     targetYear: targetYear,
                     directions: selectedDirections,
-                    entities: selectedOptions
+                    entities: selectedOptions,
+                    overwrite: overwriteData  // Добавляем параметр перезаписи
                 })
             });
 
