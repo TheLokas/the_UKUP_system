@@ -16,6 +16,8 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        report_matrix, get_required_disciplines, get_required_discipline, update_data, get_ze, update_ze)
 from flask import request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import or_  # Добавьте этот импорт
+
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
 
@@ -951,3 +953,80 @@ def copy_data():
             "success": False,
             "error": str(e)
         }), 500
+
+
+
+@UKUP.route('/delete-data', methods=['POST'])
+def delete_data():
+    try:
+        data = request.get_json()
+        year = int(data['year'])
+        direction_ids = list(map(int, data['directions']))
+        entities = data['entities']
+
+        # Валидация
+        if not direction_ids:
+            return jsonify({'error': 'Выберите хотя бы одно направление'}), 400
+
+        if not entities:
+            return jsonify({'error': 'Выберите хотя бы один элемент для удаления'}), 400
+
+        # Удаление данных
+        for direction_id in direction_ids:
+            # Удаление дисциплин
+            if 'disciplines' in entities:
+                disciplines = Discipline.query.join(
+                    DirectionDiscipline
+                ).filter(
+                    DirectionDiscipline.direction_id == direction_id,
+                    Discipline.year_approved == year
+                ).all()
+
+                for disc in disciplines:
+                    # Удаление зависимостей
+                    if 'dependent_disciplines' in entities:
+                        RequiredDiscipline.query.filter(
+                            (RequiredDiscipline.required_discipline_id == disc.id) |
+                            (RequiredDiscipline.dependent_discipline_id == disc.id)
+                        ).delete()
+
+                    # Удаление связей компетенция-дисциплина
+                    if 'competence_discipline_links' in entities:
+                        CompetenceDiscipline.query.filter_by(discipline_id=disc.id).delete()
+
+                    # Удаление связей индикатор-дисциплина
+                    if 'indicator_discipline_links' in entities:
+                        IndicatorDiscipline.query.filter_by(discipline_id=disc.id).delete()
+
+                    # Удаление ZE
+                    if 'ze' in entities:
+                        ZE.query.filter_by(discipline_id=disc.id).delete()
+
+                    # Удаление дисциплины
+                    db.session.delete(disc)
+
+            # Удаление компетенций
+            if 'competences' in entities:
+                competences = Competence.query.filter(
+                    Competence.direction_id == direction_id,
+                    Competence.year_approved == year
+                ).all()
+
+                for comp in competences:
+                    # Удаление индикаторов
+                    if 'indicators' in entities:
+                        Indicator.query.filter_by(competence_id=comp.id).delete()
+
+                    # Удаление связей компетенция-дисциплина
+                    if 'competence_discipline_links' in entities:
+                        CompetenceDiscipline.query.filter_by(competence_id=comp.id).delete()
+
+                    # Удаление компетенции
+                    db.session.delete(comp)
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Данные успешно удалены'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

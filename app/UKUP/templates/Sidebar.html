@@ -98,7 +98,12 @@
        </form>
     </div>
 
-
+<!-- Рядом с кнопкой "Открыть выбор" -->
+<div class="navbutton" style="display: inline-block;">
+  <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#deleteModal">
+    Удалить данные
+  </button>
+</div>
 
 <div class="navbutton" style="display: inline-block;">  <!-- или d-inline-block -->
   <button type="button" class="btn btn-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#checkboxModal">
@@ -264,6 +269,120 @@ listDirections.forEach((item, index) => {
         <i class="bi bi-x-lg me-1"></i> Отмена
       </button>
     </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Модальное окно для удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">Удаление данных</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Год для удаления -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="deleteYear" class="form-label">Год данных для удаления:</label>
+            <select class="form-select" id="deleteYear">
+              {% for year in years %}
+              <option value="{{ year }}">{{ year }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Таблица с направлениями -->
+        <div class="mb-4">
+          <h6>Выберите направления для удаления:</h6>
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="sticky-top bg-light">
+                <tr>
+                  <th width="40px"><input type="checkbox" id="selectAllDirectionsDelete"></th>
+                  <th>Направление</th>
+                  <th>Код</th>
+                </tr>
+              </thead>
+              <tbody id="directionsTableDelete">
+                {% for direction in directions %}
+                <tr>
+                  <td><input type="checkbox" class="direction-checkbox-delete" value="{{ direction.id }}" checked></td>
+                  <td>{{ direction.name }}</td>
+                  <td>{{ direction.code }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Чекбоксы для выбора типов данных -->
+        <!-- В модальном окне удаления замените блок с чекбоксами на: -->
+        <div class="row g-2">
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="selectAllOptionsDelete">
+              <label class="form-check-label" for="selectAllOptionsDelete">
+                Выбрать всё
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="disciplines" id="deleteOption1" checked>
+              <label class="form-check-label" for="deleteOption1">
+                Дисциплины
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="competences" id="deleteOption2" checked>
+              <label class="form-check-label" for="deleteOption2">
+                Компетенции
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="indicators" id="deleteOption3" checked>
+              <label class="form-check-label" for="deleteOption3">
+                Индикаторы
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="ze" id="deleteOption4" checked>
+              <label class="form-check-label" for="deleteOption4">
+                Зачётные единицы
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="dependent_disciplines" id="deleteOption5" checked>
+              <label class="form-check-label" for="deleteOption5">
+                Зависимые дисциплины
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="competence_discipline_links" id="deleteOption6" checked>
+              <label class="form-check-label" for="deleteOption6">
+                Связи компетенция-дисциплина
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input element-delete-checkbox" type="checkbox" value="indicator_discipline_links" id="deleteOption7" checked>
+              <label class="form-check-label" for="deleteOption7">
+                Связи индикатор-дисциплина
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">
+          <i class="bi bi-trash me-1"></i> Удалить выбранное
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -504,6 +623,89 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-files me-1"></i> Копировать';
         }
+    });
+});
+
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик для кнопки "Удалить выбранное"
+    document.getElementById('confirmDelete').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Удаление...';
+
+        try {
+            // Получаем выбранные параметры
+            const year = document.getElementById('deleteYear').value;
+
+            // Получаем выбранные направления
+            const directionCheckboxes = document.querySelectorAll('.direction-checkbox-delete:checked');
+            const directions = Array.from(directionCheckboxes).map(cb => cb.value);
+
+            // Получаем выбранные типы данных для удаления
+            const elements = Array.from(document.querySelectorAll('.element-delete-checkbox:checked')).map(cb => cb.value);
+
+            // Валидация
+            if (directions.length === 0) {
+                throw new Error('Выберите хотя бы одно направление');
+            }
+
+            if (elements.length === 0) {
+                throw new Error('Выберите хотя бы один элемент для удаления');
+            }
+
+            // Отправляем данные на сервер
+            const response = await fetch('/UKUP/delete-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    year: year,
+                    directions: directions,
+                    entities: elements
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Ошибка сервера');
+            }
+
+            // Успешное удаление
+            alert('Данные успешно удалены!');
+
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            modal.hide();
+
+            // Обновляем страницу (если нужно)
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Ошибка при удалении:', error);
+            alert('Ошибка: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-trash me-1"></i> Удалить выбранное';
+        }
+    });
+
+    // Обработчик для "Выбрать все" направления
+    document.getElementById('selectAllDirectionsDelete').addEventListener('change', function() {
+        document.querySelectorAll('.direction-checkbox-delete').forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Обработчик для "Выбрать все" элементы
+    document.getElementById('selectAllOptionsDelete').addEventListener('change', function() {
+        document.querySelectorAll('.element-delete-checkbox').forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
     });
 });
 </script>
