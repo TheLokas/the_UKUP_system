@@ -377,10 +377,12 @@ listDirections.forEach((item, index) => {
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete">
-          <i class="bi bi-trash me-1"></i> Удалить выбранное
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-danger" style="width: 120px;" id="confirmDelete">
+          <i class="bi bi-trash me-1"></i> Удалить
+        </button>
+        <button type="button" class="btn btn-outline-secondary" style="width: 120px;" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i> Отмена
         </button>
       </div>
     </div>
@@ -632,6 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     // Обработчик для кнопки "Удалить выбранное"
     document.getElementById('confirmDelete').addEventListener('click', async function() {
+
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Удаление...';
@@ -708,6 +711,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function updateSelectAllDirectionsDelete() {
+    const checkboxes = document.querySelectorAll('.direction-checkbox-delete');
+    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    document.getElementById('selectAllDirectionsDelete').checked = allChecked;
+}
+
+function updateSelectAllOptionsDelete() {
+    const checkboxes = document.querySelectorAll('.element-delete-checkbox');
+    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    document.getElementById('selectAllOptionsDelete').checked = allChecked;
+}
+
+// Когда модальное окно открывается
+document.getElementById('deleteModal').addEventListener('shown.bs.modal', function () {
+    updateSelectAllDirectionsDelete();
+    updateSelectAllOptionsDelete();
+});
+
+
 </script>
 
 
