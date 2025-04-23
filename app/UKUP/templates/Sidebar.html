@@ -91,25 +91,39 @@
         </li>
       </ul>
         </form>
-       <form class="navbutton" id="form2" method="get" action="/UKUP/{{ type }}/add">
-        <input name="year" id="year0" type="hidden" value="{{ current_year }}">
-        <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
-         <input type="submit" class="btn btn-secondary btn-lg" value="Добавить">
-       </form>
-    </div>
+       <div class="navbutton">
+  <ul class="navbar-nav mb-2 mb-lg-0 justify-content-end">
+    <li class="nav-item dropdown nav-button">
+      <a class="nav-link dropdown-toggle btn btn-secondary btn-lg" role="button" data-bs-toggle="dropdown" aria-expanded="false">Действия</a>
+      <ul class="dropdown-menu">
+        <!-- Кнопка "Добавить" -->
+        <li>
+          <form class="dropdown-item" id="form2" method="get" action="/UKUP/{{ type }}/add">
+            <input name="year" id="year0" type="hidden" value="{{ current_year }}">
+            <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
+            <input type="submit" class="btn btn-link p-0 border-0 bg-transparent" style="text-align: left; width: 100%;" value="Добавить">
+          </form>
+        </li>
+
+        <!-- Кнопка "Удалить данные" -->
+        <li>
+          <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            Удалить данные
+          </button>
+        </li>
+
+        <!-- Кнопка "Открыть выбор" -->
+        <li>
+          <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#checkboxModal">
+            Открыть выбор
+          </button>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
 
 <!-- Рядом с кнопкой "Открыть выбор" -->
-<div class="navbutton" style="display: inline-block;">
-  <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#deleteModal">
-    Удалить данные
-  </button>
-</div>
-
-<div class="navbutton" style="display: inline-block;">  <!-- или d-inline-block -->
-  <button type="button" class="btn btn-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#checkboxModal">
-    Открыть выбор
-  </button>
-</div>
   </div>
 
 
@@ -545,6 +559,30 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('option1').checked = true; // Дисциплины
             document.getElementById('option2').checked = true; // Компетенции
         }
+        // 6. Если убрали индикаторы или компетенции — снять дисциплина-индикатор
+        if ((checkbox.id === 'option2' || checkbox.id === 'option3') && !this.checked) {
+            document.getElementById('option6').checked = false; // Убираем дисциплина-индикатор
+        }
+
+        // 7. При выборе дисциплина-индикатор — проверяем, выбраны ли индикаторы и компетенции
+        if (checkbox.id === 'option6' && this.checked) {
+            const indicatorChecked = document.getElementById('option3').checked;
+            const competenceChecked = document.getElementById('option2').checked;
+            if (!indicatorChecked || !competenceChecked) {
+                alert('Нельзя выбрать "Дисциплина–Индикатор" без включённых "Индикаторов" и "Компетенций".');
+                checkbox.checked = false; // Снять галочку
+                return; // Не продолжаем выполнение
+
+            }
+        }
+        // 8. Если сняли "Связи дисциплина–компетенция" — снять "Дисциплина–Индикатор", если он выбран
+        if (checkbox.id === 'option7' && !this.checked) {
+            const indicatorDisciplineCheckbox = document.getElementById('option6');
+            if (indicatorDisciplineCheckbox.checked) {
+                indicatorDisciplineCheckbox.checked = false;
+            }
+        }
+
 
         });
     });
@@ -632,60 +670,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Обработчик для кнопки "Удалить выбранное"
+    // Обработчик кнопки удаления
     document.getElementById('confirmDelete').addEventListener('click', async function() {
-
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Удаление...';
 
         try {
-            // Получаем выбранные параметры
             const year = document.getElementById('deleteYear').value;
-
-            // Получаем выбранные направления
             const directionCheckboxes = document.querySelectorAll('.direction-checkbox-delete:checked');
             const directions = Array.from(directionCheckboxes).map(cb => cb.value);
-
-            // Получаем выбранные типы данных для удаления
             const elements = Array.from(document.querySelectorAll('.element-delete-checkbox:checked')).map(cb => cb.value);
 
-            // Валидация
-            if (directions.length === 0) {
-                throw new Error('Выберите хотя бы одно направление');
-            }
+            if (directions.length === 0) throw new Error('Выберите хотя бы одно направление');
+            if (elements.length === 0) throw new Error('Выберите хотя бы один элемент для удаления');
 
-            if (elements.length === 0) {
-                throw new Error('Выберите хотя бы один элемент для удаления');
-            }
-
-            // Отправляем данные на сервер
             const response = await fetch('/UKUP/delete-data', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    year: year,
-                    directions: directions,
-                    entities: elements
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year: year, directions: directions, entities: elements })
             });
 
             const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Ошибка сервера');
 
-            if (!response.ok) {
-                throw new Error(result.error || 'Ошибка сервера');
-            }
-
-            // Успешное удаление
             alert('Данные успешно удалены!');
-
-            // Закрываем модальное окно
             const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
             modal.hide();
-
-            // Обновляем страницу (если нужно)
             window.location.reload();
 
         } catch (error) {
@@ -697,41 +708,222 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Обработчик для "Выбрать все" направления
+    // "Выбрать все" направления
     document.getElementById('selectAllDirectionsDelete').addEventListener('change', function() {
         document.querySelectorAll('.direction-checkbox-delete').forEach(checkbox => {
             checkbox.checked = this.checked;
         });
     });
 
-    // Обработчик для "Выбрать все" элементы
+    // "Выбрать все" элементы
     document.getElementById('selectAllOptionsDelete').addEventListener('change', function() {
         document.querySelectorAll('.element-delete-checkbox').forEach(checkbox => {
             checkbox.checked = this.checked;
         });
     });
+
+    // Обновление состояния чекбокса "выбрать всё"
+    function updateSelectAllDirectionsDelete() {
+        const checkboxes = document.querySelectorAll('.direction-checkbox-delete');
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('selectAllDirectionsDelete').checked = allChecked;
+    }
+
+    function updateSelectAllOptionsDelete() {
+        const checkboxes = document.querySelectorAll('.element-delete-checkbox');
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('selectAllOptionsDelete').checked = allChecked;
+    }
+
+    // Обновляем при открытии модального окна
+    document.getElementById('deleteModal').addEventListener('shown.bs.modal', function () {
+        updateSelectAllDirectionsDelete();
+        updateSelectAllOptionsDelete();
+    });
+
+    // Получаем все чекбоксы
+    const checkboxMap = {
+        disciplines: document.getElementById('deleteOption1'),
+        ze: document.getElementById('deleteOption4'),
+        dependent_disciplines: document.getElementById('deleteOption5'),
+        competence_discipline_links: document.getElementById('deleteOption6'),
+        indicator_discipline_links: document.getElementById('deleteOption7'),
+        competences: document.getElementById('deleteOption2'),
+        indicators: document.getElementById('deleteOption3'),
+    };
+
+    // Функция для обновления состояния чекбокса "Выбрать всё"
+    function updateSelectAll() {
+        const checkboxes = document.querySelectorAll('.element-delete-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('selectAllOptionsDelete').checked = allChecked;
+    }
+
+    // Функция для обновления состояния чекбокса "Выбрать всё" для направлений
+    function updateSelectAllDirections() {
+        const checkboxes = document.querySelectorAll('.direction-checkbox-delete');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('selectAllDirectionsDelete').checked = allChecked;
+    }
+
+    // Применяем эту логику после каждого изменения состояния чекбоксов
+    document.querySelectorAll('.element-delete-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectAll);
+    });
+
+    document.querySelectorAll('.direction-checkbox-delete').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectAllDirections);
+    });
+
+    // Логика для дисциплин
+    checkboxMap.disciplines.addEventListener('change', () => {
+        if (checkboxMap.disciplines.checked) {
+            // При выборе дисциплин активируются все зависимости
+            checkboxMap.ze.checked = true;
+            checkboxMap.dependent_disciplines.checked = true;
+            checkboxMap.competence_discipline_links.checked = true;
+            checkboxMap.indicator_discipline_links.checked = true;
+        } else {
+            // Если снимается дисциплина, снимаем только зачётные единицы
+            checkboxMap.ze.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для зачётных единиц
+    checkboxMap.ze.addEventListener('change', () => {
+        if (checkboxMap.ze.checked) {
+            // При выборе зачётных единиц активируются дисциплины и все зависимости
+            checkboxMap.disciplines.checked = true;
+            checkboxMap.dependent_disciplines.checked = true;
+            checkboxMap.competence_discipline_links.checked = true;
+            checkboxMap.indicator_discipline_links.checked = true;
+        } else {
+            // Если снимается зачётная единица, снимаем дисциплины
+            checkboxMap.disciplines.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для компетенций
+    checkboxMap.competences.addEventListener('change', () => {
+        if (checkboxMap.competences.checked) {
+            // При выборе компетенций активируются связи компетенция-дисциплина, индикатор-дисциплина и индикаторы
+            checkboxMap.competence_discipline_links.checked = true;
+            checkboxMap.indicator_discipline_links.checked = true;
+            checkboxMap.indicators.checked = true;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для индикаторов
+    checkboxMap.indicators.addEventListener('change', () => {
+        if (checkboxMap.indicators.checked) {
+            // При выборе индикаторов активируется связь индикатор-дисциплина
+            checkboxMap.indicator_discipline_links.checked = true;
+        } else {
+            // Если убираются индикаторы, снимаем галочку с компетенций
+            checkboxMap.competences.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для связи индикатор-дисциплина
+    checkboxMap.indicator_discipline_links.addEventListener('change', () => {
+        if (!checkboxMap.indicator_discipline_links.checked) {
+            // Если снимается связь индикатор-дисциплина, снимаем индикатор
+            checkboxMap.indicators.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для связи компетенция-дисциплина
+    checkboxMap.competence_discipline_links.addEventListener('change', () => {
+        if (!checkboxMap.competence_discipline_links.checked) {
+            // Если снимается связь компетенция-дисциплина, снимаем компетенции
+            checkboxMap.competences.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для снятия галочки с компетенций, если убираются связи
+    checkboxMap.indicator_discipline_links.addEventListener('change', () => {
+        if (!checkboxMap.indicator_discipline_links.checked) {
+            // Если снимается связь индикатор-дисциплина, снимаем компетенции
+            checkboxMap.competences.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для снятия галочки с дисциплин, если убираются зачётные единицы
+    checkboxMap.ze.addEventListener('change', () => {
+        if (!checkboxMap.ze.checked) {
+            // Если снимаются зачётные единицы, снимаем дисциплины
+            checkboxMap.disciplines.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для снятия галочки с дисциплин, если убираются зависимости
+    checkboxMap.dependent_disciplines.addEventListener('change', () => {
+        if (!checkboxMap.dependent_disciplines.checked) {
+            // Если снимаются зависимые дисциплины, снимаем дисциплины
+            checkboxMap.disciplines.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для снятия галочки с дисциплин, если убираются связи
+    checkboxMap.competence_discipline_links.addEventListener('change', () => {
+        if (!checkboxMap.competence_discipline_links.checked) {
+            // Если снимаются связи дисциплины, снимаем дисциплины
+            checkboxMap.disciplines.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для снятия галочки с компетенций, если убираются связи
+    checkboxMap.indicator_discipline_links.addEventListener('change', () => {
+        if (!checkboxMap.indicator_discipline_links.checked) {
+            // Если снимаются связи индикатор-дисциплина, снимаем компетенции
+            checkboxMap.competences.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для снятия галочки с индикаторов, если убираются связи
+    checkboxMap.indicator_discipline_links.addEventListener('change', () => {
+        if (!checkboxMap.indicator_discipline_links.checked) {
+            // Если снимаются связи индикатор-дисциплина, снимаем индикаторы
+            checkboxMap.indicators.checked = false;
+        }
+        updateSelectAll(); // Обновляем состояние "Выбрать все"
+    });
+
+    // Логика для обновления чекбокса "Выбрать всё" для направлений
+    document.getElementById('selectAllDirectionsDelete').addEventListener('change', (e) => {
+        const checkboxes = document.querySelectorAll('.direction-checkbox-delete');
+        checkboxes.forEach(cb => {
+            cb.checked = e.target.checked;
+        });
+        updateSelectAllDirections(); // Обновляем состояние "Выбрать все" для направлений
+    });
+
+
+    // Если отключили любой из зависимых чекбоксов — отключается дисциплина
+    const disciplineDependencies = ['ze', 'competence_discipline_links', 'indicator_discipline_links', 'dependent_disciplines'];
+    disciplineDependencies.forEach(key => {
+        checkboxMap[key].addEventListener('change', () => {
+            const anyDependentChecked = disciplineDependencies.some(k => checkboxMap[k].checked);
+            if (!anyDependentChecked) {
+                checkboxMap.disciplines.checked = false;
+            }
+        });
+    });
 });
-
-function updateSelectAllDirectionsDelete() {
-    const checkboxes = document.querySelectorAll('.direction-checkbox-delete');
-    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-    document.getElementById('selectAllDirectionsDelete').checked = allChecked;
-}
-
-function updateSelectAllOptionsDelete() {
-    const checkboxes = document.querySelectorAll('.element-delete-checkbox');
-    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-    document.getElementById('selectAllOptionsDelete').checked = allChecked;
-}
-
-// Когда модальное окно открывается
-document.getElementById('deleteModal').addEventListener('shown.bs.modal', function () {
-    updateSelectAllDirectionsDelete();
-    updateSelectAllOptionsDelete();
-});
-
-
 </script>
+
+
 
 
 {% endblock %}
