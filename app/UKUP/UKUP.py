@@ -1,6 +1,7 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, CompetenceDiscipline, Indicator
+from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, \
+    CompetenceDiscipline, Indicator, ZE, RequiredDiscipline, IndicatorDiscipline
 from .forms import DisciplineForm, CompetenceForm, ConnectForm, ZEForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
 from .module_db import connect_discipline_with_competence
@@ -13,6 +14,9 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
                        delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type,
                        report_matrix, get_required_disciplines, get_required_discipline, update_data, get_ze, update_ze)
+from flask import request, jsonify
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import or_  # Добавьте этот импорт
 
 
 UKUP = Blueprint('UKUP', __name__, template_folder='templates', static_folder='static')
@@ -604,3 +608,425 @@ def ze_post():
         ze_dict[id]["ze"] = k
     update_ze(ze_dict)
     return redirect(f"/UKUP/ze?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
+
+
+# Декоратор маршрута Flask для обработки POST-запросов на '/copy-data'
+@UKUP.route('/copy-data', methods=['POST'])
+def copy_data():
+    try:
+        data = request.get_json()
+        source_year = int(data['sourceYear'])
+        target_year = int(data['targetYear'])
+        direction_ids = list(map(int, data['directions']))
+        entities = data['entities']
+        overwrite = data.get('overwrite', False)  # Получаем параметр перезаписи
+
+        result = {
+            'copied': 0,
+            'updated': 0,
+            'skipped': 0,
+            'details': {
+                'disciplines': {'created': [], 'updated': [], 'skipped': []},
+                'competences': {'created': [], 'updated': [], 'skipped': []},
+                'discipline_competence_links': {'created': [], 'skipped': []},
+                'discipline_indicator_links': {'created': [], 'skipped': []},
+                'ze': {'created': [], 'updated': [], 'skipped': []},
+                'dependent_disciplines': {'created': [], 'skipped': []}
+            }
+        }
+
+        # 1. Копирование дисциплин
+        if 'disciplines' in entities:
+            for direction_id in direction_ids:
+                source_disciplines = Discipline.query.join(
+                    DirectionDiscipline
+                ).filter(
+                    DirectionDiscipline.direction_id == direction_id,
+                    Discipline.year_approved == source_year
+                ).all()
+
+                for disc in source_disciplines:
+                    target_disc = Discipline.query.join(
+                        DirectionDiscipline
+                    ).filter(
+                        DirectionDiscipline.direction_id == direction_id,
+                        Discipline.name == disc.name,
+                        Discipline.year_approved == target_year
+                    ).first()
+
+                    if not target_disc:
+                        # Создаем новую дисциплину
+                        new_disc = Discipline(
+                            name=disc.name,
+                            year_approved=target_year,
+                            block_id=disc.block_id,
+                            module_id=disc.module_id,
+                            department_id=disc.department_id
+                        )
+                        db.session.add(new_disc)
+                        db.session.flush()
+
+                        # Создаем ZE
+                        new_ze = ZE(
+                            discipline_id=new_disc.id,
+                            c1=0, c2=0, c3=0, c4=0,
+                            c5=0, c6=0, c7=0, c8=0,
+                            ze=0
+                        )
+                        db.session.add(new_ze)
+
+                        # Копируем связи с направлениями
+                        direction = Direction.query.get(direction_id)
+                        new_disc.directions.append(direction)
+
+                        result['details']['disciplines']['created'].append(disc.name)
+                        result['copied'] += 1
+
+                        # Копируем ZE если нужно
+                        if 'ze' in entities and disc.ze:
+                            source_ze = disc.ze[0] if disc.ze else None
+                            if source_ze:
+                                new_ze.c1 = source_ze.c1
+                                new_ze.c2 = source_ze.c2
+                                new_ze.c3 = source_ze.c3
+                                new_ze.c4 = source_ze.c4
+                                new_ze.c5 = source_ze.c5
+                                new_ze.c6 = source_ze.c6
+                                new_ze.c7 = source_ze.c7
+                                new_ze.c8 = source_ze.c8
+                                new_ze.ze = source_ze.ze
+                                result['details']['ze']['created'].append(disc.name)
+
+                        # Копируем зависимости если нужно
+                        if 'dependent_disciplines' in entities:
+                            dependencies = RequiredDiscipline.query.filter(
+                                RequiredDiscipline.dependent_discipline_id == disc.id
+                            ).all()
+
+                            for dep in dependencies:
+                                required_disc_name = db.session.query(Discipline.name)\
+                                    .filter(Discipline.id == dep.required_discipline_id)\
+                                    .scalar()
+
+                                required_disc = Discipline.query.join(
+                                    DirectionDiscipline
+                                ).filter(
+                                    DirectionDiscipline.direction_id == direction_id,
+                                    Discipline.name == required_disc_name,
+                                    Discipline.year_approved == target_year
+                                ).first()
+
+                                if required_disc:
+                                    new_dep = RequiredDiscipline(
+                                        required_discipline_id=required_disc.id,
+                                        dependent_discipline_id=new_disc.id
+                                    )
+                                    db.session.add(new_dep)
+                                    result['details']['dependent_disciplines']['created'].append(
+                                        f"{disc.name} → {required_disc_name}"
+                                    )
+
+                    elif overwrite:
+                        # Обновляем существующую дисциплину
+                        target_disc.block_id = disc.block_id
+                        target_disc.module_id = disc.module_id
+                        target_disc.department_id = disc.department_id
+
+                        # Обновляем ZE если нужно
+                        if 'ze' in entities and disc.ze:
+                            target_ze = target_disc.ze[0] if target_disc.ze else None
+                            source_ze = disc.ze[0] if disc.ze else None
+                            if target_ze and source_ze:
+                                target_ze.c1 = source_ze.c1
+                                target_ze.c2 = source_ze.c2
+                                target_ze.c3 = source_ze.c3
+                                target_ze.c4 = source_ze.c4
+                                target_ze.c5 = source_ze.c5
+                                target_ze.c6 = source_ze.c6
+                                target_ze.c7 = source_ze.c7
+                                target_ze.c8 = source_ze.c8
+                                target_ze.ze = source_ze.ze
+                                result['details']['ze']['updated'].append(disc.name)
+
+                        result['details']['disciplines']['updated'].append(disc.name)
+                        result['updated'] += 1
+                    else:
+                        result['details']['disciplines']['skipped'].append(disc.name)
+                        result['skipped'] += 1
+
+        # 2. Копирование компетенций
+        if 'competences' in entities:
+            for direction_id in direction_ids:
+                source_competences = Competence.query.filter(
+                    Competence.direction_id == direction_id,
+                    Competence.year_approved == source_year
+                ).all()
+
+                for comp in source_competences:
+                    target_comp = Competence.query.filter(
+                        Competence.direction_id == direction_id,
+                        Competence.name == comp.name,
+                        Competence.year_approved == target_year
+                    ).first()
+
+                    if not target_comp:
+                        # Создаем новую компетенцию
+                        new_comp = Competence(
+                            name=comp.name,
+                            year_approved=target_year,
+                            type=comp.type,
+                            formulation=comp.formulation,
+                            source=comp.source,
+                            direction_id=direction_id
+                        )
+                        db.session.add(new_comp)
+                        db.session.flush()
+
+                        result['details']['competences']['created'].append(comp.name)
+                        result['copied'] += 1
+
+                        # Копируем индикаторы если нужно
+                        if 'indicators' in entities:
+                            for indicator in comp.indicators:
+                                new_ind = Indicator(
+                                    name=indicator.name,
+                                    formulation=indicator.formulation,
+                                    competence_id=new_comp.id
+                                )
+                                db.session.add(new_ind)
+
+                    elif overwrite:
+                        # Обновляем существующую компетенцию
+                        target_comp.type = comp.type
+                        target_comp.formulation = comp.formulation
+                        target_comp.source = comp.source
+
+                        # Обновляем индикаторы если нужно
+                        if 'indicators' in entities:
+                            # Удаляем старые индикаторы
+                            Indicator.query.filter_by(competence_id=target_comp.id).delete()
+                            # Добавляем новые
+                            for indicator in comp.indicators:
+                                new_ind = Indicator(
+                                    name=indicator.name,
+                                    formulation=indicator.formulation,
+                                    competence_id=target_comp.id
+                                )
+                                db.session.add(new_ind)
+
+                        result['details']['competences']['updated'].append(comp.name)
+                        result['updated'] += 1
+                    else:
+                        result['details']['competences']['skipped'].append(comp.name)
+                        result['skipped'] += 1
+
+        # 3. Копирование связей дисциплина-компетенция
+        if 'discipline_competence_links' in entities:
+            for direction_id in direction_ids:
+                source_links = db.session.query(CompetenceDiscipline)\
+                    .join(Discipline, CompetenceDiscipline.discipline_id == Discipline.id)\
+                    .join(Competence, CompetenceDiscipline.competence_id == Competence.id)\
+                    .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id)\
+                    .filter(
+                        Discipline.year_approved == source_year,
+                        Competence.year_approved == source_year,
+                        DirectionDiscipline.direction_id == direction_id
+                    ).all()
+
+                for link in source_links:
+                    disc_name = db.session.query(Discipline.name)\
+                        .filter(Discipline.id == link.discipline_id).scalar()
+                    comp_name = db.session.query(Competence.name)\
+                        .filter(Competence.id == link.competence_id).scalar()
+
+                    if not disc_name or not comp_name:
+                        continue
+
+                    target_disc = Discipline.query.join(
+                        DirectionDiscipline,
+                        Discipline.id == DirectionDiscipline.discipline_id
+                    ).filter(
+                        DirectionDiscipline.direction_id == direction_id,
+                        Discipline.name == disc_name,
+                        Discipline.year_approved == target_year
+                    ).first()
+
+                    target_comp = Competence.query.filter(
+                        Competence.direction_id == direction_id,
+                        Competence.name == comp_name,
+                        Competence.year_approved == target_year
+                    ).first()
+
+                    if target_disc and target_comp:
+                        exists = CompetenceDiscipline.query.filter(
+                            CompetenceDiscipline.discipline_id == target_disc.id,
+                            CompetenceDiscipline.competence_id == target_comp.id
+                        ).first()
+
+                        if not exists:
+                            new_link = CompetenceDiscipline(
+                                discipline_id=target_disc.id,
+                                competence_id=target_comp.id
+                            )
+                            db.session.add(new_link)
+                            result['details']['discipline_competence_links']['created'].append(
+                                f"{disc_name} ↔ {comp_name}"
+                            )
+                            result['copied'] += 1
+                        else:
+                            result['details']['discipline_competence_links']['skipped'].append(
+                                f"{disc_name} ↔ {comp_name}"
+                            )
+                            result['skipped'] += 1
+
+        # 4. Копирование связей дисциплина-индикатор
+        if 'discipline_indicator_links' in entities:
+            for direction_id in direction_ids:
+                source_links = db.session.query(IndicatorDiscipline)\
+                    .join(Discipline, IndicatorDiscipline.discipline_id == Discipline.id)\
+                    .join(Indicator, IndicatorDiscipline.indicator_id == Indicator.id)\
+                    .join(Competence, Indicator.competence_id == Competence.id)\
+                    .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id)\
+                    .filter(
+                        Discipline.year_approved == source_year,
+                        Competence.year_approved == source_year,
+                        DirectionDiscipline.direction_id == direction_id
+                    ).all()
+
+                for link in source_links:
+                    disc_name = db.session.query(Discipline.name)\
+                        .filter(Discipline.id == link.discipline_id).scalar()
+                    ind_name = db.session.query(Indicator.name)\
+                        .filter(Indicator.id == link.indicator_id).scalar()
+
+                    if not disc_name or not ind_name:
+                        continue
+
+                    target_disc = Discipline.query.join(
+                        DirectionDiscipline,
+                        Discipline.id == DirectionDiscipline.discipline_id
+                    ).filter(
+                        DirectionDiscipline.direction_id == direction_id,
+                        Discipline.name == disc_name,
+                        Discipline.year_approved == target_year
+                    ).first()
+
+                    target_ind = Indicator.query.join(Competence)\
+                        .filter(
+                            Competence.direction_id == direction_id,
+                            Indicator.name == ind_name,
+                            Competence.year_approved == target_year
+                        ).first()
+
+                    if target_disc and target_ind:
+                        exists = IndicatorDiscipline.query.filter(
+                            IndicatorDiscipline.discipline_id == target_disc.id,
+                            IndicatorDiscipline.indicator_id == target_ind.id
+                        ).first()
+
+                        if not exists:
+                            new_link = IndicatorDiscipline(
+                                discipline_id=target_disc.id,
+                                indicator_id=target_ind.id
+                            )
+                            db.session.add(new_link)
+                            result['details']['discipline_indicator_links']['created'].append(
+                                f"{disc_name} → {ind_name}"
+                            )
+                            result['copied'] += 1
+                        else:
+                            result['details']['discipline_indicator_links']['skipped'].append(
+                                f"{disc_name} → {ind_name}"
+                            )
+                            result['skipped'] += 1
+
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Копирование завершено",
+            "stats": result
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+
+@UKUP.route('/delete-data', methods=['POST'])
+def delete_data():
+    try:
+        data = request.get_json()
+        year = int(data['year'])
+        direction_ids = list(map(int, data['directions']))
+        entities = data['entities']
+
+        # Валидация
+        if not direction_ids:
+            return jsonify({'error': 'Выберите хотя бы одно направление'}), 400
+
+        if not entities:
+            return jsonify({'error': 'Выберите хотя бы один элемент для удаления'}), 400
+
+        # Удаление данных
+        for direction_id in direction_ids:
+            # Удаление дисциплин
+            if 'disciplines' in entities:
+                disciplines = Discipline.query.join(
+                    DirectionDiscipline
+                ).filter(
+                    DirectionDiscipline.direction_id == direction_id,
+                    Discipline.year_approved == year
+                ).all()
+
+                for disc in disciplines:
+                    # Удаление зависимостей
+                    if 'dependent_disciplines' in entities:
+                        RequiredDiscipline.query.filter(
+                            (RequiredDiscipline.required_discipline_id == disc.id) |
+                            (RequiredDiscipline.dependent_discipline_id == disc.id)
+                        ).delete()
+
+                    # Удаление связей компетенция-дисциплина
+                    if 'competence_discipline_links' in entities:
+                        CompetenceDiscipline.query.filter_by(discipline_id=disc.id).delete()
+
+                    # Удаление связей индикатор-дисциплина
+                    if 'indicator_discipline_links' in entities:
+                        IndicatorDiscipline.query.filter_by(discipline_id=disc.id).delete()
+
+                    # Удаление ZE
+                    if 'ze' in entities:
+                        ZE.query.filter_by(discipline_id=disc.id).delete()
+
+                    # Удаление дисциплины
+                    db.session.delete(disc)
+
+            # Удаление компетенций
+            if 'competences' in entities:
+                competences = Competence.query.filter(
+                    Competence.direction_id == direction_id,
+                    Competence.year_approved == year
+                ).all()
+
+                for comp in competences:
+                    # Удаление индикаторов
+                    if 'indicators' in entities:
+                        Indicator.query.filter_by(competence_id=comp.id).delete()
+
+                    # Удаление связей компетенция-дисциплина
+                    if 'competence_discipline_links' in entities:
+                        CompetenceDiscipline.query.filter_by(competence_id=comp.id).delete()
+
+                    # Удаление компетенции
+                    db.session.delete(comp)
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Данные успешно удалены'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
