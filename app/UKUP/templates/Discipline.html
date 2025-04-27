@@ -2,6 +2,37 @@
 {% block content %}
 {{ super() }}
 <div class="content">
+   <!-- Add search input at the top -->
+   <div class="row mb-3">
+       <div class="col-md-6">
+           <input type="text" id="searchInput" class="form-control" placeholder="Поиск по дисциплинам или модулю...">
+       </div>
+       <div class="col-md-3">
+           <select id="blockFilter" class="form-select">
+               <option value="">Все блоки</option>
+               {% set blocks = [] %}
+               {% for discipline in disciplines %}
+                   {% if discipline.block.name not in blocks %}
+                       <option value="{{ discipline.block.name }}">{{ discipline.block.name }}</option>
+                       {% set blocks = blocks.append(discipline.block.name) %}
+                   {% endif %}
+               {% endfor %}
+           </select>
+       </div>
+       <div class="col-md-3">
+           <select id="departmentFilter" class="form-select">
+               <option value="">Все кафедры</option>
+               {% set departments = [] %}
+               {% for discipline in disciplines %}
+                   {% if discipline.department.name not in departments %}
+                       <option value="{{ discipline.department.name }}">{{ discipline.department.name }}</option>
+                       {% set departments = departments.append(discipline.department.name) %}
+                   {% endif %}
+               {% endfor %}
+           </select>
+       </div>
+   </div>
+
    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px;">
       <thead class="table-light">
       <tr>
@@ -14,17 +45,26 @@
           <th>Дисциплины</th>
           <th>Блок</th>
           <th>Кафедра</th>
-          <th>Действие</th>
+          <th>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>Действие</span>
+                  <form id="form2" method="get" action="/UKUP/{{ type }}/add" style="margin: 0;">
+                      <input name="year" id="year0" type="hidden" value="{{ current_year }}">
+                      <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
+                      <input type="submit" class="btn btn-primary btn-sm" value="Добавить">
+                  </form>
+              </div>
+          </th>
       </tr>
       </thead>
-      <tbody>
+      <tbody id="disciplineTableBody">
       {% set ns = namespace(module="", count = 1) %}
       {%  for discipline in disciplines  %}
         {%  if ns.module != discipline.module  %}
-            <tr class="table-light"><th style="text-align:center; border-color: inherit;" colspan="5">{{  discipline.module.name  }}</th></tr>
+            <tr class="table-light module-row" data-module="{{ discipline.module.name }}"><th style="text-align:center; border-color: inherit;" colspan="5">{{  discipline.module.name  }}</th></tr>
             {%  set ns.module = discipline.module  %}
         {%  endif  %}
-        <tr>
+        <tr class="discipline-row" data-name="{{ discipline.name|lower }}" data-block="{{ discipline.block.name|lower }}" data-department="{{ discipline.department.name|lower }}" data-module="{{ discipline.module.name|lower }}">
             <td>{{  ns.count  }}</td>
             <td>{{  discipline.name  }}</td>
             <td>{{  discipline.block.name  }}</td>
@@ -56,5 +96,66 @@
       </tbody>
    </table>
 </div>
-</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const blockFilter = document.getElementById('blockFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const rows = document.querySelectorAll('.discipline-row, .module-row');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const blockValue = blockFilter.value.toLowerCase();
+        const departmentValue = departmentFilter.value.toLowerCase();
+
+        // Сначала скрыть все строки
+        rows.forEach(row => {
+            row.style.display = 'none';
+        });
+
+        let currentModuleRow = null;
+        let hasVisibleInModule = false;
+
+        rows.forEach(row => {
+            if (row.classList.contains('module-row')) {
+                // Новый модуль — проверяем, нужно ли показать предыдущий
+                if (currentModuleRow && hasVisibleInModule) {
+                    currentModuleRow.style.display = '';
+                }
+                currentModuleRow = row;
+                hasVisibleInModule = false;
+            } else if (row.classList.contains('discipline-row')) {
+                const nameMatch = row.dataset.name.includes(searchTerm);
+                const blockMatch = blockValue === '' || row.dataset.block.includes(blockValue);
+                const departmentMatch = departmentValue === '' || row.dataset.department.includes(departmentValue);
+                const moduleMatch = row.dataset.module.includes(searchTerm);
+
+                const shouldShow = (nameMatch || moduleMatch) && blockMatch && departmentMatch;
+
+                if (shouldShow) {
+                    row.style.display = '';
+                    hasVisibleInModule = true;
+                }
+            }
+        });
+
+        // Проверка для последнего модуля
+        if (currentModuleRow && hasVisibleInModule) {
+            currentModuleRow.style.display = '';
+        }
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    blockFilter.addEventListener('change', filterTable);
+    departmentFilter.addEventListener('change', filterTable);
+});
+</script>
+
+
+<style>
+    #searchInput, #blockFilter, #departmentFilter {
+        margin-bottom: 10px;
+    }
+</style>
 {% endblock %}

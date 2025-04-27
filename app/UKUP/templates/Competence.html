@@ -12,14 +12,35 @@
       <tr>
           <th>Код</th>
           <th>Описание</th>
-          <th style="width: 200px;">Действие</th>
+          <th style="width: 200px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>Действие</span>
+                  <form method="get" action="/UKUP/competence/add" style="margin: 0;">
+                      <input name="year" type="hidden" value="{{ current_year }}">
+                      <input name="direction" type="hidden" value="{{ current_direction.id }}">
+                      <input type="submit" class="btn btn-primary btn-sm" value="Добавить">
+                  </form>
+              </div>
+          </th>
       </tr>
       </thead>
       <tbody>
       {% set ns = namespace(type="", count = 1) %}
       {%  for competence in competencies  %}
         {%  if ns.type != competence.type  %}
-            <tr class="table-light"><th style="text-align:center; border-color: inherit;" colspan="3">{{  competence.type  }}</th></tr>
+            <tr class="table-light">
+                <th style="text-align:center; border-color: inherit;" colspan="3">
+                    {% if competence.type == "УК" %}
+                        Универсальные компетенции
+                    {% elif competence.type == "ОПК" %}
+                        Общепрофессиональные компетенции
+                    {% elif competence.type == "ПК" %}
+                        Профессиональные компетенции
+                    {% else %}
+                        {{ competence.type }}
+                    {% endif %}
+                </th>
+            </tr>
             {%  set ns.type = competence.type  %}
         {%  endif  %}
         <tr>

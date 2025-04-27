@@ -52,9 +52,16 @@ def competence():
         current_direction = get_direction_by_id(request.args["direction"])
     competence = get_competences(direction=current_direction.id, year=current_year)
 
+    # Вот тут сортируем
+    competence = sorted(competence, key=lambda c: (
+        0 if c.type == "УК" else 1 if c.type == "ОПК" else 2 if c.type == "ПК" else 3,
+        c.name  # сортировка по имени внутри группы, можно убрать
+    ))
+
     return render_template("Competence.html", type=type,
                            competencies=competence, years=years, directions=directions,
                            current_year=current_year, current_direction=current_direction)
+
 
 
 # Страница добавления дисциплин
