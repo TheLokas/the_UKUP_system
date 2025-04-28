@@ -1,12 +1,14 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
+
 <div class="content">
 
     <!-- Поле поиска -->
-    <div style="margin-bottom: 10px;">
+    <div style="margin-bottom: 10px; position: relative;">
         <input type="text" id="competenceSearch" class="form-control" placeholder="Поиск компетенций...">
     </div>
+
 
     <!-- Таблица -->
     <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
@@ -20,9 +22,9 @@
                 <th>Код</th>
                 <th>Описание</th>
                 <th style="width: 200px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Действие</span>
-                        <form method="get" action="/UKUP/competence/add" style="margin: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+                        <div style="display: flex; align-items: center;">Действие</div>
+                        <form method="get" action="/UKUP/competence/add" style="margin: 0; display: flex; align-items: center;">
                             <input name="year" type="hidden" value="{{ current_year }}">
                             <input name="direction" type="hidden" value="{{ current_direction.id }}">
                             <input type="submit" class="btn btn-primary btn-sm" value="Добавить">
@@ -99,17 +101,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const moduleName = row.innerText.toLowerCase();
                 showAllUnderCurrentModule = (moduleName.includes(searchTerm) && searchTerm !== '');
 
-                // Всегда пока скрываем модуль, потом решим показывать или нет
+                // Скрываем модуль, потом решаем показывать или нет
                 row.style.display = 'none';
             } else if (row.classList.contains('competence-row')) {
                 const code = row.children[0].textContent.toLowerCase();
                 const description = row.children[1].textContent.toLowerCase();
 
                 if (showAllUnderCurrentModule || code.includes(searchTerm) || description.includes(searchTerm)) {
-                    // Показываем компетенцию
                     row.style.display = '';
 
-                    // И обязательно показываем её модуль
                     if (currentModuleRow) {
                         currentModuleRow.style.display = '';
                     }
@@ -121,6 +121,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
 
 {% endblock %}

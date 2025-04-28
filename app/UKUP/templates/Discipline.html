@@ -3,35 +3,36 @@
 {{ super() }}
 <div class="content">
    <!-- Add search input at the top -->
-   <div class="row mb-3">
-       <div class="col-md-6">
-           <input type="text" id="searchInput" class="form-control" placeholder="Поиск по дисциплинам или модулю...">
-       </div>
-       <div class="col-md-3">
-           <select id="blockFilter" class="form-select">
-               <option value="">Все блоки</option>
-               {% set blocks = [] %}
-               {% for discipline in disciplines %}
-                   {% if discipline.block.name not in blocks %}
-                       <option value="{{ discipline.block.name }}">{{ discipline.block.name }}</option>
-                       {% set blocks = blocks.append(discipline.block.name) %}
-                   {% endif %}
-               {% endfor %}
-           </select>
-       </div>
-       <div class="col-md-3">
-           <select id="departmentFilter" class="form-select">
-               <option value="">Все кафедры</option>
-               {% set departments = [] %}
-               {% for discipline in disciplines %}
-                   {% if discipline.department.name not in departments %}
-                       <option value="{{ discipline.department.name }}">{{ discipline.department.name }}</option>
-                       {% set departments = departments.append(discipline.department.name) %}
-                   {% endif %}
-               {% endfor %}
-           </select>
-       </div>
-   </div>
+    <div class="row mb-3" style="position: relative;">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Поиск по дисциплинам или модулю...">
+        </div>
+        <div class="col-md-3">
+            <select id="blockFilter" class="form-select">
+                <option value="">Все блоки</option>
+                {% set blocks = [] %}
+                {% for discipline in disciplines %}
+                    {% if discipline.block.name not in blocks %}
+                        <option value="{{ discipline.block.name }}">{{ discipline.block.name }}</option>
+                        {% set blocks = blocks.append(discipline.block.name) %}
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="departmentFilter" class="form-select">
+                <option value="">Все кафедры</option>
+                {% set departments = [] %}
+                {% for discipline in disciplines %}
+                    {% if discipline.department.name not in departments %}
+                        <option value="{{ discipline.department.name }}">{{ discipline.department.name }}</option>
+                        {% set departments = departments.append(discipline.department.name) %}
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
 
    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px;">
       <thead class="table-light">

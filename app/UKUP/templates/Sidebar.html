@@ -56,7 +56,7 @@
                 <input name="direction" id="direction7" type="hidden" value="{{ current_direction.id }}">
                 <input type="submit" class="dropdown-item" value="Матрица">
               </form></span></li>
-              
+
             </ul>
           </li>
         </ul>
@@ -118,7 +118,17 @@
   </div>
 
 
+
 </nav>
+
+<style>
+  /* Если нужно специально "опустить" содержимое страницы ниже панели */
+  .content {
+    margin-top: 4px; /* Или сколько у тебя там высота панели */
+  }
+</style>
+
+
 <script>
 var listYears = document.querySelectorAll('.year li > span');
 var listDirections = document.querySelectorAll('.direction li > span');
@@ -393,6 +403,7 @@ listDirections.forEach((item, index) => {
   </div>
 </div>
 
+
 <style>
   /* Стили для подсветки чекбоксов при наведении */
   .form-check:hover {
@@ -429,6 +440,7 @@ listDirections.forEach((item, index) => {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 </style>
+
 
 <script>
 // Функция для обновления состояния чекбокса "Выбрать все направления"
