@@ -1,9 +1,11 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
+<!-- Контейнер для уведомлений -->
+<div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1000; width: 350px;"></div>
 <div class="content">
-   <!-- Add search input at the top -->
-    <div class="row mb-3" style="position: relative;">
+   <!-- Поисковая панель -->
+   <div class="row mb-3" style="position: relative;">
         <div class="col-md-6">
             <input type="text" id="searchInput" class="form-control" placeholder="Поиск по дисциплинам или модулю...">
         </div>
@@ -33,7 +35,6 @@
         </div>
     </div>
 
-
    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px;">
       <thead class="table-light">
       <tr>
@@ -50,8 +51,8 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span>Действие</span>
                   <form id="form2" method="get" action="/UKUP/{{ type }}/add" style="margin: 0;">
-                      <input name="year" id="year0" type="hidden" value="{{ current_year }}">
-                      <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
+                      <input name="year" type="hidden" value="{{ current_year }}">
+                      <input name="direction" type="hidden" value="{{ current_direction.id }}">
                       <input type="submit" class="btn btn-primary btn-sm" value="Добавить">
                   </form>
               </div>
@@ -60,46 +61,98 @@
       </thead>
       <tbody id="disciplineTableBody">
       {% set ns = namespace(module="", count = 1) %}
-      {%  for discipline in disciplines  %}
-        {%  if ns.module != discipline.module  %}
-            <tr class="table-light module-row" data-module="{{ discipline.module.name }}"><th style="text-align:center; border-color: inherit;" colspan="5">{{  discipline.module.name  }}</th></tr>
-            {%  set ns.module = discipline.module  %}
-        {%  endif  %}
+      {% for discipline in disciplines %}
+        {% if ns.module != discipline.module %}
+            <tr class="table-light module-row" data-module="{{ discipline.module.name }}">
+                <th colspan="5" style="text-align:center;">{{ discipline.module.name }}</th>
+            </tr>
+            {% set ns.module = discipline.module %}
+        {% endif %}
         <tr class="discipline-row" data-name="{{ discipline.name|lower }}" data-block="{{ discipline.block.name|lower }}" data-department="{{ discipline.department.name|lower }}" data-module="{{ discipline.module.name|lower }}">
-            <td>{{  ns.count  }}</td>
-            <td>{{  discipline.name  }}</td>
-            <td>{{  discipline.block.name  }}</td>
-            <td>{{  discipline.department.name  }}</td>
+            <td>{{ ns.count }}</td>
+            <td>{{ discipline.name }}</td>
+            <td>{{ discipline.block.name }}</td>
+            <td>{{ discipline.department.name }}</td>
             <td style="display: flex;">
-                <form action="/UKUP/discipline/{{  discipline.id  }}" method="get" style="margin:5px;">
-                    <input name="year" id="editYear{{  discipline.id  }}" type="hidden" value="{{ current_year }}">
-                    <input name="direction" id="editDirection{{  discipline.id  }}" type="hidden" value="{{ current_direction.id }}">
+                <form action="/UKUP/discipline/{{ discipline.id }}" method="get" style="margin:5px;">
+                    <input name="year" type="hidden" value="{{ current_year }}">
+                    <input name="direction" type="hidden" value="{{ current_direction.id }}">
                     <label class="edit-icon image-button">
                         <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
                     </label>
                 </form>
-                <form action="/UKUP/discipline/delete/{{  discipline.id  }}" method="post" style="margin:5px;">
-                    <input name="year" id="deleteYear{{discipline.id}}" type="hidden" value="{{ current_year }}">
-                    <input name="direction" id="deleteDirection-{{discipline.id}}" type="hidden" value="{{ current_direction.id }}">
+                <form class="delete-form" data-discipline-id="{{ discipline.id }}" data-discipline-name="{{ discipline.name }}" style="margin:5px;">
+                    <input name="year" type="hidden" value="{{ current_year }}">
+                    <input name="direction" type="hidden" value="{{ current_direction.id }}">
                     <label class="edit-icon-delete image-button">
-                        <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
+                        <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary">
                     </label>
                 </form>
-                <form action="/UKUP/discipline/connect_competence/{{  discipline.id  }}" method="get" style="margin:5px;">
-                    <input name="year" id="connectYear{{  discipline.id  }}" type="hidden" value="{{ current_year }}">
-                    <input name="direction" id="connectDirection{{  discipline.id  }}" type="hidden" value="{{ current_direction.id }}">
+                <form action="/UKUP/discipline/connect_competence/{{ discipline.id }}" method="get" style="margin:5px;">
+                    <input name="year" type="hidden" value="{{ current_year }}">
+                    <input name="direction" type="hidden" value="{{ current_direction.id }}">
                     <input type="submit" class="btn btn-outline-secondary" value="Компетенции">
                 </form>
             </td>
         </tr>
-            {%  set ns.count = ns.count + 1  %}
-      {%  endfor  %}
+        {% set ns.count = ns.count + 1 %}
+      {% endfor %}
       </tbody>
    </table>
 </div>
 
+
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmDeleteLabel">Подтверждение удаления</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+        <div class="modal-body">
+            <p>Вы собираетесь удалить дисциплину <strong id="disciplineToDeleteName"> </strong>.</p>
+            <p class="mb-0">Это действие <strong>необратимо</strong> — все связанные данные будут удалены из системы. Пожалуйста, подтвердите, что вы действительно хотите продолжить удаление.</p>
+
+        </div>
+
+      <div class="modal-footer justify-content-end">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-danger px-3" id="confirmDeleteButton">Удалить</button>
+          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Отмена</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Стили -->
+<style>
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  transform: translateY(-50px);
+  opacity: 0;
+}
+.modal.fade.show .modal-dialog {
+  transform: translateY(0);
+  opacity: 1;
+}
+.modal-backdrop.show {
+  opacity: 0.7;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+.modal-footer .btn {
+  margin-left: 0 !important;
+}
+#searchInput, #blockFilter, #departmentFilter {
+    margin-bottom: 10px;
+}
+</style>
+
+<!-- Скрипт -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchInput');
     const blockFilter = document.getElementById('blockFilter');
     const departmentFilter = document.getElementById('departmentFilter');
@@ -110,20 +163,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const blockValue = blockFilter.value.toLowerCase();
         const departmentValue = departmentFilter.value.toLowerCase();
 
-        // Сначала скрыть все строки
-        rows.forEach(row => {
-            row.style.display = 'none';
-        });
+        rows.forEach(row => row.style.display = 'none');
 
         let currentModuleRow = null;
         let hasVisibleInModule = false;
 
         rows.forEach(row => {
             if (row.classList.contains('module-row')) {
-                // Новый модуль — проверяем, нужно ли показать предыдущий
-                if (currentModuleRow && hasVisibleInModule) {
-                    currentModuleRow.style.display = '';
-                }
+                if (currentModuleRow && hasVisibleInModule) currentModuleRow.style.display = '';
                 currentModuleRow = row;
                 hasVisibleInModule = false;
             } else if (row.classList.contains('discipline-row')) {
@@ -133,7 +180,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const moduleMatch = row.dataset.module.includes(searchTerm);
 
                 const shouldShow = (nameMatch || moduleMatch) && blockMatch && departmentMatch;
-
                 if (shouldShow) {
                     row.style.display = '';
                     hasVisibleInModule = true;
@@ -141,22 +187,46 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Проверка для последнего модуля
-        if (currentModuleRow && hasVisibleInModule) {
-            currentModuleRow.style.display = '';
-        }
+        if (currentModuleRow && hasVisibleInModule) currentModuleRow.style.display = '';
     }
 
     searchInput.addEventListener('input', filterTable);
     blockFilter.addEventListener('change', filterTable);
     departmentFilter.addEventListener('change', filterTable);
+
+    let formToDelete = null;
+
+    document.querySelectorAll('.delete-form input[type="image"]').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            formToDelete = this.closest('form');
+
+            const disciplineName = formToDelete.dataset.disciplineName;
+            document.getElementById('disciplineToDeleteName').textContent = `"${disciplineName}"`;
+
+            const deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            deleteModal.show();
+        });
+    });
+
+    document.getElementById('confirmDeleteButton').addEventListener('click', function () {
+        if (formToDelete) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = `/UKUP/discipline/delete/${formToDelete.dataset.disciplineId}`;
+
+            formToDelete.querySelectorAll('input[type="hidden"]').forEach(input => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = input.name;
+                hidden.value = input.value;
+                form.appendChild(hidden);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 });
 </script>
-
-
-<style>
-    #searchInput, #blockFilter, #departmentFilter {
-        margin-bottom: 10px;
-    }
-</style>
 {% endblock %}
