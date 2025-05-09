@@ -375,7 +375,7 @@ def connect_indicators_discipline(discipline_id):
         current_direction = Direction.query.get(request.args["direction"])
 
     discipline = get_discipline_by_id(discipline_id)
-    competencies = get_connected_competences(discipline_id, current_direction.id, current_year)
+    competencies = list(reversed(get_connected_competences(discipline_id, current_direction.id, current_year)))
     competencies_id = []
     for competence in competencies:
         competencies_id.append(competence.id)
