@@ -19,11 +19,13 @@ class Discipline(db.Model):
     block_id = db.Column(db.Integer, db.ForeignKey('blocks.id'))
     module_id = db.Column(db.Integer, db.ForeignKey('modules.id'))
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
 
     block = db.relationship('Block', backref='disciplines')
     module = db.relationship('Module', backref='disciplines')
     department = db.relationship('Department', backref='disciplines')
-    directions = db.relationship('Direction', secondary='direction_disciplines', backref=db.backref('disciplines', lazy='dynamic'))
+    #directions = db.relationship('Direction', secondary='direction_disciplines', backref=db.backref('disciplines', lazy='dynamic'))
+    directions = db.relationship('Direction', backref='disciplines')
 
     # Отношения для RequiredDiscipline
     required_for = db.relationship(
@@ -85,11 +87,11 @@ class Indicator(db.Model):
     competence = db.relationship('Competence', backref='indicators')
 
 
-class DirectionDiscipline(db.Model):
-    __tablename__ = 'direction_disciplines'
-    id = db.Column(db.Integer, primary_key=True)
-    discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
-    direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
+#class DirectionDiscipline(db.Model):
+#    __tablename__ = 'direction_disciplines'
+#    id = db.Column(db.Integer, primary_key=True)
+#    discipline_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'))
+#    direction_id = db.Column(db.Integer, db.ForeignKey('directions.id'))
 
 
 class CompetenceDiscipline(db.Model):

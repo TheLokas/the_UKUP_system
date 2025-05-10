@@ -44,10 +44,10 @@
                 {% for indicator in indicators %}
                    {% if indicator.name.split(".")[0] == competence.name %}
                       <div class="form-check mt-1">
-                        <input class="form-check-input" id="{{ competence.id }}-{{ indicator.id }}" name="{{ competence.id }}" type="checkbox" value="{{ indicator.id }}"
-                          {% if "{}-{}".format(competence.id, indicator.id) in checked %} checked {% endif %}>
-                        <label class="form-check-label" for="{{ competence.id }}-{{ indicator.id }}">
-                          {{ indicator.name }}
+                        <input class="form-check-input" id="{{ indicator.id }}" name="connect" type="checkbox" value="{{ indicator.id }}"
+                          {% if indicator.id in checked %} checked {% endif %}>
+                        <label class="form-check-label" for="{{ indicator.id }}">
+                          {{ indicator.name }} - {{ indicator.formulation }}
                         </label>
                       </div>
                   {% endif %}

@@ -10,7 +10,7 @@ class DisciplineForm(FlaskForm):
     block = SelectField()
     module = SelectField()
     department = SelectField()
-    direction = SelectMultipleField()
+    direction = SelectField()
     required = SelectField()
     submit = SubmitField("Добавить")
 

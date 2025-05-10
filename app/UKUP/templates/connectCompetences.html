@@ -74,6 +74,7 @@
         <div class="col-md-6 mb-2 mb-md-0">
           {{ form.submit(value="Сохранить изменения", class="btn btn-primary w-100") }}
         </div>
+        </form>
         <div class="col-md-6">
           <form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get" class="w-100">
             <input name="year" id="year2" type="hidden" value="{{ current_year }}">
@@ -82,7 +83,7 @@
           </form>
         </div>
       </div>
-    </form>
+    
 
   </div> <!-- конец белой карточки -->
 </div>

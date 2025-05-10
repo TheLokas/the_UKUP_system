@@ -1,6 +1,6 @@
 from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence, \
+from app.models import Discipline, db, Department, Block, Module, Direction, Competence, \
     CompetenceDiscipline, Indicator, ZE, RequiredDiscipline, IndicatorDiscipline
 from .forms import DisciplineForm, CompetenceForm, ConnectForm, ZEForm
 from .functions import add_few_data, get_not_available_comp_numbers_for_type, generate_year
@@ -106,7 +106,7 @@ def add_discipline_page():
         required_disciplines_choices.append((discipline.id, discipline.name))
 
     # Инициализация формы и установка начальных зачений
-    form = DisciplineForm(year_approved=current_year, direction=(current_direction.id, current_direction.name))
+    form = DisciplineForm(year_approved=current_year, direction=current_direction.id)
     # Заполнение формы
     form.addData(year=year_choices, block=block_choices,
                  module=module_choices, direction=direction_choices,
@@ -193,12 +193,6 @@ def edit_discipline_page(discipline_id):
     block_choices = []
     for block in blocks:
         block_choices.append((block.id, block.name))
-    directionDiscipline = DirectionDiscipline.query.filter_by(discipline_id=discipline.id).all()
-    dirDiscipline =[]
-    for direction_link in directionDiscipline:
-        direction = get_direction_by_id(direction_link.direction_id)
-        dirDiscipline.append((direction.id, direction.name))
-
 
     # Установка текущего года и направления 
     years = generate_year(2019)[::-1]
@@ -225,7 +219,7 @@ def edit_discipline_page(discipline_id):
     # Заполнение формы 
     form = DisciplineForm(name=discipline.name, year_approved=discipline.year_approved,
                           block=discipline.block_id, module=discipline.module_id,
-                          department=discipline.department_id, direction=dirDiscipline, required= required_id)
+                          department=discipline.department_id, direction=discipline.direction_id, required= required_id)
     form.addData(year_approved, block_choices, module_choices, department_choices, direction_choices, required_disciplines_choices)
 
     return render_template("editDiscipline.html", type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
@@ -385,6 +379,8 @@ def connect_indicators_discipline(discipline_id):
     checked_id = []
     for check in checked:
         checked_id.append(check.indicator_id)
+        #checked_id.append(f"{check.competence_id}-{check.indicator_id}")
+        
 
     #print(competencies)
     #print(indicators[0].name)
@@ -407,6 +403,7 @@ def connect_indicators_discipline_post(discipline_id):
     indicators = request.form.getlist("connect")
     for indicator in indicators:
         indicators_id.append(int(indicator))
+    print(indicators_id)
 
     directions = get_directions()
     current_direction = directions[0]
@@ -645,21 +642,17 @@ def copy_data():
         # 1. Копирование дисциплин
         if 'disciplines' in entities:
             for direction_id in direction_ids:
-                source_disciplines = Discipline.query.join(
-                    DirectionDiscipline
-                ).filter(
-                    DirectionDiscipline.direction_id == direction_id,
-                    Discipline.year_approved == source_year
-                ).all()
+                source_disciplines = Discipline.query\
+                    .filter(Discipline.direction_id == direction_id,
+                            Discipline.year_approved == source_year) \
+                    .all()
 
                 for disc in source_disciplines:
-                    target_disc = Discipline.query.join(
-                        DirectionDiscipline
-                    ).filter(
-                        DirectionDiscipline.direction_id == direction_id,
-                        Discipline.name == disc.name,
-                        Discipline.year_approved == target_year
-                    ).first()
+                    target_disc = Discipline.query \
+                        .filter(Discipline.direction_id == direction_id,
+                                Discipline.name == disc.name,
+                                Discipline.year_approved == target_year)\
+                        .first()
 
                     if not target_disc:
                         # Создаем новую дисциплину
@@ -668,7 +661,8 @@ def copy_data():
                             year_approved=target_year,
                             block_id=disc.block_id,
                             module_id=disc.module_id,
-                            department_id=disc.department_id
+                            department_id=disc.department_id,
+                            direction_id= disc.direction_id
                         )
                         db.session.add(new_disc)
                         db.session.flush()
@@ -681,10 +675,6 @@ def copy_data():
                             ze=0
                         )
                         db.session.add(new_ze)
-
-                        # Копируем связи с направлениями
-                        direction = Direction.query.get(direction_id)
-                        new_disc.directions.append(direction)
 
                         result['details']['disciplines']['created'].append(disc.name)
                         result['copied'] += 1
@@ -715,13 +705,11 @@ def copy_data():
                                     .filter(Discipline.id == dep.required_discipline_id)\
                                     .scalar()
 
-                                required_disc = Discipline.query.join(
-                                    DirectionDiscipline
-                                ).filter(
-                                    DirectionDiscipline.direction_id == direction_id,
-                                    Discipline.name == required_disc_name,
-                                    Discipline.year_approved == target_year
-                                ).first()
+                                required_disc = Discipline.query \
+                                    .filter(Discipline.direction_id == direction_id,
+                                            Discipline.name == required_disc_name,
+                                            Discipline.year_approved == target_year) \
+                                    .first()
 
                                 if required_disc:
                                     new_dep = RequiredDiscipline(
@@ -833,11 +821,10 @@ def copy_data():
                 source_links = db.session.query(CompetenceDiscipline)\
                     .join(Discipline, CompetenceDiscipline.discipline_id == Discipline.id)\
                     .join(Competence, CompetenceDiscipline.competence_id == Competence.id)\
-                    .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id)\
                     .filter(
                         Discipline.year_approved == source_year,
                         Competence.year_approved == source_year,
-                        DirectionDiscipline.direction_id == direction_id
+                        Discipline.direction_id == direction_id
                     ).all()
 
                 for link in source_links:
@@ -849,14 +836,11 @@ def copy_data():
                     if not disc_name or not comp_name:
                         continue
 
-                    target_disc = Discipline.query.join(
-                        DirectionDiscipline,
-                        Discipline.id == DirectionDiscipline.discipline_id
-                    ).filter(
-                        DirectionDiscipline.direction_id == direction_id,
-                        Discipline.name == disc_name,
-                        Discipline.year_approved == target_year
-                    ).first()
+                    target_disc = Discipline.query \
+                        .filter(Discipline.direction_id == direction_id,
+                                Discipline.name == disc_name,
+                                Discipline.year_approved == target_year
+                        ).first()
 
                     target_comp = Competence.query.filter(
                         Competence.direction_id == direction_id,
@@ -893,11 +877,10 @@ def copy_data():
                     .join(Discipline, IndicatorDiscipline.discipline_id == Discipline.id)\
                     .join(Indicator, IndicatorDiscipline.indicator_id == Indicator.id)\
                     .join(Competence, Indicator.competence_id == Competence.id)\
-                    .join(DirectionDiscipline, Discipline.id == DirectionDiscipline.discipline_id)\
                     .filter(
                         Discipline.year_approved == source_year,
                         Competence.year_approved == source_year,
-                        DirectionDiscipline.direction_id == direction_id
+                        Discipline.direction_id == direction_id
                     ).all()
 
                 for link in source_links:
@@ -909,21 +892,19 @@ def copy_data():
                     if not disc_name or not ind_name:
                         continue
 
-                    target_disc = Discipline.query.join(
-                        DirectionDiscipline,
-                        Discipline.id == DirectionDiscipline.discipline_id
-                    ).filter(
-                        DirectionDiscipline.direction_id == direction_id,
-                        Discipline.name == disc_name,
-                        Discipline.year_approved == target_year
-                    ).first()
+                    target_disc = Discipline.query \
+                        .filter(Discipline.direction_id == direction_id,
+                                Discipline.name == disc_name,
+                                Discipline.year_approved == target_year) \
+                        .first()
 
-                    target_ind = Indicator.query.join(Competence)\
+                    target_ind = Indicator.query \
+                        .join(Competence) \
                         .filter(
                             Competence.direction_id == direction_id,
                             Indicator.name == ind_name,
-                            Competence.year_approved == target_year
-                        ).first()
+                            Competence.year_approved == target_year)\
+                        .first()
 
                     if target_disc and target_ind:
                         exists = IndicatorDiscipline.query.filter(
@@ -982,12 +963,10 @@ def delete_data():
         for direction_id in direction_ids:
             # Удаление дисциплин
             if 'disciplines' in entities:
-                disciplines = Discipline.query.join(
-                    DirectionDiscipline
-                ).filter(
-                    DirectionDiscipline.direction_id == direction_id,
-                    Discipline.year_approved == year
-                ).all()
+                disciplines = Discipline.query \
+                    .filter(Discipline.direction_id == direction_id,
+                            Discipline.year_approved == year) \
+                    .all()
 
                 for disc in disciplines:
                     # Удаление зависимостей
