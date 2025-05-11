@@ -56,7 +56,7 @@
                 <input name="direction" id="direction7" type="hidden" value="{{ current_direction.id }}">
                 <input type="submit" class="dropdown-item" value="Матрица">
               </form></span></li>
-              
+
             </ul>
           </li>
         </ul>
@@ -78,10 +78,20 @@
         </li>
          <li class="nav-item" style="width:20px;">
         </li>
-        <li class="nav-item dropdown nav-button">
-          <a class="nav-link dropdown-toggle btn btn-secondary btn-lg" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <li class="nav-item dropdown nav-button" style="width: 120px;">
+          <style>
+            .btn.text-truncate.dropdown-toggle::after {
+              position: absolute;
+              right: 10px;
+              top: 13px;
+              overflow: visible !important;
+            }
+          </style>
+
+          <a class="nav-link dropdown-toggle btn btn-secondary btn-lg text-truncate " href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding-left: 0;">
             {{ current_direction.name }}
           </a>
+
           <ul class="dropdown-menu direction">
             {% for direction in directions %}
             <li><span id="{{ direction.id }}" style="cursor: pointer" class="dropdown-item">{{  direction.name  }}</span></li>
@@ -96,15 +106,7 @@
     <li class="nav-item dropdown nav-button">
       <a class="nav-link dropdown-toggle btn btn-secondary btn-lg" role="button" data-bs-toggle="dropdown" aria-expanded="false">Действия</a>
       <ul class="dropdown-menu">
-        <!-- Кнопка "Добавить" -->
-        <li>
-          <form class="dropdown-item" id="form2" method="get" action="/UKUP/{{ type }}/add">
-            <input name="year" id="year0" type="hidden" value="{{ current_year }}">
-            <input name="direction" id="direction0" type="hidden" value="{{ current_direction.id }}">
-            <input type="submit" class="btn btn-link p-0 border-0 bg-transparent" style="text-align: left; width: 100%;" value="Добавить">
-          </form>
-        </li>
-
+        <!-- Удалено кнопка "Добавить" из этого меню -->
         <!-- Кнопка "Удалить данные" -->
         <li>
           <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deleteModal">
@@ -118,17 +120,35 @@
             Открыть выбор
           </button>
         </li>
+
+        {% if request.endpoint == "UKUP.discipline" or request.endpoint == "UKUP.competence" %}
+        <li>
+          <form id="form2" method="get" action="/UKUP/{{ type }}/add" style="margin: 0; border: 0;">
+                      <input name="year" type="hidden" value="{{ current_year }}">
+                      <input name="direction" type="hidden" value="{{ current_direction.id }}">
+                      <input type="submit" class="dropdown-item" value="Добавить">
+                  </form>
+        </li>
+        {% endif %}
       </ul>
     </li>
   </ul>
 </div>
-
 <!-- Рядом с кнопкой "Открыть выбор" -->
   </div>
 
 
 
 </nav>
+
+<style>
+  /* Если нужно специально "опустить" содержимое страницы ниже панели */
+  .content {
+    margin-top: 4px; /* Или сколько у тебя там высота панели */
+  }
+</style>
+
+
 <script>
 var listYears = document.querySelectorAll('.year li > span');
 var listDirections = document.querySelectorAll('.direction li > span');
@@ -403,6 +423,7 @@ listDirections.forEach((item, index) => {
   </div>
 </div>
 
+
 <style>
   /* Стили для подсветки чекбоксов при наведении */
   .form-check:hover {
@@ -439,6 +460,7 @@ listDirections.forEach((item, index) => {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 </style>
+
 
 <script>
 // Функция для обновления состояния чекбокса "Выбрать все направления"

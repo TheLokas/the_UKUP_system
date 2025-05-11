@@ -2,39 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-  <!-- Bootstrap Bundle JS (jsDelivr CDN) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-  <!-- <link rel="stylesheet" href="/static/styles2.css"> -->
+    <title>Петрозаводский государственный университет | Институт математики и информационных технологий</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="{{url_for('static', filename='Header.css')}}" rel="stylesheet" >
-        <link href="{{url_for('static', filename='Sidebar.css')}}" rel="stylesheet" >
-    <link href="{{url_for('static', filename='style.css')}}" rel="stylesheet" >
+    <link href="{{url_for('static', filename='Header.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='Sidebar.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='style.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='imit.css')}}" rel="stylesheet">
+    <style>
+        .math-header {
+            text-align: center;
+            margin: 20px 0;
+            font-family: serif;
+        }
+        .math-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        .math-header h2 {
+            font-size: 1.4rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .math-formula {
+            text-align: center;
+            font-style: italic;
+            margin: 15px 0;
+        }
+    </style>
 </head>
 <body style="font-family: serif;">
-<div align="center" class="header">
-<img src="//cs.petrsu.ru/style/cs_logo.png" align="left" alt="" />
-<h1 id="title"><a href="//cs.petrsu.ru/">Кафедра Информатики и Математического Обеспечения</a></h1><a href="http://www.petrsu.ru">ПетрГУ</a> |
-<a href="https://imit.petrsu.ru">ИМиИТ</a> |
-<a href="//cs.petrsu.ru/department/index.php.ru">О кафедре</a> |
-<a href="//cs.petrsu.ru/projects.php.ru">Проекты</a> |
-<a href="//cs.petrsu.ru/lab/index.php.ru">Лаборатория ИТС</a> |
-<a href="//cs.petrsu.ru/fdpw/index.php.ru">Семинары НФИ/AMICT</a><br />
-<a href="//cs.petrsu.ru/staff/index.php.ru">Сотрудники</a> |
-<a href="//cs.petrsu.ru/studies/index.php.ru">Учебный процесс</a> |
-<a href="//cs.petrsu.ru/studies/tabel_kalendar_22-23.pdf">Табель-календарь</a> |
-<a href="//cs.petrsu.ru/studies/kurs/kurs.php.ru">Курсовые и выпускные работы</a> <br />
-<a href="//cs.petrsu.ru/facilities/index.php.ru">Вычислительные ресурсы</a> |
-<a href="//cs.petrsu.ru/publications/index.php.ru">Публикации</a> |
-<a href="//cs.petrsu.ru/news/index.php.ru">Архив новостей</a> |
-<a href="//cs.petrsu.ru/contact/index.php.ru">Контактная информация</a>
-<a href="//cs.petrsu.ru/contact/index.php.en"> (English)</a>
-<br clear="all" />
+<div class="header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; width: 100%;">
+    <!-- Левый блок (логотип и дата) -->
+    <div style="display: flex; align-items: center; min-width: 200px;">
+        <a href="http://issuesofanalysis.petrsu.ru/">
+            <img id="head-image-iss" src="https://imit.petrsu.ru/images/iss-of-analysis.jpg" style="height:100px; margin-right: 10px;">
+        </a>
+        <div style="text-align: center;">
+            <h1 style="margin: 0;">
+                <a href="tabel">Май, 12</a>
+            </h1>
+            <h3 style="margin: 0;">
+                <a href="tabel">Знаменатель</a>
+            </h3>
+        </div>
+    </div>
+
+    <!-- Центральный блок (названия) -->
+    <div style="display: flex; flex-direction: column; align-items: center; flex-grow: 1; padding: 0 20px;">
+        <div id="head-petrsu" style="display: flex; align-items: center; margin-bottom: 5px;">
+            <div class="head-logo">
+                <a href="https://petrsu.ru/">
+                    <!-- Здесь должна быть иконка ПетрГУ -->
+                </a>
+            </div>
+            <div class="head-title">
+                <a id="petrsu-label" href="https://petrsu.ru/" style="text-decoration: none;">
+                    <span class="avoidwrap">Петрозаводский</span>
+                    <span class="avoidwrap">государственный</span>
+                    <span class="avoidwrap">университет</span>
+                </a>
+            </div>
+        </div>
+        <div style="margin-bottom: 5px;">
+            <a href="https://imit.petrsu.ru/" style="text-decoration: none;">
+                <span class="avoidwrap">Институт математики</span>
+                <span class="avoidwrap">и информационных технологий</span>
+            </a>
+        </div>
+        <div>
+            <a href="https://vk.com/mit.petrsu">
+                <img src="https://imit.petrsu.ru/images/vk-logo.svg" height="25px" alt="vk">
+            </a>
+        </div>
+    </div>
+
+    <!-- Правый блок (логотип Linux) -->
+    <div style="min-width: 200px; text-align: right;">
+        <img id="head-image-tux" src="https://imit.petrsu.ru/images/tux.svg" alt="logo linux tux (c) Larry Ewing" style="height:100px;" title="(c) Larry Ewing, Simon Budig, Garrett LeSage">
+    </div>
 </div>
+
+<!-- Центральное изображение (оставлено как было) -->
+<center style="margin-top: 10px; margin-bottom: 10px;">
+    <img id="head-image-center" src="https://imit.petrsu.ru/images/g3217.png" style="width:40%; min-width:100px;">
+</center>
 <hr>
 <div class="container-fluid">
-        {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
 </div>
 </body>
 </html>

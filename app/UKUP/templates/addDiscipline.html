@@ -21,8 +21,10 @@
          {{ form.module(class="form-select", style=" margin-top:15px", id="module") }}
          <label for="floatingSelect">Модуль</label>
        </div>
-       <p style="margin-top:10px">Направление</p>
-       {{ form.direction(class="", style=" height:100px", id="direction") }}
+       <div class="form-floating">
+         {{ form.direction(class="form-select", style=" margin-top:15px", id="direction") }}
+         <label for="floatingSelect">Направление</label>
+       </div>
        <div class="form-floating">
          {{ form.department(class="form-select", style=" margin-top:15px", id="department") }}
          <label for="floatingSelect">Кафедра</label>

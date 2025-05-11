@@ -1,51 +1,120 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
+
 <div class="content">
-   <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
-      <thead class="table-light">
-      <tr>
-          <th>Код</th>
-          <th>Описание</th>
-          <th style="width: 200px;">Действие</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% set ns = namespace(type="", count = 1) %}
-      {%  for competence in competencies  %}
-        {%  if ns.type != competence.type  %}
-            <tr class="table-light"><th style="text-align:center; border-color: inherit;" colspan="3">{{  competence.type  }}</th></tr>
-            {%  set ns.type = competence.type  %}
-        {%  endif  %}
-        <tr>
-            <td>{{  competence.name  }}</td>
-            <td>{{  competence.formulation }}</td>
-            <td style="display: flex; height: 100%;">
-               <form action="/UKUP/competence/{{ competence.id }}" method="get" style="margin:5px;">
-                   <input name="year" id="editYear{{competence.id}}" type="hidden" value="{{ current_year }}">
-                   <input name="direction" id="editDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
-                   <label class="edit-icon image-button">
-                        <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
-                    </label>
-               </form>
-                <form action="/UKUP/competence/delete/{{  competence.id  }}" method="post" style="margin:5px;">
-                    <input name="year" id="deleteYear{{competence.id}}" type="hidden" value="{{ current_year }}">
-                    <input name="direction" id="deleteDirection-{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
-                    <label class="edit-icon-delete image-button">
-                        <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
-                    </label>
-                </form>
-               <form action="/UKUP/competence/connect_discipline/{{ competence.id }}" method="get" style="margin:5px;">
-                   <input name="year" id="connectYear{{competence.id}}" type="hidden" value="{{ current_year }}">
-                   <input name="direction" id="connectDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
-                   <input type="submit" class="btn btn-outline-danger" value="Дисциплины">
-               </form>
-            </td>
+
+    <!-- Поле поиска -->
+    <div style="margin-bottom: 10px; position: relative;">
+        <input type="text" id="competenceSearch" class="form-control" placeholder="Поиск компетенций...">
+    </div>
+
+
+    <!-- Таблица -->
+    <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
+        <thead class="table-light">
+            <tr>
+                <th colspan="3" style="text-align: center;">
+                    Год приёма: {{ current_year }} | Направление: {{ current_direction.code }} {{ current_direction.name }}
+                </th>
             </tr>
-            {%  set ns.count = ns.count + 1  %}
-      {%  endfor  %}
-      </tbody>
-   </table>
+            <tr>
+                <th>Код</th>
+                <th>Описание</th>
+                <th style="width: 200px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+                        <div style="display: flex; align-items: center;">Действие</div>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set ns = namespace(type="", count = 1) %}
+            {% for competence in competencies %}
+                {% if ns.type != competence.type %}
+                    <tr class="table-light module-row">
+                        <th style="text-align:center; border-color: inherit;" colspan="3">
+                            {% if competence.type == "УК" %}
+                                Универсальные компетенции
+                            {% elif competence.type == "ОПК" %}
+                                Общепрофессиональные компетенции
+                            {% elif competence.type == "ПК" %}
+                                Профессиональные компетенции
+                            {% else %}
+                                {{ competence.type }}
+                            {% endif %}
+                        </th>
+                    </tr>
+                    {% set ns.type = competence.type %}
+                {% endif %}
+                <tr class="competence-row">
+                    <td>{{ competence.name }}</td>
+                    <td>{{ competence.formulation }}</td>
+                    <td style="display: flex; height: 100%;">
+                        <form action="/UKUP/competence/{{ competence.id }}" method="get" style="margin:5px;">
+                            <input name="year" id="editYear{{competence.id}}" type="hidden" value="{{ current_year }}">
+                            <input name="direction" id="editDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                            <label class="edit-icon image-button">
+                                <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
+                            </label>
+                        </form>
+                        <form action="/UKUP/competence/delete/{{ competence.id }}" method="post" style="margin:5px;">
+                            <input name="year" id="deleteYear{{competence.id}}" type="hidden" value="{{ current_year }}">
+                            <input name="direction" id="deleteDirection-{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                            <label class="edit-icon-delete image-button">
+                                <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
+                            </label>
+                        </form>
+                        <form action="/UKUP/competence/connect_discipline/{{ competence.id }}" method="get" style="margin:5px;">
+                            <input name="year" id="connectYear{{competence.id}}" type="hidden" value="{{ current_year }}">
+                            <input name="direction" id="connectDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                            <input type="submit" class="btn btn-outline-danger" value="Дисциплины">
+                        </form>
+                    </td>
+                </tr>
+                {% set ns.count = ns.count + 1 %}
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-</div>
+
+<!-- Скрипт поиска -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('competenceSearch');
+    const tableRows = document.querySelectorAll('tbody tr');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+
+        let currentModuleRow = null;
+        let showAllUnderCurrentModule = false;
+
+        tableRows.forEach(row => {
+            if (row.classList.contains('module-row')) {
+                currentModuleRow = row;
+                const moduleName = row.innerText.toLowerCase();
+                showAllUnderCurrentModule = (moduleName.includes(searchTerm) && searchTerm !== '');
+
+                // Скрываем модуль, потом решаем показывать или нет
+                row.style.display = 'none';
+            } else if (row.classList.contains('competence-row')) {
+                const code = row.children[0].textContent.toLowerCase();
+                const description = row.children[1].textContent.toLowerCase();
+
+                if (showAllUnderCurrentModule || code.includes(searchTerm) || description.includes(searchTerm)) {
+                    row.style.display = '';
+
+                    if (currentModuleRow) {
+                        currentModuleRow.style.display = '';
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+</script>
+
 {% endblock %}

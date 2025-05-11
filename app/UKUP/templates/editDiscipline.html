@@ -3,7 +3,6 @@
 {{ super() }}
 <div class="content">
    <form action="" method="post" style="width:100%; margin-top:5px">
-      <div>Отредактируй свою собственную дисциплину на нашем сайте, и в будущем её будет кто-то изучать</div>
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       <div class="form-floating mb-3">
@@ -22,8 +21,10 @@
          {{ form.module(class="form-select", style="width:80%; margin-top:15px", id="module") }}
          <label for="floatingSelect">Модуль</label>
        </div>
-       <p style="margin-top:10px">Направление</p>
-       {{ form.direction(class="", style="width:80%; height:100px", id="direction") }}
+       <div class="form-floating">
+         {{ form.direction(class="form-select", style="width:80%; margin-top:15px", id="direction") }}
+         <label for="floatingSelect">Направление</label>
+       </div>
        <div class="form-floating">
          {{ form.department(class="form-select", style="width:80%; margin-top:15px", id="department") }}
          <label for="floatingSelect">Кафедра</label>

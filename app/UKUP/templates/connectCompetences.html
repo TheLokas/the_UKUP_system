@@ -1,104 +1,141 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content">
-  <div class="card">
-    <div class="card-body">
-      <b>{{  discipline.name  }}</b> - {{  discipline.block.name }} - {{  discipline.module.name }} - {{  discipline.department.name }}
+
+<div class="content container-fluid">
+  <div class="card rounded-7 p-4 shadow-sm" style="background: #F9F9F9">
+    <!-- Заголовок страницы -->
+    <div class="page-header mb-3">
+      <h3 class="text-center mb-2" style="padding-right: 10%; padding-left: 10%;">
+        Год приёма: {{ current_year }} | Направление: {{ current_direction.code }} {{ current_direction.name }}
+      </h3>
     </div>
-    <div style="display:none;" id="block_id">{{  discipline.block_id }}</div>
-  </div>
-    <form method="post">
-        
+
+    <!-- Карточка с информацией о дисциплине -->
+    <div class="card mb-3 rounded-3">
+      <div class="card-header bg-light">
+        <h5 class="card-title mb-1">Информация о дисциплине</h5>
+      </div>
+      <div class="card-body p-3">
+        <p class="card-text">
+          <strong>{{ discipline.name }}</strong><br>
+          Блок: {{ discipline.block.name }}<br>
+          Модуль: {{ discipline.module.name }}<br>
+          Кафедра: {{ discipline.department.name }}
+        </p>
+      </div>
+      <div style="display:none;" id="block_id">{{ discipline.block_id }}</div>
+    </div>
+
+    <!-- Форма для выбора компетенций -->
+    <form method="post" class="mb-1">
       <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
       <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
       {{ form.csrf_token }}
-    <table class="table table-bordered table-hover" style="width:100%; margin-top:15px;">
-      <thead class="table-light">
-      <tr>
-          <th style="max-width: 100px;">Отметить</th>
-          <th style="min-width: 100px; max-width: 200px;">Название</th>
-          <th style="min-width: 500px;">Формулировка</th>
-      </tr>
-      </thead>
-      <tbody>
-        {{  form.hidden(id="hidden", value=checked)  }}
-        {%  for competence in competences  %}
-        <tr class="this" name="competence">
-            <td style="max-width: 100px;">{{  form.connect(value=competence.id, id="connect-{}".format(competence.id))  }}</td>
-            <td style="min-width: 100px; max-width: 200px;">{{  competence.name  }}</td>
-            <td style="min-width: 500px;">{{  competence.formulation  }}</td>
-        </tr>
-        {% endfor %}
 
-      </tbody>
-    </table>
+      <div class="card rounded-3 md-2">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-1">Связанные компетенции</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-center col-1">Выбрать</th>
+                  <th class="col-2">Код компетенции</th>
+                  <th class="col-9">Формулировка компетенции</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{ form.hidden(id="hidden", value=checked) }}
+                {% for competence in competences %}
+                <tr class="this" name="competence">
+                  <td class="text-center align-middle">
+                    {{ form.connect(value=competence.id, id="connect-{}".format(competence.id)) }}
+                  </td>
+                  <td class="align-middle">{{ competence.name }}</td>
+                  <td class="align-middle">{{ competence.formulation }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-  <div class="errors" id="errors" style="display: none; border: solid black 1px; background-color: rgba(255,0,0,0.4); 
-    margin-left: auto; margin-right: auto;    padding: 5px; text-align: center;">Дисциплины из блока  Б1.В.ОД,  Б1.В.ВД,  Б2.В  не должны быть связаны с профессиональными компетенциями
-  </div>
+      <!-- Блок с ошибками -->
+      <div class="errors alert alert-danger mt-3 mb-3 text-center" id="errors" style="display: none;">
+        Дисциплины из блока Б1.В.ОД, Б1.В.ВД, Б2.В не должны быть связаны с профессиональными компетенциями
+      </div>
 
-        {{ form.submit(value="Подтвердить", class="btn mainbtn", style="margin-top:5px;") }}
-    </form>
-<div class="mainbtn"><form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get">
-      <input name="year" id="year2" type="hidden" value="{{ current_year }}">
-      <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
-    <input type="submit" class="btn btn-secondary btn-lg" value="Индикаторы">
-</form></div>
- </div>
- <script>
-    var hidden = JSON.parse(document.getElementById("hidden").value);
-    //console.log(hidden)
-    for (let competence_id in hidden){
-        //console.log(hidden[competence_id]);
-        document.getElementById(`connect-${hidden[competence_id]}`).checked = true
-    }
+      <!-- Кнопки действий -->
+      <div class="row mt-3">
+        <div class="col-md-6 mb-2 mb-md-0">
+          {{ form.submit(value="Сохранить изменения", class="btn btn-primary w-100") }}
+        </div>
+        </form>
+        <div class="col-md-6">
+          <form action="/UKUP/discipline/{{ discipline.id }}/indicators" method="get" class="w-100">
+            <input name="year" id="year2" type="hidden" value="{{ current_year }}">
+            <input name="direction" id="direction2" type="hidden" value="{{ current_direction.id }}">
+            <input type="submit" class="btn btn-secondary w-100" value="Индикаторы">
+          </form>
+        </div>
+      </div>
+    
 
-    window.addEventListener("load",function(){
-      var err_count = 0;
-      var name = document.getElementsByName("competence");
-      var block_id = Number(document.getElementById("block_id").innerHTML);
-      var error_block = document.getElementById("errors");
-      
-      name.forEach(function(item){
-         var checkbox = item.querySelector("input[type='checkbox']");
-         var type = checkbox.parentElement.nextElementSibling;
-         type = type.innerHTML.split("-")[0];
-         
-         if(type=="ПК" && [2, 3, 5].includes(block_id))
-          {
-            if(checkbox.checked)
-            { item.style.backgroundColor = "rgba(255,0,0,0.4)";
-              err_count = err_count + 1}
-            else
-            { item.style.backgroundColor = ""}
+  </div> <!-- конец белой карточки -->
+</div>
+
+<script>
+  // Инициализация выбранных компетенций
+  var hidden = JSON.parse(document.getElementById("hidden").value);
+  for (let competence_id in hidden){
+    document.getElementById(`connect-${hidden[competence_id]}`).checked = true
+  }
+
+  // Проверка валидации
+  window.addEventListener("load", function () {
+    var err_count = 0;
+    var name = document.getElementsByName("competence");
+    var block_id = Number(document.getElementById("block_id").innerHTML);
+    var error_block = document.getElementById("errors");
+
+    name.forEach(function (item) {
+      var checkbox = item.querySelector("input[type='checkbox']");
+      var type = checkbox.parentElement.nextElementSibling;
+      type = type.innerHTML.split("-")[0];
+
+      if (type == "ПК" && [2, 3, 5].includes(block_id)) {
+        if (checkbox.checked) {
+          item.style.backgroundColor = "rgba(255,0,0,0.2)";
+          err_count += 1;
+        } else {
+          item.style.backgroundColor = "";
+        }
+      }
+
+      if (err_count > 0) {
+        error_block.style.display = "block";
+      } else {
+        error_block.style.display = "none";
+      }
+
+      checkbox.addEventListener('change', (event) => {
+        if (type == "ПК" && [2, 3, 5].includes(block_id)) {
+          if (checkbox.checked) {
+            item.style.backgroundColor = "rgba(255,0,0,0.2)";
+            err_count += 1;
+          } else {
+            item.style.backgroundColor = "";
+            err_count -= 1;
           }
-          if (err_count > 0)
-            { error_block.style.display="block";
-            }else{
-              error_block.style.display="none";
-            }
-         checkbox.addEventListener('change', (event) => {
-          if(type=="ПК" && [2, 3, 5].includes(block_id))
-          {
-            if(checkbox.checked)
-            { item.style.backgroundColor = "rgba(255,0,0,0.4)";
-              err_count = err_count + 1;}
-            else
-            { item.style.backgroundColor = ""
-              err_count = err_count - 1;}
-            if (err_count > 0)
-            { error_block.style.display="block";
-            }else{
-              error_block.style.display="none";
-            }
-          }
-         });
-
+          error_block.style.display = err_count > 0 ? "block" : "none";
+        }
       });
-   })
-   
+    });
+  });
 </script>
- </div>
 
 {% endblock %}

@@ -1,6 +1,6 @@
 from datetime import date
 from .forms import DisciplineForm, CompetenceForm
-from app.models import Discipline, db, Department, Block, Module, Direction, DirectionDiscipline, Competence
+from app.models import Discipline, db, Department, Block, Module, Direction, Competence
 
 
 def get_not_available_comp_numbers_for_type(type: str, direction, year):
