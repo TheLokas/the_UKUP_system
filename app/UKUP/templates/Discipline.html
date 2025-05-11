@@ -5,7 +5,7 @@
 <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1000; width: 350px;"></div>
 <div class="content">
    <!-- Поисковая панель -->
-   <div class="row mb-3" style="position: relative;">
+   <div class="row" style="position: relative;">
         <div class="col-md-6">
             <input type="text" id="searchInput" class="form-control" placeholder="Поиск по дисциплинам или модулю...">
         </div>
@@ -35,7 +35,7 @@
         </div>
     </div>
 
-   <table class="table table-bordered table-hover" style="width:100%; margin-top:5px;">
+   <table class="table table-bordered table-hover" style="width:100%;">
       <thead class="table-light">
       <tr>
           <th colspan="5" style="text-align: center;">
@@ -50,11 +50,6 @@
           <th>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span>Действие</span>
-                  <form id="form2" method="get" action="/UKUP/{{ type }}/add" style="margin: 0;">
-                      <input name="year" type="hidden" value="{{ current_year }}">
-                      <input name="direction" type="hidden" value="{{ current_direction.id }}">
-                      <input type="submit" class="btn btn-primary btn-sm" value="Добавить">
-                  </form>
               </div>
           </th>
       </tr>

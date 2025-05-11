@@ -78,10 +78,20 @@
         </li>
          <li class="nav-item" style="width:20px;">
         </li>
-        <li class="nav-item dropdown nav-button">
-          <a class="nav-link dropdown-toggle btn btn-secondary btn-lg" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <li class="nav-item dropdown nav-button" style="width: 120px;">
+          <style>
+            .btn.text-truncate.dropdown-toggle::after {
+              position: absolute;
+              right: 10px;
+              top: 13px;
+              overflow: visible !important;
+            }
+          </style>
+
+          <a class="nav-link dropdown-toggle btn btn-secondary btn-lg text-truncate " href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding-left: 0;">
             {{ current_direction.name }}
           </a>
+
           <ul class="dropdown-menu direction">
             {% for direction in directions %}
             <li><span id="{{ direction.id }}" style="cursor: pointer" class="dropdown-item">{{  direction.name  }}</span></li>
@@ -110,6 +120,16 @@
             Открыть выбор
           </button>
         </li>
+
+        {% if request.endpoint == "UKUP.discipline" or request.endpoint == "UKUP.competence" %}
+        <li>
+          <form id="form2" method="get" action="/UKUP/{{ type }}/add" style="margin: 0; border: 0;">
+                      <input name="year" type="hidden" value="{{ current_year }}">
+                      <input name="direction" type="hidden" value="{{ current_direction.id }}">
+                      <input type="submit" class="dropdown-item" value="Добавить">
+                  </form>
+        </li>
+        {% endif %}
       </ul>
     </li>
   </ul>
