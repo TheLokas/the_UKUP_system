@@ -37,7 +37,7 @@ class CompetenceForm(FlaskForm):
     type = SelectField(choices=["УК", "ОПК", "ПК"])
     formulation = TextAreaField()
     source = TextAreaField()
-    direction = SelectMultipleField()
+    direction = SelectField()
     submit = SubmitField("Добавить")
 
     def addYear(self, year):

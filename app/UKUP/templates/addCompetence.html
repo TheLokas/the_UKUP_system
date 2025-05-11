@@ -1,119 +1,137 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content">
-   <form action="" class="add" method="post" style="margin-top:5px">
-      <div>Добавьте свою собственную компетенцию на нашем сайте</div>
+
+<div class="content container-fluid">
+  <div class="card rounded-4 shadow-sm" style="background: #F9F9F9">
+
+    <!-- Заголовок карточки -->
+    <div class="card-header border-bottom" style="background: #F9F9F9;">
+      <h4 class="text-center mb-0">
+        <i class="bi bi-gear-fill me-2"></i>Добавление компетенции
+      </h4>
+    </div>
+
+    <!-- Форма -->
+    <form method="post" class="p-4">
+
+      <!-- Скрытые поля -->
       <input type="hidden" id="UK" value="{{ UK }}">
       <input type="hidden" id="OPK" value="{{ OPK }}">
       <input type="hidden" id="PK" value="{{ PK }}">
-      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
-      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+      <input type="hidden" name="current_year" value="{{ current_year }}">
+      <input type="hidden" name="current_direction" value="{{ current_direction.id }}">
+
+      <!-- Название -->
       <div class="form-floating mb-3">
-         {{ form.name(class="form-control", style=" margin-top:15px", id="name", readonly=True) }}
-         <label for="floatingInput">Название</label>
-       </div>
-       <div class="form-floating mb-3">
-         {{ form.num(class="form-control", style=" margin-top:5px", id="num", min= 1, step = 1, max = 100) }}
-         <label for="floatingInput">Номер</label>
-       </div>
-       <div class="form-floating">
-         {{ form.year_approved(class="form-select", style=" margin-top:5px", id="year_approved") }}
-         <label for="floatingSelect">Год</label>
-       </div>
-       <div class="form-floating">
-         {{ form.type(class="form-select", style=" margin-top:15px", id="type") }}
-         <label for="floatingSelect">Тип</label>
-       </div>
-       <p style="margin-top:10px">Направление</p>
-      {{ form.direction(class="", style=" height:100px", id="direction") }}
-      <div class="form-floating">
-         {{ form.formulation(class="form-control", style=" margin-top:15px; height:85px;", id="module") }}
-         <label for="floatingTextarea2">Формулировка</label>
-       </div>
-       <div class="form-floating" id="source_label" style="display:none;">
-         {{ form.source(class="form-control", style=" margin-top:15px; height:85px;", id="source") }}
-         <label for="floatingTextarea2">Источник</label>
-       </div>
-       {{ form.submit(value="Сохранить", class="btn mainbtn", style="margin-top:20px; display: block") }}
-   </form>
+        {{ form.name(class="form-control", id="name", readonly=True) }}
+        <label for="name">Название</label>
+      </div>
+
+      <!-- Номер и Год -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-floating mb-3">
+            {{ form.num(class="form-control", id="num", min=1, step=1, max=100) }}
+            <label for="num">Номер</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating mb-3">
+            {{ form.year_approved(class="form-select", id="year_approved") }}
+            <label for="year_approved">Год</label>
+          </div>
+        </div>
+      </div>
+
+        <!-- Тип и Направление -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              {{ form.type(class="form-select", id="type") }}
+              <label for="type">Тип</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              {{ form.direction(class="form-select", id="direction") }}
+              <label for="direction">Направление</label>
+            </div>
+          </div>
+        </div>
+
+
+      <!-- Формулировка -->
+      <div class="form-floating mb-3">
+        {{ form.formulation(class="form-control", style="height:200px;", id="formulation") }}
+        <label for="formulation">Формулировка</label>
+      </div>
+
+      <!-- Источник (по условию видимости) -->
+      <div class="form-floating mb-4" id="source_label" style="display: none;">
+        {{ form.source(class="form-control", style="height:85px;", id="source") }}
+        <label for="source">Источник</label>
+      </div>
+
+      <!-- Кнопка -->
+      <div class="row">
+        <div class="col-md-4 mx-auto">
+          {{ form.submit(value="Сохранить", class="btn btn-success w-100 shadow-sm") }}
+        </div>
+      </div>
+
+    </form>
+  </div>
 </div>
+
+<!-- Скрипты -->
 <script>
-   var type = document.getElementById("type");
-   var num = document.getElementById("num");
-   type.addEventListener("change",function(){
-      var name = document.getElementById("name");
-      if (type.value=="УК"){
-         var UK = document.getElementById("UK");
-         var source = document.getElementById('source_label');
-         //source.disabled = true;
-         source.style.display = 'none';
-         if (UK.value=="[]")
-         {
-            num.value = 1
-         }
-         else{
-            var numValue = UK.value.slice(1,-1).split(", ")
-            num.value = Number(numValue.at(-1)) + 1
-         }
-      }
-      if (type.value=="ОПК"){
-         var OPK = document.getElementById("OPK");
-         var source = document.getElementById('source_label');
-         //source.disabled = true;
-         source.style.display = 'none';
-         if (OPK.value=="[]")
-         {
-            num.value = 1
-         }
-         else{
-            var numValue = OPK.value.slice(1,-1).split(", ")
-            num.value = Number(numValue.at(-1)) + 1
-         }
-      }
-      if (type.value=="ПК"){
-         var PK = document.getElementById("PK");
-         var source = document.getElementById('source_label');
-         //source.disabled = false;
-         source.style.display = 'block';
-         if (PK.value=="[]")
-         {
-            num.value = 1
-         }
-         else{
-            var numValue = PK.value.slice(1,-1).split(", ")
-            num.value = Number(numValue.at(-1)) + 1
-         }
-      }
-      name.value = `${type.value}-${num.value}`;
-   });
-   num.addEventListener("change",function(){
-      var name = document.getElementById("name");
+  const type = document.getElementById("type");
+  const num = document.getElementById("num");
 
-      name.value = `${type.value}-${num.value}`;
-   });
-   window.addEventListener("load",function(){
+  type.addEventListener("change", function () {
+    const name = document.getElementById("name");
+    const source = document.getElementById("source_label");
 
-      var UK = document.getElementById("UK");
-      var name = document.getElementById("name");
-      if (UK.value=="[]")
-      {
-         num.value = 1
-      }
-      else{
-         var numValue = UK.value.slice(1,-1).split(", ")
-         num.value = Number(numValue.at(-1)) + 1
-      }
-      name.value = `УК-${num.value}`
-   })
-   document.querySelector('select[multiple]').addEventListener('mousedown', (e) => {
-  if (e.target.tagName === 'OPTION') {
-    e.preventDefault(); // Отменяем действие по умолчанию
-    const option = e.target;
-    option.selected = !option.selected; // Инвертируем выбранный элемент
-    e.target.parentNode.dispatchEvent(new Event('change')); // Генерируем событие изменения
-  }
-});
+    let list;
+    if (type.value === "УК") list = document.getElementById("UK").value;
+    else if (type.value === "ОПК") list = document.getElementById("OPK").value;
+    else if (type.value === "ПК") {
+      list = document.getElementById("PK").value;
+      source.style.display = "block";
+    } else {
+      list = "[]";
+      source.style.display = "none";
+    }
+
+    if (type.value !== "ПК") source.style.display = "none";
+
+    if (list === "[]") num.value = 1;
+    else {
+      const nums = list.slice(1, -1).split(", ");
+      num.value = Number(nums.at(-1)) + 1;
+    }
+
+    name.value = `${type.value}-${num.value}`;
+  });
+
+  num.addEventListener("change", function () {
+    const name = document.getElementById("name");
+    name.value = `${type.value}-${num.value}`;
+  });
+
+  window.addEventListener("load", function () {
+    const UK = document.getElementById("UK").value;
+    const name = document.getElementById("name");
+    const numInput = document.getElementById("num");
+
+    if (UK === "[]") numInput.value = 1;
+    else {
+      const nums = UK.slice(1, -1).split(", ");
+      numInput.value = Number(nums.at(-1)) + 1;
+    }
+    name.value = `УК-${numInput.value}`;
+  });
 </script>
-</div>
-{% endblock %}\
+
+{% endblock %}

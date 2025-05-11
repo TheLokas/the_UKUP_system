@@ -1,50 +1,101 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content">
-   <form action="" class="add" method="post" style="margin-top:5px">
-      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
-      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+
+<div class="content container-fluid">
+  <div class="card rounded-4 shadow-sm" style="background: #F9F9F9">
+
+    <!-- Заголовок карточки -->
+    <div class="card-header border-bottom" style="background: #F9F9F9;">
+      <h4 class="text-center mb-0">
+        <i class="bi bi-journal-plus me-2"></i>Добавление дисциплины
+      </h4>
+    </div>
+
+    <!-- Форма -->
+    <form method="post" class="p-4">
+
+      <!-- Скрытые поля -->
+      <input type="hidden" name="current_year" value="{{ current_year }}">
+      <input type="hidden" name="current_direction" value="{{ current_direction.id }}">
+
+      <!-- Название -->
       <div class="form-floating mb-3">
-         {{ form.name(class="form-control", style=" margin-top:15px", id="name") }}
-         <label for="floatingInput">Название</label>
-       </div>
-       <div class="form-floating">
-         {{ form.year_approved(class="form-select", style=" margin-top:15px", id="year_approved") }}
-         <label for="floatingSelect">Год</label>
-       </div>
-       <div class="form-floating">
-         {{ form.block(class="form-select", style=" margin-top:15px", id="block") }}
-         <label for="floatingSelect">Блок</label>
-       </div>
-       <div class="form-floating">
-         {{ form.module(class="form-select", style=" margin-top:15px", id="module") }}
-         <label for="floatingSelect">Модуль</label>
-       </div>
-       <div class="form-floating">
-         {{ form.direction(class="form-select", style=" margin-top:15px", id="direction") }}
-         <label for="floatingSelect">Направление</label>
-       </div>
-       <div class="form-floating">
-         {{ form.department(class="form-select", style=" margin-top:15px", id="department") }}
-         <label for="floatingSelect">Кафедра</label>
-       </div>
-       <div class="form-floating">
-        {{ form.required(class="form-select", style=" margin-top:15px", id="required") }}
-        <label for="floatingSelect">Необходимая дисциплина</label>
+        {{ form.name(class="form-control", id="name") }}
+        <label for="name">Название</label>
       </div>
-      {{ form.submit(value="Сохранить",class="btn mainbtn", style="margin-top:20px; ") }}
-   </form>
+
+      <!-- Год и блок -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-floating mb-3">
+            {{ form.year_approved(class="form-select", id="year_approved") }}
+            <label for="year_approved">Год</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating mb-3">
+            {{ form.block(class="form-select", id="block") }}
+            <label for="block">Блок</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модуль и направление -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-floating mb-3">
+            {{ form.module(class="form-select", id="module") }}
+            <label for="module">Модуль</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating mb-3">
+            {{ form.direction(class="form-select", id="direction") }}
+            <label for="direction">Направление</label>
+          </div>
+        </div>
+      </div>
+
+        <!-- Кафедра и Необходимая дисциплина -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              {{ form.department(class="form-select", id="department") }}
+              <label for="department">Кафедра</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              {{ form.required(class="form-select", id="required") }}
+              <label for="required">Необходимая дисциплина</label>
+            </div>
+          </div>
+        </div>
+
+
+      <!-- Кнопка -->
+      <div class="row">
+        <div class="col-md-4 mx-auto">
+          {{ form.submit(value="Сохранить", class="btn btn-success w-100 shadow-sm") }}
+        </div>
+      </div>
+
+    </form>
+
+  </div>
 </div>
-</div>
+
+<!-- Скрипт для select[multiple] -->
 <script>
-   document.querySelector('select[multiple]').addEventListener('mousedown', (e) => {
-  if (e.target.tagName === 'OPTION') {
-    e.preventDefault(); // Отменяем действие по умолчанию
-    const option = e.target;
-    option.selected = !option.selected; // Инвертируем выбранный элемент
-    e.target.parentNode.dispatchEvent(new Event('change')); // Генерируем событие изменения
-  }
-});
+  document.querySelector('select[multiple]')?.addEventListener('mousedown', (e) => {
+    if (e.target.tagName === 'OPTION') {
+      e.preventDefault();
+      const option = e.target;
+      option.selected = !option.selected;
+      e.target.parentNode.dispatchEvent(new Event('change'));
+    }
+  });
 </script>
+
 {% endblock %}
