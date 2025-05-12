@@ -44,6 +44,8 @@
         </div>
       </div>
 
+      
+
         <!-- Тип и Направление -->
         <div class="row">
           <div class="col-md-6">
@@ -60,6 +62,23 @@
           </div>
         </div>
 
+
+      <!-- Специальная компетенция-->
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <input class="form-check-input mt-0" type="checkbox" id="unique_checkbox">
+              <label class="form-check-label" for="unique_checkbox">Уникальная компетенция</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating mb-3" id="unique_label" style="display: none;">
+              <input class="form-control" type="text" id="unique">
+              <label  for="direction">Сокращение для уникальной компетенции</label>
+            </div>
+          </div>
+        </div>
 
       <!-- Формулировка -->
       <div class="form-floating mb-3">
@@ -88,9 +107,40 @@
 <script>
   const type = document.getElementById("type");
   const num = document.getElementById("num");
+  const unique_checkbox = document.getElementById("unique_checkbox");
+  const unique = document.getElementById("unique")
+  const name = document.getElementById("name");
+
+  unique.addEventListener('keydown', function(e) {
+    if (!/[a-zA-Zа-яА-яёЁ]/.test(e.key) && e.key !== 'Backspace') {
+      e.preventDefault();
+    }
+  });
+
+  unique_checkbox.addEventListener("change", function(){
+    const unique_label = document.getElementById("unique_label");
+    if (unique_checkbox.checked){
+      unique_label.style.display = "block";
+      if (unique_checkbox.checked && unique.value!=""){
+        name.value = `${type.value}-${unique.value}-${num.value}`;
+      } else {
+        name.value = `${type.value}-${num.value}`;
+    }
+    } else {
+      unique_label.style.display = "none";
+      name.value = `${type.value}-${num.value}`;
+    }
+  })
+
+  unique.addEventListener("change", function(){
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
+  })
 
   type.addEventListener("change", function () {
-    const name = document.getElementById("name");
     const source = document.getElementById("source_label");
 
     let list;
@@ -111,13 +161,19 @@
       const nums = list.slice(1, -1).split(", ");
       num.value = Number(nums.at(-1)) + 1;
     }
-
-    name.value = `${type.value}-${num.value}`;
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
   });
 
   num.addEventListener("change", function () {
-    const name = document.getElementById("name");
-    name.value = `${type.value}-${num.value}`;
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
   });
 
   window.addEventListener("load", function () {
@@ -130,7 +186,11 @@
       const nums = UK.slice(1, -1).split(", ");
       numInput.value = Number(nums.at(-1)) + 1;
     }
-    name.value = `УК-${numInput.value}`;
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
   });
 </script>
 

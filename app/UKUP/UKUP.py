@@ -250,7 +250,7 @@ def edit_competence_page(competence_id):
     indicators = Indicator.query.filter_by(competence_id=competence_id).all()
 
     form = CompetenceForm(name=competence.name, year_approved=competence.year_approved,
-                          num=int(competence.name.split("-")[1]), type=competence.type,
+                          num=int(competence.name.split("-")[-1]), type=competence.type,
                           formulation=competence.formulation, source=competence.source)
     form.addYear(year_approved)
 
