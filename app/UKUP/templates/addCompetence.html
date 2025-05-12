@@ -32,7 +32,7 @@
       <div class="row">
         <div class="col-md-6">
           <div class="form-floating mb-3">
-            {{ form.num(class="form-control", id="num", min=1, step=1, max=100) }}
+            {{ form.num(class="form-control", id="num", min=1, step=1, max=100, required=true) }}
             <label for="num">Номер</label>
           </div>
         </div>
@@ -132,7 +132,7 @@
     }
   })
 
-  unique.addEventListener("change", function(){
+  unique.addEventListener("keyup", function(){
     if (unique_checkbox.checked && unique.value!=""){
       name.value = `${type.value}-${unique.value}-${num.value}`;
     } else {
@@ -168,7 +168,7 @@
     }
   });
 
-  num.addEventListener("change", function () {
+  num.addEventListener("keyup", function () {
     if (unique_checkbox.checked && unique.value!=""){
       name.value = `${type.value}-${unique.value}-${num.value}`;
     } else {
