@@ -55,7 +55,8 @@ def competence():
     # Вот тут сортируем
     competence = sorted(competence, key=lambda c: (
         0 if c.type == "УК" else 1 if c.type == "ОПК" else 2 if c.type == "ПК" else 3,
-        c.name  # сортировка по имени внутри группы, можно убрать
+        0 if len(c.name.split("-")) == 2 else 1 if len(c.name.split("-")) == 3 else 2,
+        int(c.name.split("-")[-1])  # сортировка по имени внутри группы, можно убрать
     ))
 
     return render_template("Competence.html", type=type,
