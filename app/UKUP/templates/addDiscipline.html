@@ -20,10 +20,16 @@
       <input type="hidden" name="current_direction" value="{{ current_direction.id }}">
 
       <!-- Название -->
-      <div class="form-floating mb-3">
-        {{ form.name(class="form-control", id="name") }}
-        <label for="name">Название</label>
-      </div>
+    <div class="form-floating mb-3">
+      {{ form.name(class="form-control", id="name", list="name_suggestions") }}
+      <label for="name">Название</label>
+      <datalist id="name_suggestions">
+        {% for name in discipline_names %}
+          <option value="{{ name }}">
+        {% endfor %}
+      </datalist>
+    </div>
+
 
       <!-- Год и блок -->
       <div class="row">
@@ -86,16 +92,51 @@
   </div>
 </div>
 
-<!-- Скрипт для select[multiple] -->
+
+
 <script>
-  document.querySelector('select[multiple]')?.addEventListener('mousedown', (e) => {
-    if (e.target.tagName === 'OPTION') {
-      e.preventDefault();
-      const option = e.target;
-      option.selected = !option.selected;
-      e.target.parentNode.dispatchEvent(new Event('change'));
+  const input = document.getElementById('name');
+  let lastValue = "";
+
+  input.addEventListener('input', function () {
+    let currentValue = this.value;
+
+    // Преобразуем: первая буква заглавная, остальные — строчные
+    if (currentValue.length > 0) {
+      currentValue = currentValue.charAt(0).toUpperCase() + currentValue.slice(1).toLowerCase();
     }
+
+    const isDeleting = currentValue.length < lastValue.length;
+
+    if (!isDeleting && currentValue.length > 0) {
+      const match = disciplineNames.find(name =>
+        name.toLowerCase().startsWith(currentValue.toLowerCase())
+      );
+
+
+      if (match) {
+        this.value = match;
+        const start = match.toLowerCase().indexOf(currentValue.toLowerCase());
+        this.setSelectionRange(start + currentValue.length, match.length);
+      } else {
+        this.value = currentValue;
+        this.setSelectionRange(currentValue.length, currentValue.length);
+      }
+    } else {
+      this.value = currentValue;
+      this.setSelectionRange(currentValue.length, currentValue.length);
+    }
+
+    lastValue = this.value;
   });
+
+
+</script>
+
+
+
+<script>
+  const disciplineNames = {{ discipline_names|tojson }};
 </script>
 
 {% endblock %}

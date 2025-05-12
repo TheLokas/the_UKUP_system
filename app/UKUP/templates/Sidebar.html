@@ -117,19 +117,31 @@
         <!-- Кнопка "Открыть выбор" -->
         <li>
           <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#checkboxModal">
-            Открыть выбор
+            Копировать данные
           </button>
         </li>
 
-        {% if request.endpoint == "UKUP.discipline" or request.endpoint == "UKUP.competence" %}
+        {% if request.endpoint == "UKUP.discipline" %}
         <li>
           <form id="form2" method="get" action="/UKUP/{{ type }}/add" style="margin: 0; border: 0;">
                       <input name="year" type="hidden" value="{{ current_year }}">
                       <input name="direction" type="hidden" value="{{ current_direction.id }}">
-                      <input type="submit" class="dropdown-item" value="Добавить">
+                      <input type="submit" class="dropdown-item" value="Добавить дисциплину">
+                  </form>
+        </li>
+
+        {% endif %}
+                {% if request.endpoint == "UKUP.competence" %}
+
+        <li>
+          <form id="form3" method="get" action="/UKUP/{{ type }}/add" style="margin: 0; border: 0;">
+                      <input name="year" type="hidden" value="{{ current_year }}">
+                      <input name="direction" type="hidden" value="{{ current_direction.id }}">
+                      <input type="submit" class="dropdown-item" value="Добавить компетенцию">
                   </form>
         </li>
         {% endif %}
+        <li> <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#manageModal"> Управление сущностями </button> </li>
       </ul>
     </li>
   </ul>
@@ -422,6 +434,124 @@ listDirections.forEach((item, index) => {
     </div>
   </div>
 </div>
+
+
+<div class="modal fade" id="manageModal" tabindex="-1" aria-labelledby="manageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content rounded-4 shadow">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="manageModalLabel">Добавление сущности</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Переключатель режимов -->
+        <div class="btn-group mb-4" role="group" aria-label="Режим">
+          <button type="button" class="btn btn-outline-primary active" id="btnAdd" onclick="switchManageMode('add')">Добавить</button>
+          <button type="button" class="btn btn-outline-danger" id="btnDelete" onclick="switchManageMode('delete')">Удалить</button>
+        </div>
+
+        <!-- Тип сущности -->
+        <div class="mb-3">
+          <label for="entityType" class="form-label">Тип сущности</label>
+          <select id="entityType" class="form-select" onchange="loadEntities()">
+            <option value="block">Блок</option>
+            <option value="module">Модуль</option>
+            <option value="department">Кафедра</option>
+            <option value="direction">Направление</option>
+          </select>
+        </div>
+
+        <!-- Список сущностей -->
+        <div id="entityList" class="mb-3">
+          <!-- Подгружается динамически -->
+        </div>
+
+        <!-- Поле ввода названия новой сущности -->
+        <div id="addInputGroup" class="mb-3">
+          <label for="newEntityName" class="form-label">Название новой сущности</label>
+          <input type="text" class="form-control" id="newEntityName" placeholder="Введите название">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="submitButton" type="button" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-1"></i> Добавить
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i> Отмена
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  let currentTab = 'add';
+
+  const dummyData = {
+    block: ['Блок A', 'Блок B'],
+    module: ['Модуль 1', 'Модуль 2'],
+    department: ['Кафедра математики', 'Кафедра физики'],
+    direction: ['Информатика', 'Физика']
+  };
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('add-tab').classList.toggle('active', tab === 'add');
+    document.getElementById('delete-tab').classList.toggle('active', tab === 'delete');
+    document.getElementById('submitButton').textContent = tab === 'add' ? 'Добавить' : 'Удалить';
+    document.getElementById('addInputGroup').style.display = tab === 'add' ? 'block' : 'none';
+    loadEntities();
+  }
+
+  function loadEntities() {
+    const type = document.getElementById('entityType').value;
+    const container = document.getElementById('entityList');
+    const entities = dummyData[type] || [];
+
+    if (currentTab === 'add') {
+      container.innerHTML = '<strong>Существующие:</strong><ul>' +
+        entities.map(e => `<li>${e}</li>`).join('') + '</ul>';
+    } else {
+      container.innerHTML = '<strong>Удалить следующие:</strong>' +
+        entities.map(e => `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="${e}" id="check-${e}">
+            <label class="form-check-label" for="check-${e}">${e}</label>
+          </div>
+        `).join('');
+    }
+  }
+  function switchManageMode(mode) {
+    const title = document.getElementById('manageModalLabel');
+    const submitButton = document.getElementById('submitButton');
+    const addInputGroup = document.getElementById('addInputGroup');
+
+    if (mode === 'add') {
+      title.textContent = 'Добавление сущности';
+      submitButton.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Добавить';
+      addInputGroup.style.display = 'block';
+      document.getElementById('btnAdd').classList.add('active');
+      document.getElementById('btnDelete').classList.remove('active');
+    } else {
+      title.textContent = 'Удаление сущности';
+      submitButton.innerHTML = '<i class="bi bi-trash me-1"></i> Удалить';
+      addInputGroup.style.display = 'none';
+      document.getElementById('btnAdd').classList.remove('active');
+      document.getElementById('btnDelete').classList.add('active');
+    }
+
+    loadEntities(); // обновление списка
+  }
+  // При открытии окна — загрузить список
+  document.getElementById('manageModal').addEventListener('shown.bs.modal', loadEntities);
+</script>
+
 
 
 <style>

@@ -741,3 +741,10 @@ def update_data():
             ze = ZE(discipline_id=discipline.id, c1=0, c2=0, c3=0, c4=0, c5=0, c6=0, c7=0, c8=0, ze=0)
             db.session.add(ze)
     db.session.commit()
+
+
+def get_unique_discipline():
+    discipline_names = db.session.query(Discipline.name).distinct().all()
+    discipline_names = [name for (name,) in discipline_names]
+    return (discipline_names)
+
