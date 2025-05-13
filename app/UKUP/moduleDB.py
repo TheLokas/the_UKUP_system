@@ -218,7 +218,7 @@ def get_competences(direction, year):
 
 
 # Функция для добавления новой компетенции в базу данных
-def add_competence(competence_params):
+def add_competence(competence_params, indicators_list):
     # Разделяем параметры компетенции
     name, year_approved, competence_type, formulation, direction_ids, source = competence_params
 
@@ -237,6 +237,16 @@ def add_competence(competence_params):
                                     source=source)
         # Добавляем компетенцию в базу данных
         db.session.add(new_competence)
+        db.session.commit()
+
+        for indicator_params in indicators_list:
+            indicator_id = indicator_params[0]
+            indicator_name = indicator_params[1]
+            indicator_formulation = indicator_params[2]
+
+            if indicator_id == 'None':
+                indicator = Indicator(name=indicator_name, formulation=indicator_formulation, competence_id=new_competence.id)
+                db.session.add(indicator)
 
     # Применяем изменения
     db.session.commit()

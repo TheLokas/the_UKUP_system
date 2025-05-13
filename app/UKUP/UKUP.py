@@ -156,13 +156,20 @@ def add_competence_page():
 def add_competence_post():
     form = CompetenceForm(request.form)
 
+    indicators = []
+    for indicator in request.form.getlist("indicator"):
+        a = indicator.split("||")
+        if a[2].strip()!="":
+            indicators.append((a[0], a[1], a[2]))
+    
+
     #number = int(str(form.name.data).split("-")[1])
     #if number in not_available_numbers:
         #flash("Номер компетенции недопустим")
     #else:
     #print(form.direction)
     #print("this '" + form.source.data + "'." + " type '" + str(type(form.source.data)) + "'.")
-    add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data, form.direction.data, form.source.data])
+    add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data, form.direction.data, form.source.data], indicators)
     return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
