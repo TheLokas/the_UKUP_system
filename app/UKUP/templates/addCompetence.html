@@ -32,7 +32,7 @@
       <div class="row">
         <div class="col-md-6">
           <div class="form-floating mb-3">
-            {{ form.num(class="form-control", id="num", min=1, step=1, max=100) }}
+            {{ form.num(class="form-control", id="num", min=1, step=1, max=100, required=true) }}
             <label for="num">Номер</label>
           </div>
         </div>
@@ -43,6 +43,8 @@
           </div>
         </div>
       </div>
+
+      
 
         <!-- Тип и Направление -->
         <div class="row">
@@ -61,6 +63,23 @@
         </div>
 
 
+      <!-- Специальная компетенция-->
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <input class="form-check-input mt-0" type="checkbox" id="unique_checkbox">
+              <label class="form-check-label" for="unique_checkbox">Уникальная компетенция</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating mb-3" id="unique_label" style=" display: none;">
+              <input class="form-control" type="text" id="unique">
+              <label  for="direction">Сокращение для уникальной компетенции</label>
+            </div>
+          </div>
+        </div>
+
       <!-- Формулировка -->
       <div class="form-floating mb-3">
         {{ form.formulation(class="form-control", style="height:200px;", id="formulation") }}
@@ -68,19 +87,37 @@
       </div>
 
       <!-- Источник (по условию видимости) -->
-      <div class="form-floating mb-4" id="source_label" style="display: none;">
+      <div class="form-floating mb-3" id="source_label" style=" display: none;">
         {{ form.source(class="form-control", style="height:85px;", id="source") }}
         <label for="source">Источник</label>
       </div>
 
+      <div class="card-header border-top" style="background: #F9F9F9; padding-left: 0px; padding-right: 0px;">
+        <div id="indicators">
+         {% for indicator in indicators %}
+         <div id="{{ indicator.name }}"><input id="i-{{indicator.name.split('.')[1]}}" name="indicator" type="hidden" class="form-control" value="{{ indicator.id }}||{{ indicator.name }}||{{ indicator.formulation }}"><input type="text" class="form-control" readonly value="{{ indicator.name }}" style="width:20%; margin-top: 10px;" ><input id="f-{{indicator.name.split('.')[1]}}" class="form-control" style="width:60%; margin-top:5px;" value="{{  indicator.formulation  }}"></div>
+         {% endfor %}
+        </div>
+
+        <div class="row">
+        <div class="col-md-3" style="margin-left:auto;">
+          <button class="btn w-100 shadow-sm" style="margin-top:10px;" type="button" onclick="AddIndicator()" >Добавить индикатор</button>
+          <button class="btn w-100 shadow-sm" style="margin-top:10px; margin-bottom:10px;" type="button" onclick="RemoveIndicator()">Удалить индикатор</button>
+        </div>
+      </div>
+      </div>
+
       <!-- Кнопка -->
-      <div class="row">
+      <div class="row mt-3">
         <div class="col-md-4 mx-auto">
           {{ form.submit(value="Сохранить", class="btn btn-success w-100 shadow-sm") }}
         </div>
       </div>
 
+      
+
     </form>
+
   </div>
 </div>
 
@@ -88,36 +125,286 @@
 <script>
   const type = document.getElementById("type");
   const num = document.getElementById("num");
+  const unique_checkbox = document.getElementById("unique_checkbox");
+  const unique = document.getElementById("unique")
+  const name = document.getElementById("name");
+  var count = 1;
+  var names = []
+
+function renameAllIndicators(newName) {
+    const indicatorsContainer = document.getElementById('indicators');
+    const indicators = indicatorsContainer.children;
+    
+    for (let i = 0; i < indicators.length; i++) {
+        const indicator = indicators[i];
+        const oldId = indicator.id;
+        const parts = oldId.split('.');
+        const newId = `${newName}.${parts[parts.length - 1]}`;
+        
+        // Обновляем ID самого div-элемента
+        indicator.id = newId;
+        
+        // Обновляем внутренние элементы
+        const hiddenInput = indicator.querySelector(`input[id^="i-"]`);
+        const readonlyInput = indicator.querySelector('input[readonly]');
+        const formulaInput = indicator.querySelector(`input[id^="f-"]`);
+        
+        if (hiddenInput) {
+            const count = hiddenInput.id.split('-')[1];
+            hiddenInput.value = `None||${newName}.${count}||${hiddenInput.value.split('||')[2]}`;
+        }
+        
+        if (readonlyInput) {
+            readonlyInput.value = `${newName}.${parts[parts.length - 1]}`;
+        }
+        
+        if (formulaInput) {
+            const count = formulaInput.id.split('-')[1];
+            formulaInput.id = `f-${count}`;
+        }
+        
+        // Обновляем массив names, если он используется
+        const indexInNames = names.indexOf(oldId);
+        if (indexInNames !== -1) {
+            names[indexInNames] = newId;
+        }
+    };
+}
+
+function AddIndicator() {
+        var name = document.getElementById("name");
+        var newIndicator = document.createElement('div');
+        newIndicator.setAttribute("id",`${name.value}.${count}`)
+        newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${ name.value }.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%; margin-right:15px;" ><input id="f-${count}" class="form-control" style="">`;
+    
+    newIndicator.style.marginTop = "10px"
+    newIndicator.style.display = "flex";
+    newIndicator.style.height = "50px"
+    
+
+    newIndicator.style.opacity = '0';
+    newIndicator.style.transform = 'translateY(-10px)';
+    newIndicator.style.maxHeight = '0';
+    newIndicator.style.overflow = 'hidden';
+        
+        names.push(`${ name.value }.${count}`);
+        document.getElementById('indicators').appendChild(newIndicator);
+
+    setTimeout(() => {
+        newIndicator.style.transition = 'all 0.5s ease-out';
+        newIndicator.style.opacity = '1';
+        newIndicator.style.transform = 'translateY(0)';
+        newIndicator.style.maxHeight = '200px';
+    }, 10);
+
+        let input = document.getElementById(`f-${count}`)
+        input.addEventListener('change', (event) => {
+            let a = document.getElementById(`i-${input.id.split("-")[1]}`);
+            //console.log(a.value)
+            let indicator_name = a.value?.split("||")[1];
+            let indicator_id = a.value?.split("||")[0];
+            a.value = `${indicator_id}||${indicator_name}||${input.value}`
+         });
+        count = count + 1;
+   }
+function RemoveIndicator()
+{
+  let indicator = names.pop()
+  if (!indicator) {
+    return;
+  }
+  
+  const element = document.getElementById(indicator);
+
+  if (!element) {
+    return;
+  }
+
+  element.style.willChange = 'transform, opacity, height';
+  element.style.backfaceVisibility = 'hidden';
+  
+
+  element.classList.add("fade-out");
+  element.addEventListener("animationend", function() {
+    element.remove();
+    count = count - 1;function AddIndicator() {
+        var name = document.getElementById("name");
+        var newIndicator = document.createElement('div');
+        newIndicator.setAttribute("id",`${name.value}.${count}`)
+        newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${ name.value }.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%; margin-top:10px" ><input id="f-${count}" class="form-control" style="width:60%; margin-top:5px;">`;
+        
+    newIndicator.style.opacity = '0';
+    newIndicator.style.transform = 'translateY(-10px)';
+    newIndicator.style.maxHeight = '0';
+    newIndicator.style.overflow = 'hidden';
+        
+        names.push(`${ name.value }.${count}`);
+        document.getElementById('indicators').appendChild(newIndicator);
+
+    setTimeout(() => {
+        newIndicator.style.transition = 'all 0.5s ease-out';
+        newIndicator.style.opacity = '1';
+        newIndicator.style.transform = 'translateY(0)';
+        newIndicator.style.maxHeight = '200px';
+    }, 10);
+
+        let input = document.getElementById(`f-${count}`)
+        input.addEventListener('change', (event) => {
+            let a = document.getElementById(`i-${input.id.split("-")[1]}`);
+            //console.log(a.value)
+            let indicator_name = a.value?.split("||")[1];
+            let indicator_id = a.value?.split("||")[0];
+            a.value = `${indicator_id}||${indicator_name}||${input.value}`
+         });
+        count = count + 1;
+   }
+function RemoveIndicator()
+{
+  let indicator = names.pop()
+  if (!indicator) {
+    return;
+  }
+  
+  const element = document.getElementById(indicator);
+
+  if (!element) {
+    return;
+  }
+
+  element.style.willChange = 'transform, opacity, height';
+  element.style.backfaceVisibility = 'hidden';
+  
+
+  element.classList.add("fade-out");
+  element.addEventListener("animationend", function() {
+    element.remove();
+    count = count - 1;
+    element.removeEventListener("animationend", handler);
+  });
+}
+  });
+}
+
+
+  unique.addEventListener('keydown', function(e) {
+    if (!/[a-zA-Zа-яА-яёЁ]/.test(e.key) && e.key !== 'Backspace') {
+      e.preventDefault();
+    }
+  });
+
+  unique_checkbox.addEventListener("change", function(){
+    const unique_label = document.getElementById("unique_label");
+        if (unique_label.style.display === "block") {
+        unique_label.style.transition = 'all 0.3s ease-out';
+        unique_label.style.opacity = '0';
+        unique_label.style.transform = 'translateY(-10px)';
+        unique_label.style.maxHeight = '0';
+        unique_label.style.overflow = 'hidden';
+        unique_label.style.marginBottom = '0';
+    }
+    if (unique_checkbox.checked){
+      unique_label.style.display = "block";
+      if (unique_label.style.opacity !== '0') {
+            unique_label.style.opacity = '0';
+            unique_label.style.transform = 'translateY(-10px)';
+            unique_label.style.maxHeight = '0';
+        }
+        
+      void unique_label.offsetWidth; // Принудительный reflow
+      unique_label.style.transition = 'all 0.5s ease-out';
+      unique_label.style.opacity = '1';
+      unique_label.style.transform = 'translateY(0)';
+      unique_label.style.maxHeight = '200px';
+      unique_label.style.overflow = 'visible';
+      
+      if (unique_checkbox.checked && unique.value!=""){
+        name.value = `${type.value}-${unique.value}-${num.value}`;
+      } else {
+        name.value = `${type.value}-${num.value}`;
+    }
+    } else {
+      
+      setTimeout(() => {
+            unique_label.style.display = "none";
+        }, 300);
+      name.value = `${type.value}-${num.value}`;
+    }
+    renameAllIndicators(name.value)
+  })
+
+  unique.addEventListener("keyup", function(){
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
+    renameAllIndicators(name.value)
+  })
 
   type.addEventListener("change", function () {
-    const name = document.getElementById("name");
     const source = document.getElementById("source_label");
+
+    if (source.style.display === "block") {
+        source.style.transition = 'all 0.3s ease-out';
+        source.style.opacity = '0';
+        source.style.transform = 'translateY(-10px)';
+        source.style.maxHeight = '0';
+        source.style.overflow = 'hidden';
+        source.style.marginBottom = '0';
+    }
+
 
     let list;
     if (type.value === "УК") list = document.getElementById("UK").value;
     else if (type.value === "ОПК") list = document.getElementById("OPK").value;
     else if (type.value === "ПК") {
       list = document.getElementById("PK").value;
-      source.style.display = "block";
+
+       source.style.display = "block";
+        
+        // Принудительный reflow и анимация только если элемент был скрыт
+        if (source.style.opacity !== '0') {
+            source.style.opacity = '0';
+            source.style.transform = 'translateY(-10px)';
+            source.style.maxHeight = '0';
+        }
+        
+        void source.offsetWidth; // Принудительный reflow
+        source.style.transition = 'all 0.5s ease-out';
+        source.style.opacity = '1';
+        source.style.transform = 'translateY(0)';
+        source.style.maxHeight = '200px';
+        source.style.overflow = 'visible';
+
     } else {
       list = "[]";
       source.style.display = "none";
     }
 
-    if (type.value !== "ПК") source.style.display = "none";
+    if (type.value !== "ПК") setTimeout(() => {
+            source.style.display = "none";
+        }, 300);
 
     if (list === "[]") num.value = 1;
     else {
       const nums = list.slice(1, -1).split(", ");
       num.value = Number(nums.at(-1)) + 1;
     }
-
-    name.value = `${type.value}-${num.value}`;
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
+    renameAllIndicators(name.value)
   });
 
-  num.addEventListener("change", function () {
-    const name = document.getElementById("name");
-    name.value = `${type.value}-${num.value}`;
+  num.addEventListener("keyup", function () {
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
+    renameAllIndicators(name.value)
   });
 
   window.addEventListener("load", function () {
@@ -130,7 +417,11 @@
       const nums = UK.slice(1, -1).split(", ");
       numInput.value = Number(nums.at(-1)) + 1;
     }
-    name.value = `УК-${numInput.value}`;
+    if (unique_checkbox.checked && unique.value!=""){
+      name.value = `${type.value}-${unique.value}-${num.value}`;
+    } else {
+      name.value = `${type.value}-${num.value}`;
+    }
   });
 </script>
 

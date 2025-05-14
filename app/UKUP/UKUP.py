@@ -57,7 +57,8 @@ def competence():
     # Вот тут сортируем
     competence = sorted(competence, key=lambda c: (
         0 if c.type == "УК" else 1 if c.type == "ОПК" else 2 if c.type == "ПК" else 3,
-        c.name  # сортировка по имени внутри группы, можно убрать
+        0 if len(c.name.split("-")) == 2 else 1 if len(c.name.split("-")) == 3 else 2,
+        int(c.name.split("-")[-1])  # сортировка по имени внутри группы, можно убрать
     ))
 
     return render_template("Competence.html", type=type,
@@ -158,13 +159,20 @@ def add_competence_page():
 def add_competence_post():
     form = CompetenceForm(request.form)
 
+    indicators = []
+    for indicator in request.form.getlist("indicator"):
+        a = indicator.split("||")
+        if a[2].strip()!="":
+            indicators.append((a[0], a[1], a[2]))
+    
+
     #number = int(str(form.name.data).split("-")[1])
     #if number in not_available_numbers:
         #flash("Номер компетенции недопустим")
     #else:
     #print(form.direction)
     #print("this '" + form.source.data + "'." + " type '" + str(type(form.source.data)) + "'.")
-    add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data, form.direction.data, form.source.data])
+    add_competence([form.name.data, form.year_approved.data, form.type.data, form.formulation.data, form.direction.data, form.source.data], indicators)
     return redirect(f"/UKUP/competence?year={request.form.get('current_year')}&direction={request.form.get('current_direction')}")
 
 
@@ -252,7 +260,7 @@ def edit_competence_page(competence_id):
     indicators = Indicator.query.filter_by(competence_id=competence_id).all()
 
     form = CompetenceForm(name=competence.name, year_approved=competence.year_approved,
-                          num=int(competence.name.split("-")[1]), type=competence.type,
+                          num=int(competence.name.split("-")[-1]), type=competence.type,
                           formulation=competence.formulation, source=competence.source)
     form.addYear(year_approved)
 
