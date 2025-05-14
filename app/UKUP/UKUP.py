@@ -35,7 +35,12 @@ def discipline():
         current_year = request.args["year"]
         current_direction = get_direction_by_id(request.args["direction"])
 
+    
     disciplines = get_disciplines(directionID=current_direction.id, year=current_year)
+    disciplines = sorted(disciplines, key=lambda x:(
+        x.module_id, 
+        x.name
+    ))
     return render_template("Discipline.html", type=type, disciplines=disciplines,
                            years=years, directions=directions, current_year=current_year,
                            current_direction=current_direction)
