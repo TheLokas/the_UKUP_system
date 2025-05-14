@@ -225,15 +225,15 @@ def edit_discipline_page(discipline_id):
     required_discipline = get_required_discipline(discipline_id)
     if not required_discipline is None:
         required_id = required_discipline.id
-    
 
+    discipline_names = get_unique_discipline()
     # Заполнение формы 
     form = DisciplineForm(name=discipline.name, year_approved=discipline.year_approved,
                           block=discipline.block_id, module=discipline.module_id,
                           department=discipline.department_id, direction=discipline.direction_id, required= required_id)
     form.addData(year_approved, block_choices, module_choices, department_choices, direction_choices, required_disciplines_choices)
 
-    return render_template("editDiscipline.html", type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
+    return render_template("editDiscipline.html", type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction, discipline_names=discipline_names)
 
 
 # Обработка POST-запроса на обновление выбранной дисциплины
