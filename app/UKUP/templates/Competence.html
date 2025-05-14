@@ -9,7 +9,6 @@
         <input type="text" id="competenceSearch" class="form-control" placeholder="Поиск компетенций...">
     </div>
 
-
     <!-- Таблица -->
     <table class="table table-bordered table-hover" style="width:100%; margin-top:5px">
         <thead class="table-light">
@@ -21,11 +20,7 @@
             <tr>
                 <th>Код</th>
                 <th>Описание</th>
-                <th style="width: 200px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
-                        <div style="display: flex; align-items: center;">Действие</div>
-                    </div>
-                </th>
+                <th style="width: 200px;">Действие</th>
             </tr>
         </thead>
         <tbody>
@@ -33,7 +28,7 @@
             {% for competence in competencies %}
                 {% if ns.type != competence.type %}
                     <tr class="table-light module-row">
-                        <th style="text-align:center; border-color: inherit;" colspan="3">
+                        <th colspan="3" style="text-align:center;">
                             {% if competence.type == "УК" %}
                                 Универсальные компетенции
                             {% elif competence.type == "ОПК" %}
@@ -50,24 +45,24 @@
                 <tr class="competence-row">
                     <td>{{ competence.name }}</td>
                     <td>{{ competence.formulation }}</td>
-                    <td style="display: flex; height: 100%;">
+                    <td style="display: flex;">
                         <form action="/UKUP/competence/{{ competence.id }}" method="get" style="margin:5px;">
-                            <input name="year" id="editYear{{competence.id}}" type="hidden" value="{{ current_year }}">
-                            <input name="direction" id="editDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                            <input name="year" type="hidden" value="{{ current_year }}">
+                            <input name="direction" type="hidden" value="{{ current_direction.id }}">
                             <label class="edit-icon image-button">
                                 <input type="image" src="{{ url_for('static', filename='bin 17.png') }}" alt="Редактировать" class="btn-outline-secondary">
                             </label>
                         </form>
-                        <form action="/UKUP/competence/delete/{{ competence.id }}" method="post" style="margin:5px;">
-                            <input name="year" id="deleteYear{{competence.id}}" type="hidden" value="{{ current_year }}">
-                            <input name="direction" id="deleteDirection-{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                        <form class="delete-competence-form" data-competence-id="{{ competence.id }}" data-competence-name="{{ competence.name }}" style="margin:5px;">
+                            <input name="year" type="hidden" value="{{ current_year }}">
+                            <input name="direction" type="hidden" value="{{ current_direction.id }}">
                             <label class="edit-icon-delete image-button">
-                                <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary edit-icon">
+                                <input type="image" src="{{ url_for('static', filename='bin 3.png') }}" alt="Удалить" class="btn-outline-secondary">
                             </label>
                         </form>
                         <form action="/UKUP/competence/connect_discipline/{{ competence.id }}" method="get" style="margin:5px;">
-                            <input name="year" id="connectYear{{competence.id}}" type="hidden" value="{{ current_year }}">
-                            <input name="direction" id="connectDirection{{competence.id}}" type="hidden" value="{{ current_direction.id }}">
+                            <input name="year" type="hidden" value="{{ current_year }}">
+                            <input name="direction" type="hidden" value="{{ current_direction.id }}">
                             <input type="submit" class="btn btn-outline-danger" value="Дисциплины">
                         </form>
                     </td>
@@ -78,43 +73,95 @@
     </table>
 </div>
 
-<!-- Скрипт поиска -->
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmDeleteLabel">Подтверждение удаления</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <p>Вы собираетесь удалить компетенцию <strong id="competenceToDeleteName"></strong>.</p>
+        <p class="mb-0">Это действие <strong>необратимо</strong> — все связанные данные будут удалены из системы. Пожалуйста, подтвердите, что вы действительно хотите продолжить удаление.</p>
+      </div>
+      <div class="modal-footer justify-content-end">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-danger px-3" id="confirmDeleteButton">Удалить</button>
+          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Отмена</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Стили -->
+<style>
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  transform: translateY(-50px);
+  opacity: 0;
+}
+.modal.fade.show .modal-dialog {
+  transform: translateY(0);
+  opacity: 1;
+}
+.modal-backdrop.show {
+  opacity: 0.7;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+.modal-footer .btn {
+  margin-left: 0 !important;
+}
+</style>
+
+<!-- Скрипт -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('competenceSearch');
-    const tableRows = document.querySelectorAll('tbody tr');
+    const rows = document.querySelectorAll('.competence-row');
 
-    searchInput.addEventListener('input', function() {
-        const searchTerm = searchInput.value.trim().toLowerCase();
-
-        let currentModuleRow = null;
-        let showAllUnderCurrentModule = false;
-
-        tableRows.forEach(row => {
-            if (row.classList.contains('module-row')) {
-                currentModuleRow = row;
-                const moduleName = row.innerText.toLowerCase();
-                showAllUnderCurrentModule = (moduleName.includes(searchTerm) && searchTerm !== '');
-
-                // Скрываем модуль, потом решаем показывать или нет
-                row.style.display = 'none';
-            } else if (row.classList.contains('competence-row')) {
-                const code = row.children[0].textContent.toLowerCase();
-                const description = row.children[1].textContent.toLowerCase();
-
-                if (showAllUnderCurrentModule || code.includes(searchTerm) || description.includes(searchTerm)) {
-                    row.style.display = '';
-
-                    if (currentModuleRow) {
-                        currentModuleRow.style.display = '';
-                    }
-                } else {
-                    row.style.display = 'none';
-                }
-            }
+    searchInput.addEventListener('input', function () {
+        const term = searchInput.value.toLowerCase();
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
         });
+    });
+
+    let formToDelete = null;
+
+    document.querySelectorAll('.delete-competence-form input[type="image"]').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            formToDelete = this.closest('form');
+
+            const competenceName = formToDelete.dataset.competenceName;
+            document.getElementById('competenceToDeleteName').textContent = `"${competenceName}"`;
+
+            const deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            deleteModal.show();
+        });
+    });
+
+    document.getElementById('confirmDeleteButton').addEventListener('click', function () {
+        if (formToDelete) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = `/UKUP/competence/delete/${formToDelete.dataset.competenceId}`;
+
+            formToDelete.querySelectorAll('input[type="hidden"]').forEach(input => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = input.name;
+                hidden.value = input.value;
+                form.appendChild(hidden);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        }
     });
 });
 </script>
-
 {% endblock %}
