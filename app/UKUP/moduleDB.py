@@ -431,6 +431,7 @@ def edit_competence(id_competence, competence_params, indicators_list):
 
         # Получаем все связи с индикаторами для этой компетенции
         indicator_links = IndicatorDiscipline.query \
+            .join(Indicator, Indicator.id == IndicatorDiscipline.indicator_id)\
             .filter(Indicator.competence_id == id_competence) \
             .all()
 
@@ -441,6 +442,9 @@ def edit_competence(id_competence, competence_params, indicators_list):
         competence.name = competence_params[0]
         #competence.type = competence_params[1]
         competence.formulation = competence_params[2]
+        if competence_params[4].strip() == "":
+            competence_params[4] = None
+        competence.source = competence_params[4]
 
         # Список индикаторов, которые уже связаны с этой компетенцией
         existing_indicator_ids = {indicator.id for indicator in competence.indicators}
@@ -450,9 +454,7 @@ def edit_competence(id_competence, competence_params, indicators_list):
             indicator_id = indicator_params[0]
             indicator_name = indicator_params[1]
             indicator_formulation = indicator_params[2]
-            if competence_params[4].strip() == "":
-                competence_params[4] = None
-            competence.source = competence_params[4]
+            
 
             # Если передан None в качестве идентификатора, создаем новый индикатор
             if indicator_id == 'None':
@@ -466,7 +468,7 @@ def edit_competence(id_competence, competence_params, indicators_list):
 
         # Удаляем индикаторы, которых больше нет в списке indicators_list
         for indicator in competence.indicators:
-            if indicator.id not in [indicator_params[0] for indicator_params in indicators_list if indicator_params[0] is not None]:
+            if indicator.id not in [int(indicator_params[0]) for indicator_params in indicators_list if indicator_params[0] != 'None']:
                 # Удаляем связи индикатора с дисциплинами
                 IndicatorDiscipline.query.filter_by(indicator_id=indicator.id).delete()
                 # Удаляем сам индикатор

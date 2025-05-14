@@ -147,7 +147,7 @@ def add_competence_page():
         current_year = request.args["year"]
         current_direction = get_direction_by_id(request.args["direction"])
 
-    form = CompetenceForm(year_approved=current_year)
+    form = CompetenceForm(year_approved=current_year, direction=current_direction.id)
     form.addYear(year=year_choices)
     form.addDirection(direction=direction_choices)
     return render_template("addCompetence.html", type=type, form=form, UK=UK, OPK=OPK, PK=PK, years=years,
@@ -257,15 +257,21 @@ def edit_competence_page(competence_id):
 
     year_approved = generate_year(2019)
 
+    directions = get_directions()
+    direction_choices = []
+    for direction in directions:
+        direction_choices.append((direction.id, direction.name))
+
     indicators = Indicator.query.filter_by(competence_id=competence_id).all()
 
-    form = CompetenceForm(name=competence.name, year_approved=competence.year_approved,
-                          num=int(competence.name.split("-")[-1]), type=competence.type,
-                          formulation=competence.formulation, source=competence.source)
+    form = CompetenceForm(name=competence.name, year_approved=competence.year_approved, 
+                          num=int(competence.name.split("-")[-1]), type=competence.type, 
+                          direction=competence.direction_id, formulation=competence.formulation, source=competence.source)
+    form.addDirection(direction_choices)
     form.addYear(year_approved)
 
     years = generate_year(2019)[::-1]
-    directions = get_directions()
+    
     current_direction = directions[0]
     current_year = date.today().year
     if request and {"year", "direction"} <= set(request.args):
@@ -603,6 +609,7 @@ def ze():
     form = ZEForm()
     return render_template('ze.html', current_direction=current_direction,
                            years=years,
+                           directions=directions,
                            current_year=current_year, ze=ze, form=form)
 
 

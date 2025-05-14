@@ -1,61 +1,138 @@
 {% extends "Sidebar.html" %}
 {% block content %}
 {{ super() }}
-<div class="content" >
-   <form action="" method="post" style="width:100%; margin-top:5px">
-      <input type="hidden" id="UK" value="{{ UK }}">
-      <input type="hidden" id="OPK" value="{{ OPK }}">
-      <input type="hidden" id="PK" value="{{ PK }}">
-      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
-      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
-      <div class="form-floating mb-3">
-         {{ form.name(class="form-control", style="width:80%; margin-top:15px", id="name", readonly=True) }}
-         <label for="floatingInput">Название</label>
-       </div>
-       <div class="form-floating mb-3">
-         {{ form.num(class="form-control", style="width:80%; margin-top:5px", id="num", disabled=true) }}
-         <label for="floatingInput">Номер</label>
-       </div>
-       <div class="form-floating">
-         {{ form.year_approved(class="form-select", style="width:80%; margin-top:5px", id="year_approved") }}
-         <label for="floatingSelect">Год</label>
-       </div>
-       <div class="form-floating">
-         {{ form.type(class="form-select", style="width:80%; margin-top:15px", id="type", disabled=true) }}
-         <label for="floatingSelect">Тип</label>
-       </div>
-      <div class="form-floating">
-         {{ form.formulation(class="form-control", style="width:80%; margin-top:15px; height:85px;", id="formulation") }}
-         <label for="floatingTextarea2">Формулировка</label>
-       </div>
-       <div class="form-floating" id="source_label" style="display:none;">
-         {{ form.source(class="form-control", style="width:80%; margin-top:15px; height:85px;", id="source") }}
-         <label for="floatingTextarea2">Источник</label>
-       </div>
-      <div id="indicators">
-         {% for indicator in indicators %}
-         <div id="{{ indicator.name }}"><input id="i-{{indicator.name.split('.')[1]}}" name="indicator" type="hidden" class="form-control" value="{{ indicator.id }}||{{ indicator.name }}||{{ indicator.formulation }}"><input type="text" class="form-control" readonly value="{{ indicator.name }}" style="width:20%; margin-top: 10px;" ><input id="f-{{indicator.name.split('.')[1]}}" class="form-control" style="width:60%; margin-top:5px;" value="{{  indicator.formulation  }}"></div>
-         {% endfor %}
+
+<div class="content container-fluid">
+   <div class="card rounded-4 shadow-sm" style="background: #F9F9F9">
+
+      <!-- Заголовок карточки -->
+      <div class="card-header border-bottom" style="background: #F9F9F9;">
+         <h4 class="text-center mb-0">
+            <i class="bi bi-gear-fill me-2"></i>Редактирование компетенции
+         </h4>
       </div>
-      <button class="btn" type="button" onclick="AddIndicator()" style="width:80%; margin-top:10px; border:solid 1px;">Добавить индикатор</button>
-      <button class="btn" type="button" onclick="RemoveIndicator() "style="width:80%; margin-top:5px; border:solid 1px;">Удалить индикатор</button>
-      {{ form.submit(value="Сохранить", class="btn", style="margin-top:20px; width:10%; display: block") }}
-   </form>
+
+      <!-- Форма -->
+      <form method="post" class="p-4">
+
+         <!-- Скрытые поля -->
+         <input type="hidden" id="UK" value="{{ UK }}">
+         <input type="hidden" id="OPK" value="{{ OPK }}">
+         <input type="hidden" id="PK" value="{{ PK }}">
+         <input type="hidden" name="current_year" value="{{ current_year }}">
+         <input type="hidden" name="current_direction" value="{{ current_direction.id }}">
+
+         <!-- Название -->
+         <div class="form-floating mb-3">
+            {{ form.name(class="form-control", id="name", readonly=True) }}
+            <label for="name">Название</label>
+         </div>
+
+         <!-- Номер и Год -->
+         <div class="row">
+            <div class="col-md-6">
+               <div class="form-floating mb-3">
+                  {{ form.num(class="form-control", id="num", min=1, step=1, max=100, required=true, disabled=true) }}
+                  <label for="num">Номер</label>
+               </div>
+            </div>
+            <div class="col-md-6">
+               <div class="form-floating mb-3">
+                  {{ form.year_approved(class="form-select", id="year_approved") }}
+                  <label for="year_approved">Год</label>
+               </div>
+            </div>
+         </div>
+
+
+
+         <!-- Тип и Направление -->
+         <div class="row">
+            <div class="col-md-6">
+               <div class="form-floating mb-3">
+                  {{ form.type(class="form-select", id="type", disabled=true) }}
+                  <label for="type">Тип</label>
+               </div>
+            </div>
+            <div class="col-md-6">
+               <div class="form-floating mb-3">
+                  {{ form.direction(class="form-select", id="direction", disabled=true) }}
+                  <label for="direction">Направление</label>
+               </div>
+            </div>
+         </div>
+
+         <!-- Формулировка -->
+         <div class="form-floating mb-3">
+            {{ form.formulation(class="form-control", style="height:200px;", id="formulation") }}
+            <label for="formulation">Формулировка</label>
+         </div>
+
+         <!-- Источник (по условию видимости) -->
+         
+         <div class="form-floating mb-3" id="source_label" {% if form.type.data != "ПК"%}style="display:none"{% endif %}>
+            {{ form.source(class="form-control", style="height:85px;", id="source") }}
+            <label for="source">Источник</label>
+         </div>
+
+
+         <div class="card-header border-top" style="background: #F9F9F9; padding-left: 0px; padding-right: 0px;">
+            <div id="indicators">
+               {% for indicator in indicators %}
+               <div id="{{ indicator.name }}" style="display:flex; margin-top:10px; height: 50px;">
+               <input id="i-{{indicator.name.split('.')[1]}}" name="indicator"
+                     type="hidden" class="form-control"
+                     value="{{ indicator.id }}||{{ indicator.name }}||{{ indicator.formulation }}">
+               <input type="text"
+                     class="form-control" readonly value="{{ indicator.name }}"
+                     style="width:20%; margin-right:15px;">
+               <input id="f-{{indicator.name.split('.')[1]}}"
+                     class="form-control"  value="{{  indicator.formulation  }}">
+               </div>
+               {% endfor %}
+            </div>
+
+            <div class="row">
+               <div class="col-md-3" style="margin-left:auto;">
+                  <button class="btn w-100 shadow-sm" style="margin-top:10px;" type="button"
+                     onclick="AddIndicator()">Добавить индикатор</button>
+                  <button class="btn w-100 shadow-sm" style="margin-top:10px; margin-bottom:10px;" type="button"
+                     onclick="RemoveIndicator()">Удалить индикатор</button>
+               </div>
+            </div>
+         </div>
+
+         <!-- Кнопка -->
+         <div class="row mt-3">
+            <div class="col-md-4 mx-auto">
+               {{ form.submit(value="Сохранить", class="btn btn-success w-100 shadow-sm") }}
+            </div>
+         </div>
+
+
+
+      </form>
+
+   </div>
 </div>
+
+
+
 <script>
    var type = document.getElementById("type");
    var num = document.getElementById("num");
    var count = 1;
    var names = []
-   window.addEventListener("load",function(){
-      if (type.value=="ПК"){
-      var source = document.getElementById('source_label');
-      source.style.display = 'block';}
-      
+   window.addEventListener("load", function () {
+      if (type.value == "ПК") {
+         var source = document.getElementById('source_label');
+         source.style.display = 'block';
+      }
+
       var name = document.getElementsByName("indicator");
       console.log(name.length)
       //console.log(name);
-      name.forEach(function(item){
+      name.forEach(function (item) {
          console.log(item.value);
          names.push(item.value?.split("||")[1]);
          let input = document.getElementById(`f-${count}`);
@@ -74,30 +151,64 @@
    var num = document.getElementById("num");
    var count = 1;
    function AddIndicator() {
-        var name = document.getElementById("name");
-        var newIndicator = document.createElement('div');
-        newIndicator.setAttribute("id",`${name.value}.${count}`)
-        newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${ name.value }.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%; margin-top:10px" ><input id="f-${count}" class="form-control" style="width:60%; margin-top:5px;">`;
-        names.push(`${ name.value }.${count}`);
-        document.getElementById('indicators').appendChild(newIndicator);
-        let input = document.getElementById(`f-${count}`)
-        input.addEventListener('change', (event) => {
-            let a = document.getElementById(`i-${input.id.split("-")[1]}`);
-            console.log(a.value)
-            let indicator_name = a.value?.split("||")[1];
-            let indicator_id = a.value?.split("||")[0];
-            a.value = `${indicator_id}||${indicator_name}||${input.value}`
-         });
-        count = count + 1;
+      var name = document.getElementById("name");
+      var newIndicator = document.createElement('div');
+      newIndicator.setAttribute("id", `${name.value}.${count}`)
+      newIndicator.innerHTML = `<input id="i-${count}" name="indicator" type="hidden" class="form-control" value="None||${name.value}.${count}||"><input type="text" class="form-control" readonly value="${name.value}.${count}" style="width:20%; margin-right:15px;" ><input id="f-${count}" class="form-control" style="">`;
+
+      newIndicator.style.marginTop = "10px"
+      newIndicator.style.display = "flex";
+      newIndicator.style.height = "50px"
+
+
+      newIndicator.style.opacity = '0';
+      newIndicator.style.transform = 'translateY(-10px)';
+      newIndicator.style.maxHeight = '0';
+      newIndicator.style.overflow = 'hidden';
+
+      names.push(`${name.value}.${count}`);
+      document.getElementById('indicators').appendChild(newIndicator);
+
+      setTimeout(() => {
+         newIndicator.style.transition = 'all 0.5s ease-out';
+         newIndicator.style.opacity = '1';
+         newIndicator.style.transform = 'translateY(0)';
+         newIndicator.style.maxHeight = '200px';
+      }, 10);
+
+      let input = document.getElementById(`f-${count}`)
+      input.addEventListener('change', (event) => {
+         let a = document.getElementById(`i-${input.id.split("-")[1]}`);
+         //console.log(a.value)
+         let indicator_name = a.value?.split("||")[1];
+         let indicator_id = a.value?.split("||")[0];
+         a.value = `${indicator_id}||${indicator_name}||${input.value}`
+      });
+      count = count + 1;
    }
-   function RemoveIndicator()
-   {
+   function RemoveIndicator() {
       let indicator = names.pop()
-      try{
-      document.getElementById(indicator).remove();
-      count = count - 1;}
-      catch{}
+      if (!indicator) {
+         return;
+      }
+
+      const element = document.getElementById(indicator);
+
+      if (!element) {
+         return;
+      }
+
+      element.style.willChange = 'transform, opacity, height';
+      element.style.backfaceVisibility = 'hidden';
+
+
+      element.classList.add("fade-out");
+      element.addEventListener("animationend", function () {
+         element.remove();
+         count = count - 1;
+      });
    }
+
 </script>
 </div>
 {% endblock %}\
