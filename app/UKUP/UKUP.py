@@ -12,8 +12,10 @@ from .moduleDB import (get_disciplines, get_competences, add_discipline, add_com
                        update_discipline_competences, update_competence_disciplines, get_indicators_for_discipline,
                        get_connected_competences, update_discipline_indicators,
                        get_indicators_disciplines_links_by_competence_id, update_indicator_disciplines,
-                       delete_discipline, delete_competence, get_competences_and_indicators, get_competences_and_indicators_type,
-                       report_matrix, get_required_disciplines, get_required_discipline, update_data, get_ze, update_ze)
+                       delete_discipline, delete_competence, get_competences_and_indicators,
+                       get_competences_and_indicators_type,
+                       report_matrix, get_required_disciplines, get_required_discipline, update_data, get_ze, update_ze,
+                       get_unique_discipline)
 from flask import request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_  # Добавьте этот импорт
@@ -99,6 +101,7 @@ def add_discipline_page():
         current_year = request.args["year"]
         current_direction = Direction.query.get(request.args["direction"])
 
+    discipline_names = get_unique_discipline()
     # Получение списка необходимых (базовых) дисциплин и формирование из них списка кортежей из id и name
     disciplines = get_disciplines(directionID=current_direction.id, year=current_year)
     required_disciplines_choices = [(-1, " - ")]
@@ -111,7 +114,7 @@ def add_discipline_page():
     form.addData(year=year_choices, block=block_choices,
                  module=module_choices, direction=direction_choices,
                  department=department_choices, required_discipines=required_disciplines_choices)
-    return render_template("addDiscipline.html",type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction)
+    return render_template("addDiscipline.html",type=type, form=form, years=years, directions=directions, current_year=current_year, current_direction=current_direction, discipline_names=discipline_names)
 
 
 # Обработка POST-запроса на добавление дисциплины

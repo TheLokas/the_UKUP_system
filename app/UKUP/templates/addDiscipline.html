@@ -21,9 +21,13 @@
 
       <!-- Название -->
       <div class="form-floating mb-3">
-        {{ form.name(class="form-control", id="name") }}
+        <input type="text" name="name" class="form-control" id="name" autocomplete="off">
         <label for="name">Название</label>
+
+        <!-- Контейнер для подсказок -->
+        <ul id="suggestions" class="list-group position-absolute w-100 shadow" style="z-index: 1000; top: 100%; display: none;"></ul>
       </div>
+
 
       <!-- Год и блок -->
       <div class="row">
@@ -86,16 +90,132 @@
   </div>
 </div>
 
-<!-- Скрипт для select[multiple] -->
+
 <script>
-  document.querySelector('select[multiple]')?.addEventListener('mousedown', (e) => {
-    if (e.target.tagName === 'OPTION') {
+  document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("name");
+  const suggestionBox = document.getElementById("suggestions");
+  const disciplineNames = {{ discipline_names | tojson }};
+  let activeIndex = -1; // индекс текущей активной подсказки
+
+  // Функция для преобразования текста: первая буква каждого слова заглавная
+  function capitalizeFirstLetter(value) {
+    return value
+      .split(' ') // разделяем на слова
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // первая буква каждого слова заглавная
+      .join(' '); // объединяем обратно
+  }
+
+  // Функция отображения подсказок
+  function showSuggestions(value) {
+    const filtered = disciplineNames.filter(name =>
+      name.toLowerCase().startsWith(value.toLowerCase())
+    );
+
+    suggestionBox.innerHTML = "";
+    activeIndex = -1;
+
+    if (filtered.length === 0 || value.trim() === "") {
+      suggestionBox.style.display = "none";
+      return;
+    }
+
+    filtered.forEach((name, index) => {
+      const li = document.createElement("li");
+      li.classList.add("list-group-item");
+      li.textContent = name;
+
+      li.addEventListener("click", () => {
+        input.value = name;
+        suggestionBox.style.display = "none";
+      });
+
+      suggestionBox.appendChild(li);
+    });
+
+    suggestionBox.style.display = "block";
+  }
+
+  function moveSelection(direction) {
+    const items = suggestionBox.querySelectorAll("li");
+    if (items.length === 0) return;
+
+    // снять выделение со всех
+    items.forEach(item => item.classList.remove("active"));
+
+    // изменяем активный индекс
+    activeIndex += direction;
+    if (activeIndex < 0) activeIndex = items.length - 1;
+    if (activeIndex >= items.length) activeIndex = 0;
+
+    items[activeIndex].classList.add("active");
+    items[activeIndex].scrollIntoView({ block: "nearest" });
+  }
+
+  function selectActiveItem() {
+    const items = suggestionBox.querySelectorAll("li");
+    if (activeIndex >= 0 && items[activeIndex]) {
+      input.value = items[activeIndex].textContent;
+      suggestionBox.style.display = "none";
+    }
+  }
+
+  input.addEventListener("input", () => {
+    input.value = capitalizeFirstLetter(input.value); // применяем преобразование
+    showSuggestions(input.value);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    const key = e.key;
+
+    if (key === "ArrowDown") {
+      moveSelection(1);
       e.preventDefault();
-      const option = e.target;
-      option.selected = !option.selected;
-      e.target.parentNode.dispatchEvent(new Event('change'));
+    } else if (key === "ArrowUp") {
+      moveSelection(-1);
+      e.preventDefault();
+    } else if (key === "Enter") {
+      selectActiveItem();
+      e.preventDefault(); // не отправляем форму
     }
   });
+
+  input.addEventListener("focus", () => {
+    if (input.value.length > 0) {
+      showSuggestions(input.value);
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      suggestionBox.style.display = "none";
+    }, 150);
+  });
+});
+
 </script>
+
+
+
+<style>
+  #suggestions {
+    max-height: 200px;
+    overflow-y: auto;
+    cursor: pointer;
+  }
+
+  #suggestions li {
+    padding: 8px 12px;
+  }
+
+  #suggestions li:hover {
+    background-color: #f0f0f0;
+  }
+  #suggestions li.active {
+    background-color: #1967d2;
+    color: white;
+  }
+
+</style>
 
 {% endblock %}
