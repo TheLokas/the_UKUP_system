@@ -5,13 +5,14 @@
 <div class="content container-fluid">
   <div class="card rounded-7 p-4 shadow-sm" style="background: #F9F9F9">
 
-      <div class="page-header mb-3">
-          <h3 class="text-center mb-2" style="padding-right: 10%; padding-left: 10%;">
-            Год приёма: {{ current_year }} | Направление: {{ current_direction.code }} {{ current_direction.name }}
-          </h3>
-      </div>
+    <!-- Заголовок страницы -->
+    <div class="page-header mb-3">
+      <h3 class="text-center mb-2" style="padding-right: 10%; padding-left: 10%;">
+        Год приёма: {{ current_year }} | Направление: {{ current_direction.code }} {{ current_direction.name }}
+      </h3>
+    </div>
 
-    <!-- Заголовок компетенции -->
+    <!-- Информация о компетенции -->
     <div class="card mb-3 rounded-3">
       <div class="card-header bg-light">
         <h5 class="card-title mb-1">Информация о компетенции</h5>
@@ -24,10 +25,10 @@
       <div style="display:none;" id="type">{{ competence.type }}</div>
     </div>
 
-    <!-- Форма с таблицей и кнопкой Подтвердить -->
+    <!-- Форма с таблицей -->
     <form method="post" class="mb-1">
-      <input name="current_year" id="year" type="hidden" value="{{ current_year }}">
-      <input name="current_direction" id="direction" type="hidden" value="{{ current_direction.id }}">
+      <input name="current_year" type="hidden" value="{{ current_year }}">
+      <input name="current_direction" type="hidden" value="{{ current_direction.id }}">
       {{ form.csrf_token }}
 
       <div class="card rounded-3 md-2">
@@ -66,32 +67,24 @@
         Дисциплины из блока Б1.В.ОД, Б1.В.ВД, Б2.В не должны быть связаны с профессиональными компетенциями
       </div>
 
-      <!-- Кнопка Подтвердить -->
+      <!-- Кнопки действий -->
       <div class="row mt-3">
         <div class="col-md-6 mb-2 mb-md-0">
           {{ form.submit(value="Подтвердить", class="btn btn-primary w-100") }}
         </div>
+    </form>  <!-- Закрываем первую форму -->
 
-        <!-- Пустой div для выравнивания с соседним col-md-6 -->
-        <div class="col-md-6 mb-2 mb-md-0 d-md-none">
+        <div class="col-md-6">
+          <form action="/UKUP/competence/{{ competence.id }}/indicators" method="get" class="w-100">
+            <input name="year" type="hidden" value="{{ current_year }}">
+            <input name="direction" type="hidden" value="{{ current_direction.id }}">
+            <input type="submit" class="btn btn-secondary w-100" value="Перейти к индикаторам">
+          </form>
         </div>
       </div>
-    </form>
-
-    <!-- Отдельная форма с кнопкой Перейти к индикаторам -->
-    <div class="row" style="margin-top: -38px;">
-      <div class="col-md-6 offset-md-6">
-        <form action="/UKUP/competence/{{ competence.id }}/indicators" method="get">
-          <input name="year" type="hidden" value="{{ current_year }}">
-          <input name="direction" type="hidden" value="{{ current_direction.id }}">
-          <input type="submit" class="btn btn-secondary w-100" value="Перейти к индикаторам">
-        </form>
-      </div>
-    </div>
 
   </div> <!-- конец белой карточки -->
 </div>
-
 
 <script>
   var hidden = JSON.parse(document.getElementById("hidden").value);
